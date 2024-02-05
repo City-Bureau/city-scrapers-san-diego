@@ -5,17 +5,16 @@ name = "pypi"
 
 [packages]
 scrapy = "*"
-scrapy-sentry = "*"
-city-scrapers-core = {ref = "main", git = "https://github.com/City-Bureau/city-scrapers-core.git", extras=["azure"]}
-pypiwin32 = {version = "*", sys_platform = "== 'win32'"}
+scrapy-sentry-errors = "*"
+city-scrapers-core = {ref = "main", git = "https://github.com/City-Bureau/city-scrapers-core.git", extras = ["azure"]}
 scrapy-wayback-middleware = "*"
-python-dateutil = "*"
-importlib-resources = "*"
-pdfminer-six = "*"
 
 [dev-packages]
 freezegun = "*"
 pytest = "*"
 "flake8" = "*"
 isort = "*"
-black = "==22.6"
+black = "*"
+
+[requires]
+python_version = "3.9"
