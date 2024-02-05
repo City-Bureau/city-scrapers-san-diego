@@ -2,7 +2,6 @@ name: Cron
 
 on:
   schedule:
-    # Set any time that you'd like scrapers to run (in UTC)
     - cron: "27 6 * * *"
   workflow_dispatch:
 
@@ -14,10 +13,6 @@ env:
   AUTOTHROTTLE_MAX_DELAY: 30.0
   AUTOTHROTTLE_START_DELAY: 1.5
   AUTOTHROTTLE_TARGET_CONCURRENCY: 3.0
-  # Add secrets for the platform you're using and uncomment here
-  # AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  # AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  # S3_BUCKET: ${{ secrets.S3_BUCKET }}
   AZURE_ACCOUNT_KEY: ${{ secrets.AZURE_ACCOUNT_KEY }}
   AZURE_ACCOUNT_NAME: ${{ secrets.AZURE_ACCOUNT_NAME }}
   AZURE_CONTAINER: ${{ secrets.AZURE_CONTAINER }}
