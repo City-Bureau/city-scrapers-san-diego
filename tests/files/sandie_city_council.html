@@ -1,0 +1,2509 @@
+
+<!DOCTYPE html>
+<html lang="en" dir="ltr" prefix="og: https://ogp.me/ns#">
+  <head>
+    <meta charset="utf-8" /><script type="text/javascript">(window.NREUM||(NREUM={})).init={privacy:{cookies_enabled:true},ajax:{deny_list:["bam.nr-data.net"]},distributed_tracing:{enabled:true}};(window.NREUM||(NREUM={})).loader_config={agentID:"1386103139",accountID:"3958089",trustKey:"66686",xpid:"Vw8CWVZbARABV1JSAgQFU1cC",licenseKey:"NRJS-f71d0866c6680bc2a95",applicationID:"1330552533"};;/*! For license information please see nr-loader-spa-1.251.1.min.js.LICENSE.txt */
+(()=>{var e,t,r={234:(e,t,r)=>{"use strict";r.d(t,{P_:()=>m,Mt:()=>b,C5:()=>s,DL:()=>w,OP:()=>D,lF:()=>O,Yu:()=>E,Dg:()=>v,CX:()=>c,GE:()=>x,sU:()=>N});var n=r(8632),i=r(9567);const o={beacon:n.ce.beacon,errorBeacon:n.ce.errorBeacon,licenseKey:void 0,applicationID:void 0,sa:void 0,queueTime:void 0,applicationTime:void 0,ttGuid:void 0,user:void 0,account:void 0,product:void 0,extra:void 0,jsAttributes:{},userAttributes:void 0,atts:void 0,transactionName:void 0,tNamePlain:void 0},a={};function s(e){if(!e)throw new Error("All info objects require an agent identifier!");if(!a[e])throw new Error("Info for ".concat(e," was never set"));return a[e]}function c(e,t){if(!e)throw new Error("All info objects require an agent identifier!");a[e]=(0,i.D)(t,o);const r=(0,n.ek)(e);r&&(r.info=a[e])}const u=e=>{if(!e||"string"!=typeof e)return!1;try{document.createDocumentFragment().querySelector(e)}catch{return!1}return!0};var d=r(7056),l=r(50);const f="[data-nr-mask]",h=()=>{const e={mask_selector:"*",block_selector:"[data-nr-block]",mask_input_options:{color:!1,date:!1,"datetime-local":!1,email:!1,month:!1,number:!1,range:!1,search:!1,tel:!1,text:!1,time:!1,url:!1,week:!1,textarea:!1,select:!1,password:!0}};return{feature_flags:[],proxy:{assets:void 0,beacon:void 0},privacy:{cookies_enabled:!0},ajax:{deny_list:void 0,block_internal:!0,enabled:!0,harvestTimeSeconds:10,autoStart:!0},distributed_tracing:{enabled:void 0,exclude_newrelic_header:void 0,cors_use_newrelic_header:void 0,cors_use_tracecontext_headers:void 0,allowed_origins:void 0},session:{domain:void 0,expiresMs:d.oD,inactiveMs:d.Hb},ssl:void 0,obfuscate:void 0,jserrors:{enabled:!0,harvestTimeSeconds:10,autoStart:!0},metrics:{enabled:!0,autoStart:!0},page_action:{enabled:!0,harvestTimeSeconds:30,autoStart:!0},page_view_event:{enabled:!0,autoStart:!0},page_view_timing:{enabled:!0,harvestTimeSeconds:30,long_task:!1,autoStart:!0},session_trace:{enabled:!0,harvestTimeSeconds:10,autoStart:!0},harvest:{tooManyRequestsDelay:60},session_replay:{autoStart:!0,enabled:!1,harvestTimeSeconds:60,sampling_rate:50,error_sampling_rate:50,collect_fonts:!1,inline_images:!1,inline_stylesheet:!0,mask_all_inputs:!0,get mask_text_selector(){return e.mask_selector},set mask_text_selector(t){u(t)?e.mask_selector="".concat(t,",").concat(f):""===t||null===t?e.mask_selector=f:(0,l.Z)("An invalid session_replay.mask_selector was provided. '*' will be used.",t)},get block_class(){return"nr-block"},get ignore_class(){return"nr-ignore"},get mask_text_class(){return"nr-mask"},get block_selector(){return e.block_selector},set block_selector(t){u(t)?e.block_selector+=",".concat(t):""!==t&&(0,l.Z)("An invalid session_replay.block_selector was provided and will not be used",t)},get mask_input_options(){return e.mask_input_options},set mask_input_options(t){t&&"object"==typeof t?e.mask_input_options={...t,password:!0}:(0,l.Z)("An invalid session_replay.mask_input_option was provided and will not be used",t)}},spa:{enabled:!0,harvestTimeSeconds:10,autoStart:!0}}},p={},g="All configuration objects require an agent identifier!";function m(e){if(!e)throw new Error(g);if(!p[e])throw new Error("Configuration for ".concat(e," was never set"));return p[e]}function v(e,t){if(!e)throw new Error(g);p[e]=(0,i.D)(t,h());const r=(0,n.ek)(e);r&&(r.init=p[e])}function b(e,t){if(!e)throw new Error(g);var r=m(e);if(r){for(var n=t.split("."),i=0;i<n.length-1;i++)if("object"!=typeof(r=r[n[i]]))return;r=r[n[n.length-1]]}return r}const y={accountID:void 0,trustKey:void 0,agentID:void 0,licenseKey:void 0,applicationID:void 0,xpid:void 0},A={};function w(e){if(!e)throw new Error("All loader-config objects require an agent identifier!");if(!A[e])throw new Error("LoaderConfig for ".concat(e," was never set"));return A[e]}function x(e,t){if(!e)throw new Error("All loader-config objects require an agent identifier!");A[e]=(0,i.D)(t,y);const r=(0,n.ek)(e);r&&(r.loader_config=A[e])}const E=(0,n.mF)().o;var _=r(385),T=r(6818);const S={buildEnv:T.Re,customTransaction:void 0,disabled:!1,distMethod:T.gF,isolatedBacklog:!1,loaderType:void 0,maxBytes:3e4,offset:Math.floor(_._A?.performance?.timeOrigin||_._A?.performance?.timing?.navigationStart||Date.now()),onerror:void 0,origin:""+_._A.location,ptid:void 0,releaseIds:{},session:void 0,xhrWrappable:"function"==typeof _._A.XMLHttpRequest?.prototype?.addEventListener,version:T.q4,denyList:void 0},R={};function D(e){if(!e)throw new Error("All runtime objects require an agent identifier!");if(!R[e])throw new Error("Runtime for ".concat(e," was never set"));return R[e]}function N(e,t){if(!e)throw new Error("All runtime objects require an agent identifier!");R[e]=(0,i.D)(t,S);const r=(0,n.ek)(e);r&&(r.runtime=R[e])}function O(e){return function(e){try{const t=s(e);return!!t.licenseKey&&!!t.errorBeacon&&!!t.applicationID}catch(e){return!1}}(e)}},9567:(e,t,r)=>{"use strict";r.d(t,{D:()=>i});var n=r(50);function i(e,t){try{if(!e||"object"!=typeof e)return(0,n.Z)("Setting a Configurable requires an object as input");if(!t||"object"!=typeof t)return(0,n.Z)("Setting a Configurable requires a model to set its initial properties");const r=Object.create(Object.getPrototypeOf(t),Object.getOwnPropertyDescriptors(t)),o=0===Object.keys(r).length?e:r;for(let a in o)if(void 0!==e[a])try{Array.isArray(e[a])&&Array.isArray(t[a])?r[a]=Array.from(new Set([...e[a],...t[a]])):"object"==typeof e[a]&&"object"==typeof t[a]?r[a]=i(e[a],t[a]):r[a]=e[a]}catch(e){(0,n.Z)("An error occurred while setting a property of a Configurable",e)}return r}catch(e){(0,n.Z)("An error occured while setting a Configurable",e)}}},6818:(e,t,r)=>{"use strict";r.d(t,{Re:()=>i,gF:()=>o,lF:()=>a,q4:()=>n});const n="1.251.1",i="PROD",o="CDN",a="2.0.0-alpha.11"},385:(e,t,r)=>{"use strict";r.d(t,{FN:()=>c,IF:()=>l,LW:()=>a,Nk:()=>h,Tt:()=>u,_A:()=>o,cv:()=>p,iS:()=>s,il:()=>n,ux:()=>d,v6:()=>i,w1:()=>f});const n="undefined"!=typeof window&&!!window.document,i="undefined"!=typeof WorkerGlobalScope&&("undefined"!=typeof self&&self instanceof WorkerGlobalScope&&self.navigator instanceof WorkerNavigator||"undefined"!=typeof globalThis&&globalThis instanceof WorkerGlobalScope&&globalThis.navigator instanceof WorkerNavigator),o=n?window:"undefined"!=typeof WorkerGlobalScope&&("undefined"!=typeof self&&self instanceof WorkerGlobalScope&&self||"undefined"!=typeof globalThis&&globalThis instanceof WorkerGlobalScope&&globalThis),a="complete"===o?.document?.readyState,s=Boolean("hidden"===o?.document?.visibilityState),c=""+o?.location,u=/iPad|iPhone|iPod/.test(o.navigator?.userAgent),d=u&&"undefined"==typeof SharedWorker,l=(()=>{const e=o.navigator?.userAgent?.match(/Firefox[/\s](\d+\.\d+)/);return Array.isArray(e)&&e.length>=2?+e[1]:0})(),f=Boolean(n&&window.document.documentMode),h=!!o.navigator?.sendBeacon,p=Math.floor(o?.performance?.timeOrigin||o?.performance?.timing?.navigationStart||Date.now())},1117:(e,t,r)=>{"use strict";r.d(t,{w:()=>o});var n=r(50);const i={agentIdentifier:"",ee:void 0};class o{constructor(e){try{if("object"!=typeof e)return(0,n.Z)("shared context requires an object as input");this.sharedContext={},Object.assign(this.sharedContext,i),Object.entries(e).forEach((e=>{let[t,r]=e;Object.keys(i).includes(t)&&(this.sharedContext[t]=r)}))}catch(e){(0,n.Z)("An error occured while setting SharedContext",e)}}}},8e3:(e,t,r)=>{"use strict";r.d(t,{L:()=>d,R:()=>c});var n=r(8325),i=r(1284),o=r(4322),a=r(3325);const s={};function c(e,t){const r={staged:!1,priority:a.p[t]||0};u(e),s[e].get(t)||s[e].set(t,r)}function u(e){e&&(s[e]||(s[e]=new Map))}function d(){let e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:"",t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:"feature";if(u(e),!e||!s[e].get(t))return a(t);s[e].get(t).staged=!0;const r=[...s[e]];function a(t){const r=e?n.ee.get(e):n.ee,a=o.X.handlers;if(r.backlog&&a){var s=r.backlog[t],c=a[t];if(c){for(var u=0;s&&u<s.length;++u)l(s[u],c);(0,i.D)(c,(function(e,t){(0,i.D)(t,(function(t,r){r[0].on(e,r[1])}))}))}delete a[t],r.backlog[t]=null,r.emit("drain-"+t,[])}}r.every((e=>{let[t,r]=e;return r.staged}))&&(r.sort(((e,t)=>e[1].priority-t[1].priority)),r.forEach((t=>{let[r]=t;s[e].delete(r),a(r)})))}function l(e,t){var r=e[1];(0,i.D)(t[r],(function(t,r){var n=e[0];if(r[0]===n){var i=r[1],o=e[3],a=e[2];i.apply(o,a)}}))}},8325:(e,t,r)=>{"use strict";r.d(t,{A:()=>c,ee:()=>u});var n=r(8632),i=r(2210),o=r(234);class a{constructor(e){this.contextId=e}}var s=r(3117);const c="nr@context:".concat(s.a),u=function e(t,r){var n={},s={},d={},f=!1;try{f=16===r.length&&(0,o.OP)(r).isolatedBacklog}catch(e){}var h={on:g,addEventListener:g,removeEventListener:function(e,t){var r=n[e];if(!r)return;for(var i=0;i<r.length;i++)r[i]===t&&r.splice(i,1)},emit:function(e,r,n,i,o){!1!==o&&(o=!0);if(u.aborted&&!i)return;t&&o&&t.emit(e,r,n);for(var a=p(n),c=m(e),d=c.length,l=0;l<d;l++)c[l].apply(a,r);var f=b()[s[e]];f&&f.push([h,e,r,a]);return a},get:v,listeners:m,context:p,buffer:function(e,t){const r=b();if(t=t||"feature",h.aborted)return;Object.entries(e||{}).forEach((e=>{let[n,i]=e;s[i]=t,t in r||(r[t]=[])}))},abort:l,aborted:!1,isBuffering:function(e){return!!b()[s[e]]},debugId:r,backlog:f?{}:t&&"object"==typeof t.backlog?t.backlog:{}};return h;function p(e){return e&&e instanceof a?e:e?(0,i.X)(e,c,(()=>new a(c))):new a(c)}function g(e,t){n[e]=m(e).concat(t)}function m(e){return n[e]||[]}function v(t){return d[t]=d[t]||e(h,t)}function b(){return h.backlog}}(void 0,"globalEE"),d=(0,n.fP)();function l(){u.aborted=!0,u.backlog={}}d.ee||(d.ee=u)},5546:(e,t,r)=>{"use strict";r.d(t,{E:()=>n,p:()=>i});var n=r(8325).ee.get("handle");function i(e,t,r,i,o){o?(o.buffer([e],i),o.emit(e,t,r)):(n.buffer([e],i),n.emit(e,t,r))}},4322:(e,t,r)=>{"use strict";r.d(t,{X:()=>o});var n=r(5546);o.on=a;var i=o.handlers={};function o(e,t,r,o){a(o||n.E,i,e,t,r)}function a(e,t,r,i,o){o||(o="feature"),e||(e=n.E);var a=t[o]=t[o]||{};(a[r]=a[r]||[]).push([e,i])}},3239:(e,t,r)=>{"use strict";r.d(t,{bP:()=>s,iz:()=>c,m$:()=>a});var n=r(385);let i=!1,o=!1;try{const e={get passive(){return i=!0,!1},get signal(){return o=!0,!1}};n._A.addEventListener("test",null,e),n._A.removeEventListener("test",null,e)}catch(e){}function a(e,t){return i||o?{capture:!!e,passive:i,signal:t}:!!e}function s(e,t){let r=arguments.length>2&&void 0!==arguments[2]&&arguments[2],n=arguments.length>3?arguments[3]:void 0;window.addEventListener(e,t,a(r,n))}function c(e,t){let r=arguments.length>2&&void 0!==arguments[2]&&arguments[2],n=arguments.length>3?arguments[3]:void 0;document.addEventListener(e,t,a(r,n))}},3117:(e,t,r)=>{"use strict";r.d(t,{a:()=>n});const n=(0,r(4402).Rl)()},4402:(e,t,r)=>{"use strict";r.d(t,{Ht:()=>u,M:()=>c,Rl:()=>a,ky:()=>s});var n=r(385);const i="xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx";function o(e,t){return e?15&e[t]:16*Math.random()|0}function a(){const e=n._A?.crypto||n._A?.msCrypto;let t,r=0;return e&&e.getRandomValues&&(t=e.getRandomValues(new Uint8Array(30))),i.split("").map((e=>"x"===e?o(t,r++).toString(16):"y"===e?(3&o()|8).toString(16):e)).join("")}function s(e){const t=n._A?.crypto||n._A?.msCrypto;let r,i=0;t&&t.getRandomValues&&(r=t.getRandomValues(new Uint8Array(e)));const a=[];for(var s=0;s<e;s++)a.push(o(r,i++).toString(16));return a.join("")}function c(){return s(16)}function u(){return s(32)}},7056:(e,t,r)=>{"use strict";r.d(t,{Bq:()=>n,Hb:()=>o,IK:()=>c,oD:()=>i,uT:()=>s,wO:()=>a});const n="NRBA",i=144e5,o=18e5,a={PAUSE:"session-pause",RESET:"session-reset",RESUME:"session-resume",UPDATE:"session-update"},s={SAME_TAB:"same-tab",CROSS_TAB:"cross-tab"},c={OFF:0,FULL:1,ERROR:2}},7894:(e,t,r)=>{"use strict";function n(){return Math.round(performance.now())}r.d(t,{z:()=>n})},7243:(e,t,r)=>{"use strict";r.d(t,{e:()=>i});var n=r(385);function i(e){if(0===(e||"").indexOf("data:"))return{protocol:"data"};try{const t=new URL(e,location.href),r={port:t.port,hostname:t.hostname,pathname:t.pathname,search:t.search,protocol:t.protocol.slice(0,t.protocol.indexOf(":")),sameOrigin:t.protocol===n._A?.location?.protocol&&t.host===n._A?.location?.host};return r.port&&""!==r.port||("http:"===t.protocol&&(r.port="80"),"https:"===t.protocol&&(r.port="443")),r.pathname&&""!==r.pathname?r.pathname.startsWith("/")||(r.pathname="/".concat(r.pathname)):r.pathname="/",r}catch(e){return{}}}},50:(e,t,r)=>{"use strict";function n(e,t){"function"==typeof console.warn&&(console.warn("New Relic: ".concat(e)),t&&console.warn(t))}r.d(t,{Z:()=>n})},2825:(e,t,r)=>{"use strict";r.d(t,{N:()=>d,T:()=>l});var n=r(8325),i=r(5546),o=r(3325),a=r(385);const s="newrelic";const c={stn:[o.D.sessionTrace],err:[o.D.jserrors,o.D.metrics],ins:[o.D.pageAction],spa:[o.D.spa],sr:[o.D.sessionReplay,o.D.sessionTrace]},u=new Set;function d(e,t){const r=n.ee.get(t);e&&"object"==typeof e&&(u.has(t)||(Object.entries(e).forEach((e=>{let[t,n]=e;c[t]?c[t].forEach((e=>{n?(0,i.p)("feat-"+t,[],void 0,e,r):(0,i.p)("block-"+t,[],void 0,e,r),(0,i.p)("rumresp-"+t,[Boolean(n)],void 0,e,r)})):n&&(0,i.p)("feat-"+t,[],void 0,void 0,r),l[t]=Boolean(n)})),Object.keys(c).forEach((e=>{void 0===l[e]&&(c[e]?.forEach((t=>(0,i.p)("rumresp-"+e,[!1],void 0,t,r))),l[e]=!1)})),u.add(t),function(){let e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{};try{a._A.dispatchEvent(new CustomEvent(s,{detail:e}))}catch(e){}}({loaded:!0})))}const l={}},2210:(e,t,r)=>{"use strict";r.d(t,{X:()=>i});var n=Object.prototype.hasOwnProperty;function i(e,t,r){if(n.call(e,t))return e[t];var i=r();if(Object.defineProperty&&Object.keys)try{return Object.defineProperty(e,t,{value:i,writable:!0,enumerable:!1}),i}catch(e){}return e[t]=i,i}},1284:(e,t,r)=>{"use strict";r.d(t,{D:()=>n});const n=(e,t)=>Object.entries(e||{}).map((e=>{let[r,n]=e;return t(r,n)}))},4351:(e,t,r)=>{"use strict";r.d(t,{P:()=>o});var n=r(8325);const i=()=>{const e=new WeakSet;return(t,r)=>{if("object"==typeof r&&null!==r){if(e.has(r))return;e.add(r)}return r}};function o(e){try{return JSON.stringify(e,i())}catch(e){try{n.ee.emit("internal-error",[e])}catch(e){}}}},3960:(e,t,r)=>{"use strict";r.d(t,{KB:()=>a,b2:()=>o});var n=r(3239);function i(){return"undefined"==typeof document||"complete"===document.readyState}function o(e,t){if(i())return e();(0,n.bP)("load",e,t)}function a(e){if(i())return e();(0,n.iz)("DOMContentLoaded",e)}},8632:(e,t,r)=>{"use strict";r.d(t,{EZ:()=>d,ce:()=>o,ek:()=>u,fP:()=>a,gG:()=>l,h5:()=>c,mF:()=>s});var n=r(7894),i=r(385);const o={beacon:"bam.nr-data.net",errorBeacon:"bam.nr-data.net"};function a(){return i._A.NREUM||(i._A.NREUM={}),void 0===i._A.newrelic&&(i._A.newrelic=i._A.NREUM),i._A.NREUM}function s(){let e=a();return e.o||(e.o={ST:i._A.setTimeout,SI:i._A.setImmediate,CT:i._A.clearTimeout,XHR:i._A.XMLHttpRequest,REQ:i._A.Request,EV:i._A.Event,PR:i._A.Promise,MO:i._A.MutationObserver,FETCH:i._A.fetch}),e}function c(e,t){let r=a();r.initializedAgents??={},t.initializedAt={ms:(0,n.z)(),date:new Date},r.initializedAgents[e]=t}function u(e){let t=a();return t.initializedAgents?.[e]}function d(e,t){a()[e]=t}function l(){return function(){let e=a();const t=e.info||{};e.info={beacon:o.beacon,errorBeacon:o.errorBeacon,...t}}(),function(){let e=a();const t=e.init||{};e.init={...t}}(),s(),function(){let e=a();const t=e.loader_config||{};e.loader_config={...t}}(),a()}},7956:(e,t,r)=>{"use strict";r.d(t,{N:()=>i});var n=r(3239);function i(e){let t=arguments.length>1&&void 0!==arguments[1]&&arguments[1],r=arguments.length>2?arguments[2]:void 0,i=arguments.length>3?arguments[3]:void 0;(0,n.iz)("visibilitychange",(function(){if(t)return void("hidden"===document.visibilityState&&e());e(document.visibilityState)}),r,i)}},1214:(e,t,r)=>{"use strict";r.d(t,{em:()=>b,u5:()=>R,QU:()=>O,_L:()=>C,Gm:()=>M,Lg:()=>L,BV:()=>Z,Kf:()=>Y});var n=r(8325),i=r(3117);const o="nr@original:".concat(i.a);var a=Object.prototype.hasOwnProperty,s=!1;function c(e,t){return e||(e=n.ee),r.inPlace=function(e,t,n,i,o){n||(n="");const a="-"===n.charAt(0);for(let s=0;s<t.length;s++){const c=t[s],u=e[c];d(u)||(e[c]=r(u,a?c+n:n,i,c,o))}},r.flag=o,r;function r(t,r,n,s,c){return d(t)?t:(r||(r=""),nrWrapper[o]=t,function(e,t,r){if(Object.defineProperty&&Object.keys)try{return Object.keys(e).forEach((function(r){Object.defineProperty(t,r,{get:function(){return e[r]},set:function(t){return e[r]=t,t}})})),t}catch(e){u([e],r)}for(var n in e)a.call(e,n)&&(t[n]=e[n])}(t,nrWrapper,e),nrWrapper);function nrWrapper(){var o,a,d,l;try{a=this,o=[...arguments],d="function"==typeof n?n(o,a):n||{}}catch(t){u([t,"",[o,a,s],d],e)}i(r+"start",[o,a,s],d,c);try{return l=t.apply(a,o)}catch(e){throw i(r+"err",[o,a,e],d,c),e}finally{i(r+"end",[o,a,l],d,c)}}}function i(r,n,i,o){if(!s||t){var a=s;s=!0;try{e.emit(r,n,i,t,o)}catch(t){u([t,r,n,i],e)}s=a}}}function u(e,t){t||(t=n.ee);try{t.emit("internal-error",e)}catch(e){}}function d(e){return!(e&&"function"==typeof e&&e.apply&&!e[o])}var l=r(2210),f=r(385);const h={},p=f._A.XMLHttpRequest,g="addEventListener",m="removeEventListener",v="nr@wrapped:".concat(n.A);function b(e){var t=function(e){return(e||n.ee).get("events")}(e);if(h[t.debugId]++)return t;h[t.debugId]=1;var r=c(t,!0);function i(e){r.inPlace(e,[g,m],"-",o)}function o(e,t){return e[1]}return"getPrototypeOf"in Object&&(f.il&&y(document,i),y(f._A,i),y(p.prototype,i)),t.on(g+"-start",(function(e,t){var n=e[1];if(null!==n&&("function"==typeof n||"object"==typeof n)){var i=(0,l.X)(n,v,(function(){var e={object:function(){if("function"!=typeof n.handleEvent)return;return n.handleEvent.apply(n,arguments)},function:n}[typeof n];return e?r(e,"fn-",null,e.name||"anonymous"):n}));this.wrapped=e[1]=i}})),t.on(m+"-start",(function(e){e[1]=this.wrapped||e[1]})),t}function y(e,t){let r=e;for(;"object"==typeof r&&!Object.prototype.hasOwnProperty.call(r,g);)r=Object.getPrototypeOf(r);for(var n=arguments.length,i=new Array(n>2?n-2:0),o=2;o<n;o++)i[o-2]=arguments[o];r&&t(r,...i)}var A="fetch-",w=A+"body-",x=["arrayBuffer","blob","json","text","formData"],E=f._A.Request,_=f._A.Response,T="prototype";const S={};function R(e){const t=function(e){return(e||n.ee).get("fetch")}(e);if(!(E&&_&&f._A.fetch))return t;if(S[t.debugId]++)return t;function r(e,r,i){var o=e[r];"function"==typeof o&&(e[r]=function(){var e,r=[...arguments],a={};t.emit(i+"before-start",[r],a),a[n.A]&&a[n.A].dt&&(e=a[n.A].dt);var s=o.apply(this,r);return t.emit(i+"start",[r,e],s),s.then((function(e){return t.emit(i+"end",[null,e],s),e}),(function(e){throw t.emit(i+"end",[e],s),e}))})}return S[t.debugId]=1,x.forEach((e=>{r(E[T],e,w),r(_[T],e,w)})),r(f._A,"fetch",A),t.on(A+"end",(function(e,r){var n=this;if(r){var i=r.headers.get("content-length");null!==i&&(n.rxSize=i),t.emit(A+"done",[null,r],n)}else t.emit(A+"done",[e],n)})),t}const D={},N=["pushState","replaceState"];function O(e){const t=function(e){return(e||n.ee).get("history")}(e);return!f.il||D[t.debugId]++||(D[t.debugId]=1,c(t).inPlace(window.history,N,"-")),t}var I=r(3239);const j={},P=["appendChild","insertBefore","replaceChild"];function C(e){const t=function(e){return(e||n.ee).get("jsonp")}(e);if(!f.il||j[t.debugId])return t;j[t.debugId]=!0;var r=c(t),i=/[?&](?:callback|cb)=([^&#]+)/,o=/(.*)\.([^.]+)/,a=/^(\w+)(\.|$)(.*)$/;function s(e,t){if(!e)return t;const r=e.match(a),n=r[1];return s(r[3],t[n])}return r.inPlace(Node.prototype,P,"dom-"),t.on("dom-start",(function(e){!function(e){if(!e||"string"!=typeof e.nodeName||"script"!==e.nodeName.toLowerCase())return;if("function"!=typeof e.addEventListener)return;var n=(a=e.src,c=a.match(i),c?c[1]:null);var a,c;if(!n)return;var u=function(e){var t=e.match(o);if(t&&t.length>=3)return{key:t[2],parent:s(t[1],window)};return{key:e,parent:window}}(n);if("function"!=typeof u.parent[u.key])return;var d={};function l(){t.emit("jsonp-end",[],d),e.removeEventListener("load",l,(0,I.m$)(!1)),e.removeEventListener("error",f,(0,I.m$)(!1))}function f(){t.emit("jsonp-error",[],d),t.emit("jsonp-end",[],d),e.removeEventListener("load",l,(0,I.m$)(!1)),e.removeEventListener("error",f,(0,I.m$)(!1))}r.inPlace(u.parent,[u.key],"cb-",d),e.addEventListener("load",l,(0,I.m$)(!1)),e.addEventListener("error",f,(0,I.m$)(!1)),t.emit("new-jsonp",[e.src],d)}(e[0])})),t}const k={};function M(e){const t=function(e){return(e||n.ee).get("mutation")}(e);if(!f.il||k[t.debugId])return t;k[t.debugId]=!0;var r=c(t),i=f._A.MutationObserver;return i&&(window.MutationObserver=function(e){return this instanceof i?new i(r(e,"fn-")):i.apply(this,arguments)},MutationObserver.prototype=i.prototype),t}const H={};function L(e){const t=function(e){return(e||n.ee).get("promise")}(e);if(H[t.debugId])return t;H[t.debugId]=!0;var r=t.context,i=c(t),a=f._A.Promise;return a&&function(){function e(r){var n=t.context(),o=i(r,"executor-",n,null,!1);const s=Reflect.construct(a,[o],e);return t.context(s).getCtx=function(){return n},s}f._A.Promise=e,Object.defineProperty(e,"name",{value:"Promise"}),e.toString=function(){return a.toString()},Object.setPrototypeOf(e,a),["all","race"].forEach((function(r){const n=a[r];e[r]=function(e){let i=!1;[...e||[]].forEach((e=>{this.resolve(e).then(a("all"===r),a(!1))}));const o=n.apply(this,arguments);return o;function a(e){return function(){t.emit("propagate",[null,!i],o,!1,!1),i=i||!e}}}})),["resolve","reject"].forEach((function(r){const n=a[r];e[r]=function(e){const r=n.apply(this,arguments);return e!==r&&t.emit("propagate",[e,!0],r,!1,!1),r}})),e.prototype=a.prototype;const n=a.prototype.then;a.prototype.then=function(){var e=this,o=r(e);o.promise=e;for(var a=arguments.length,s=new Array(a),c=0;c<a;c++)s[c]=arguments[c];s[0]=i(s[0],"cb-",o,null,!1),s[1]=i(s[1],"cb-",o,null,!1);const u=n.apply(this,s);return o.nextPromise=u,t.emit("propagate",[e,!0],u,!1,!1),u},a.prototype.then[o]=n,t.on("executor-start",(function(e){e[0]=i(e[0],"resolve-",this,null,!1),e[1]=i(e[1],"resolve-",this,null,!1)})),t.on("executor-err",(function(e,t,r){e[1](r)})),t.on("cb-end",(function(e,r,n){t.emit("propagate",[n,!0],this.nextPromise,!1,!1)})),t.on("propagate",(function(e,r,n){this.getCtx&&!r||(this.getCtx=function(){if(e instanceof Promise)var r=t.context(e);return r&&r.getCtx?r.getCtx():this})}))}(),t}const z={},F="setTimeout",B="setInterval",U="clearTimeout",V="-start",q="-",G=[F,"setImmediate",B,U,"clearImmediate"];function Z(e){const t=function(e){return(e||n.ee).get("timer")}(e);if(z[t.debugId]++)return t;z[t.debugId]=1;var r=c(t);return r.inPlace(f._A,G.slice(0,2),F+q),r.inPlace(f._A,G.slice(2,3),B+q),r.inPlace(f._A,G.slice(3),U+q),t.on(B+V,(function(e,t,n){e[0]=r(e[0],"fn-",null,n)})),t.on(F+V,(function(e,t,n){this.method=n,this.timerDuration=isNaN(e[1])?0:+e[1],e[0]=r(e[0],"fn-",this,n)})),t}var W=r(50);const X={},K=["open","send"];function Y(e){var t=e||n.ee;const r=function(e){return(e||n.ee).get("xhr")}(t);if(X[r.debugId]++)return r;X[r.debugId]=1,b(t);var i=c(r),o=f._A.XMLHttpRequest,a=f._A.MutationObserver,s=f._A.Promise,u=f._A.setInterval,d="readystatechange",l=["onload","onerror","onabort","onloadstart","onloadend","onprogress","ontimeout"],h=[],p=f._A.XMLHttpRequest=function(e){const t=new o(e),n=r.context(t);try{r.emit("new-xhr",[t],n),t.addEventListener(d,(a=n,function(){var e=this;e.readyState>3&&!a.resolved&&(a.resolved=!0,r.emit("xhr-resolved",[],e)),i.inPlace(e,l,"fn-",w)}),(0,I.m$)(!1))}catch(e){(0,W.Z)("An error occurred while intercepting XHR",e);try{r.emit("internal-error",[e])}catch(e){}}var a;return t};function g(e,t){i.inPlace(t,["onreadystatechange"],"fn-",w)}if(function(e,t){for(var r in e)t[r]=e[r]}(o,p),p.prototype=o.prototype,i.inPlace(p.prototype,K,"-xhr-",w),r.on("send-xhr-start",(function(e,t){g(e,t),function(e){h.push(e),a&&(m?m.then(A):u?u(A):(v=-v,y.data=v))}(t)})),r.on("open-xhr-start",g),a){var m=s&&s.resolve();if(!u&&!s){var v=1,y=document.createTextNode(v);new a(A).observe(y,{characterData:!0})}}else t.on("fn-end",(function(e){e[0]&&e[0].type===d||A()}));function A(){for(var e=0;e<h.length;e++)g(0,h[e]);h.length&&(h=[])}function w(e,t){return t}return r}},7825:(e,t,r)=>{"use strict";r.d(t,{t:()=>n});const n=r(3325).D.ajax},6660:(e,t,r)=>{"use strict";r.d(t,{t:()=>n});const n=r(3325).D.jserrors},3081:(e,t,r)=>{"use strict";r.d(t,{gF:()=>o,mY:()=>i,t9:()=>n,vz:()=>s,xS:()=>a});const n=r(3325).D.metrics,i="sm",o="cm",a="storeSupportabilityMetrics",s="storeEventMetrics"},4649:(e,t,r)=>{"use strict";r.d(t,{t:()=>n});const n=r(3325).D.pageAction},7633:(e,t,r)=>{"use strict";r.d(t,{t:()=>n});const n=r(3325).D.pageViewEvent},9251:(e,t,r)=>{"use strict";r.d(t,{t:()=>n});const n=r(3325).D.pageViewTiming},7144:(e,t,r)=>{"use strict";r.d(t,{J0:()=>l,Mi:()=>d,Vb:()=>o,Ye:()=>s,fm:()=>c,i9:()=>a,t9:()=>i,u0:()=>u});var n=r(7056);const i=r(3325).D.sessionReplay,o=.12,a={DomContentLoaded:0,Load:1,FullSnapshot:2,IncrementalSnapshot:3,Meta:4,Custom:5},s=1e6,c=64e3,u={[n.IK.ERROR]:15e3,[n.IK.FULL]:3e5,[n.IK.OFF]:0},d={RESET:{message:"Session was reset",sm:"Reset"},IMPORT:{message:"Recorder failed to import",sm:"Import"},TOO_MANY:{message:"429: Too Many Requests",sm:"Too-Many"},TOO_BIG:{message:"Payload was too large",sm:"Too-Big"},CROSS_TAB:{message:"Session Entity was set to OFF on another tab",sm:"Cross-Tab"},ENTITLEMENTS:{message:"Session Replay is not allowed and will not be started",sm:"Entitlement"}},l=5e3},3614:(e,t,r)=>{"use strict";r.d(t,{BST_RESOURCE:()=>i,END:()=>s,FEATURE_NAME:()=>n,FN_END:()=>u,FN_START:()=>c,PUSH_STATE:()=>d,RESOURCE:()=>o,START:()=>a});const n=r(3325).D.sessionTrace,i="bstResource",o="resource",a="-start",s="-end",c="fn"+a,u="fn"+s,d="pushState"},7836:(e,t,r)=>{"use strict";r.d(t,{BODY:()=>x,CB_END:()=>E,CB_START:()=>u,END:()=>w,FEATURE_NAME:()=>i,FETCH:()=>T,FETCH_BODY:()=>v,FETCH_DONE:()=>m,FETCH_START:()=>g,FN_END:()=>c,FN_START:()=>s,INTERACTION:()=>f,INTERACTION_API:()=>d,INTERACTION_EVENTS:()=>o,JSONP_END:()=>b,JSONP_NODE:()=>p,JS_TIME:()=>_,MAX_TIMER_BUDGET:()=>a,REMAINING:()=>l,SPA_NODE:()=>h,START:()=>A,originalSetTimeout:()=>y});var n=r(234);const i=r(3325).D.spa,o=["click","submit","keypress","keydown","keyup","change"],a=999,s="fn-start",c="fn-end",u="cb-start",d="api-ixn-",l="remaining",f="interaction",h="spaNode",p="jsonpNode",g="fetch-start",m="fetch-done",v="fetch-body-",b="jsonp-end",y=n.Yu.ST,A="-start",w="-end",x="-body",E="cb"+w,_="jsTime",T="fetch"},5938:(e,t,r)=>{"use strict";r.d(t,{W:()=>i});var n=r(8325);class i{constructor(e,t,r){this.agentIdentifier=e,this.aggregator=t,this.ee=n.ee.get(e),this.featureName=r,this.blocked=!1}}},7530:(e,t,r)=>{"use strict";r.d(t,{j:()=>b});var n=r(3325),i=r(234),o=r(5546),a=r(8325),s=r(7894),c=r(8e3),u=r(3960),d=r(385),l=r(50),f=r(3081),h=r(8632);function p(){const e=(0,h.gG)();["setErrorHandler","finished","addToTrace","addRelease","addPageAction","setCurrentRouteName","setPageViewName","setCustomAttribute","interaction","noticeError","setUserId","setApplicationVersion","start","recordReplay","pauseReplay"].forEach((t=>{e[t]=function(){for(var r=arguments.length,n=new Array(r),i=0;i<r;i++)n[i]=arguments[i];return function(t){for(var r=arguments.length,n=new Array(r>1?r-1:0),i=1;i<r;i++)n[i-1]=arguments[i];let o=[];return Object.values(e.initializedAgents).forEach((e=>{e.exposed&&e.api[t]&&o.push(e.api[t](...n))})),o.length>1?o:o[0]}(t,...n)}}))}var g=r(2825);const m=e=>{const t=e.startsWith("http");e+="/",r.p=t?e:"https://"+e};let v=!1;function b(e){let t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:{},b=arguments.length>2?arguments[2]:void 0,y=arguments.length>3?arguments[3]:void 0,{init:A,info:w,loader_config:x,runtime:E={loaderType:b},exposed:_=!0}=t;const T=(0,h.gG)();w||(A=T.init,w=T.info,x=T.loader_config),(0,i.Dg)(e.agentIdentifier,A||{}),(0,i.GE)(e.agentIdentifier,x||{}),w.jsAttributes??={},d.v6&&(w.jsAttributes.isWorker=!0),(0,i.CX)(e.agentIdentifier,w);const S=(0,i.P_)(e.agentIdentifier),R=[w.beacon,w.errorBeacon];v||(S.proxy.assets&&(m(S.proxy.assets),R.push(S.proxy.assets)),S.proxy.beacon&&R.push(S.proxy.beacon),p(),(0,h.EZ)("activatedFeatures",g.T)),E.denyList=[...S.ajax.deny_list||[],...S.ajax.block_internal?R:[]],(0,i.sU)(e.agentIdentifier,E),void 0===e.api&&(e.api=function(e,t){t||(0,c.R)(e,"api");const h={};var p=a.ee.get(e),g=p.get("tracer"),m="api-",v=m+"ixn-";function b(t,r,n,o){const a=(0,i.C5)(e);return null===r?delete a.jsAttributes[t]:(0,i.CX)(e,{...a,jsAttributes:{...a.jsAttributes,[t]:r}}),w(m,n,!0,o||null===r?"session":void 0)(t,r)}function y(){}["setErrorHandler","finished","addToTrace","addRelease"].forEach((e=>{h[e]=w(m,e,!0,"api")})),h.addPageAction=w(m,"addPageAction",!0,n.D.pageAction),h.setCurrentRouteName=w(m,"routeName",!0,n.D.spa),h.setPageViewName=function(t,r){if("string"==typeof t)return"/"!==t.charAt(0)&&(t="/"+t),(0,i.OP)(e).customTransaction=(r||"http://custom.transaction")+t,w(m,"setPageViewName",!0)()},h.setCustomAttribute=function(e,t){let r=arguments.length>2&&void 0!==arguments[2]&&arguments[2];if("string"==typeof e){if(["string","number","boolean"].includes(typeof t)||null===t)return b(e,t,"setCustomAttribute",r);(0,l.Z)("Failed to execute setCustomAttribute.\nNon-null value must be a string, number or boolean type, but a type of <".concat(typeof t,"> was provided."))}else(0,l.Z)("Failed to execute setCustomAttribute.\nName must be a string type, but a type of <".concat(typeof e,"> was provided."))},h.setUserId=function(e){if("string"==typeof e||null===e)return b("enduser.id",e,"setUserId",!0);(0,l.Z)("Failed to execute setUserId.\nNon-null value must be a string type, but a type of <".concat(typeof e,"> was provided."))},h.setApplicationVersion=function(e){if("string"==typeof e||null===e)return b("application.version",e,"setApplicationVersion",!1);(0,l.Z)("Failed to execute setApplicationVersion. Expected <String | null>, but got <".concat(typeof e,">."))},h.start=e=>{try{const t=e?"defined":"undefined";(0,o.p)(f.xS,["API/start/".concat(t,"/called")],void 0,n.D.metrics,p);const r=Object.values(n.D);if(void 0===e)e=r;else{if((e=Array.isArray(e)&&e.length?e:[e]).some((e=>!r.includes(e))))return(0,l.Z)("Invalid feature name supplied. Acceptable feature names are: ".concat(r));e.includes(n.D.pageViewEvent)||e.push(n.D.pageViewEvent)}e.forEach((e=>{p.emit("".concat(e,"-opt-in"))}))}catch(e){(0,l.Z)("An unexpected issue occurred",e)}},h.recordReplay=function(){(0,o.p)(f.xS,["API/recordReplay/called"],void 0,n.D.metrics,p),(0,o.p)("recordReplay",[],void 0,n.D.sessionReplay,p)},h.pauseReplay=function(){(0,o.p)(f.xS,["API/pauseReplay/called"],void 0,n.D.metrics,p),(0,o.p)("pauseReplay",[],void 0,n.D.sessionReplay,p)},h.interaction=function(){return(new y).get()};var A=y.prototype={createTracer:function(e,t){var r={},i=this,a="function"==typeof t;return(0,o.p)(f.xS,["API/createTracer/called"],void 0,n.D.metrics,p),(0,o.p)(v+"tracer",[(0,s.z)(),e,r],i,n.D.spa,p),function(){if(g.emit((a?"":"no-")+"fn-start",[(0,s.z)(),i,a],r),a)try{return t.apply(this,arguments)}catch(e){throw g.emit("fn-err",[arguments,this,e],r),e}finally{g.emit("fn-end",[(0,s.z)()],r)}}}};function w(e,t,r,i){return function(){return(0,o.p)(f.xS,["API/"+t+"/called"],void 0,n.D.metrics,p),i&&(0,o.p)(e+t,[(0,s.z)(),...arguments],r?null:this,i,p),r?void 0:this}}function x(){r.e(111).then(r.bind(r,7438)).then((t=>{let{setAPI:r}=t;r(e),(0,c.L)(e,"api")})).catch((()=>(0,l.Z)("Downloading runtime APIs failed...")))}return["actionText","setName","setAttribute","save","ignore","onEnd","getContext","end","get"].forEach((e=>{A[e]=w(v,e,void 0,n.D.spa)})),h.noticeError=function(e,t){"string"==typeof e&&(e=new Error(e)),(0,o.p)(f.xS,["API/noticeError/called"],void 0,n.D.metrics,p),(0,o.p)("err",[e,(0,s.z)(),!1,t],void 0,n.D.jserrors,p)},d.il?(0,u.b2)((()=>x()),!0):x(),h}(e.agentIdentifier,y)),void 0===e.exposed&&(e.exposed=_),v=!0}},1926:(e,t,r)=>{r.nc=(()=>{try{return document?.currentScript?.nonce}catch(e){}return""})()},3325:(e,t,r)=>{"use strict";r.d(t,{D:()=>n,p:()=>i});const n={ajax:"ajax",jserrors:"jserrors",metrics:"metrics",pageAction:"page_action",pageViewEvent:"page_view_event",pageViewTiming:"page_view_timing",sessionReplay:"session_replay",sessionTrace:"session_trace",spa:"spa"},i={[n.pageViewEvent]:1,[n.pageViewTiming]:2,[n.metrics]:3,[n.jserrors]:4,[n.ajax]:5,[n.sessionTrace]:6,[n.pageAction]:7,[n.spa]:8,[n.sessionReplay]:9}}},n={};function i(e){var t=n[e];if(void 0!==t)return t.exports;var o=n[e]={exports:{}};return r[e](o,o.exports,i),o.exports}i.m=r,i.d=(e,t)=>{for(var r in t)i.o(t,r)&&!i.o(e,r)&&Object.defineProperty(e,r,{enumerable:!0,get:t[r]})},i.f={},i.e=e=>Promise.all(Object.keys(i.f).reduce(((t,r)=>(i.f[r](e,t),t)),[])),i.u=e=>({111:"nr-spa",164:"nr-spa-compressor",433:"nr-spa-recorder"}[e]+"-1.251.1.min.js"),i.o=(e,t)=>Object.prototype.hasOwnProperty.call(e,t),e={},t="NRBA-1.251.1.PROD:",i.l=(r,n,o,a)=>{if(e[r])e[r].push(n);else{var s,c;if(void 0!==o)for(var u=document.getElementsByTagName("script"),d=0;d<u.length;d++){var l=u[d];if(l.getAttribute("src")==r||l.getAttribute("data-webpack")==t+o){s=l;break}}if(!s){c=!0;var f={111:"sha512-lCY4+B0gOT0jVtMbaDU0ri7coukTGr4YSIrFnYCbNcvlKoBWZ5lEMC3pnQbfFRHmqU9ClOHO1zeM7zl3Bpi8lg==",433:"sha512-uSk6ex6Q5btbEC3Fd9ucXsXT/MfYs9nSwrApEySzfsKG5WHfu74lzjBZOw2ou+AfTHUFLXX7zUhG8T18KvZDQQ==",164:"sha512-69slZTW/5YZ/pY5zE0I3TCiV/tXwxGlT/pOzl7BgweR1maJ+C+doWoTbPHgKP1SrTS/0sZHb5fgMScLDwVDkqw=="};(s=document.createElement("script")).charset="utf-8",s.timeout=120,i.nc&&s.setAttribute("nonce",i.nc),s.setAttribute("data-webpack",t+o),s.src=r,0!==s.src.indexOf(window.location.origin+"/")&&(s.crossOrigin="anonymous"),f[a]&&(s.integrity=f[a])}e[r]=[n];var h=(t,n)=>{s.onerror=s.onload=null,clearTimeout(p);var i=e[r];if(delete e[r],s.parentNode&&s.parentNode.removeChild(s),i&&i.forEach((e=>e(n))),t)return t(n)},p=setTimeout(h.bind(null,void 0,{type:"timeout",target:s}),12e4);s.onerror=h.bind(null,s.onerror),s.onload=h.bind(null,s.onload),c&&document.head.appendChild(s)}},i.r=e=>{"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(e,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(e,"__esModule",{value:!0})},i.p="https://js-agent.newrelic.com/",(()=>{var e={801:0,92:0};i.f.j=(t,r)=>{var n=i.o(e,t)?e[t]:void 0;if(0!==n)if(n)r.push(n[2]);else{var o=new Promise(((r,i)=>n=e[t]=[r,i]));r.push(n[2]=o);var a=i.p+i.u(t),s=new Error;i.l(a,(r=>{if(i.o(e,t)&&(0!==(n=e[t])&&(e[t]=void 0),n)){var o=r&&("load"===r.type?"missing":r.type),a=r&&r.target&&r.target.src;s.message="Loading chunk "+t+" failed.\n("+o+": "+a+")",s.name="ChunkLoadError",s.type=o,s.request=a,n[1](s)}}),"chunk-"+t,t)}};var t=(t,r)=>{var n,o,[a,s,c]=r,u=0;if(a.some((t=>0!==e[t]))){for(n in s)i.o(s,n)&&(i.m[n]=s[n]);if(c)c(i)}for(t&&t(r);u<a.length;u++)o=a[u],i.o(e,o)&&e[o]&&e[o][0](),e[o]=0},r=self["webpackChunk:NRBA-1.251.1.PROD"]=self["webpackChunk:NRBA-1.251.1.PROD"]||[];r.forEach(t.bind(null,0)),r.push=t.bind(null,r.push.bind(r))})(),(()=>{"use strict";i(1926);var e=i(50);class t{#e(t){for(var r=arguments.length,n=new Array(r>1?r-1:0),i=1;i<r;i++)n[i-1]=arguments[i];if("function"==typeof this.api?.[t])return this.api[t](...n);(0,e.Z)("Call to agent api ".concat(t," failed. The API is not currently initialized."))}addPageAction(e,t){return this.#e("addPageAction",e,t)}setPageViewName(e,t){return this.#e("setPageViewName",e,t)}setCustomAttribute(e,t,r){return this.#e("setCustomAttribute",e,t,r)}noticeError(e,t){return this.#e("noticeError",e,t)}setUserId(e){return this.#e("setUserId",e)}setApplicationVersion(e){return this.#e("setApplicationVersion",e)}setErrorHandler(e){return this.#e("setErrorHandler",e)}finished(e){return this.#e("finished",e)}addRelease(e,t){return this.#e("addRelease",e,t)}start(e){return this.#e("start",e)}recordReplay(){return this.#e("recordReplay")}pauseReplay(){return this.#e("pauseReplay")}addToTrace(e){return this.#e("addToTrace",e)}setCurrentRouteName(e){return this.#e("setCurrentRouteName",e)}interaction(){return this.#e("interaction")}}var r=i(3325),n=i(234);const o=Object.values(r.D);function a(e){const t={};return o.forEach((r=>{t[r]=function(e,t){return!1!==(0,n.Mt)(t,"".concat(e,".enabled"))}(r,e)})),t}var s=i(7530);var c=i(8e3),u=i(5938),d=i(3960),l=i(385);class f extends u.W{constructor(e,t,r){let i=!(arguments.length>3&&void 0!==arguments[3])||arguments[3];super(e,t,r),this.auto=i,this.abortHandler=void 0,this.featAggregate=void 0,this.onAggregateImported=void 0,!1===(0,n.Mt)(this.agentIdentifier,"".concat(this.featureName,".autoStart"))&&(this.auto=!1),this.auto&&(0,c.R)(e,r)}importAggregator(){let t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{};if(this.featAggregate)return;if(!this.auto)return void this.ee.on("".concat(this.featureName,"-opt-in"),(()=>{(0,c.R)(this.agentIdentifier,this.featureName),this.auto=!0,this.importAggregator()}));const r=l.il&&!0===(0,n.Mt)(this.agentIdentifier,"privacy.cookies_enabled");let o;this.onAggregateImported=new Promise((e=>{o=e}));const a=async()=>{let n;try{if(r){const{setupAgentSession:e}=await i.e(111).then(i.bind(i,1656));n=e(this.agentIdentifier)}}catch(t){(0,e.Z)("A problem occurred when starting up session manager. This page will not start or extend any session.",t)}try{if(!this.shouldImportAgg(this.featureName,n))return(0,c.L)(this.agentIdentifier,this.featureName),void o(!1);const{lazyFeatureLoader:e}=await i.e(111).then(i.bind(i,8582)),{Aggregate:r}=await e(this.featureName,"aggregate");this.featAggregate=new r(this.agentIdentifier,this.aggregator,t),o(!0)}catch(t){(0,e.Z)("Downloading and initializing ".concat(this.featureName," failed..."),t),this.abortHandler?.(),(0,c.L)(this.agentIdentifier,this.featureName),o(!1)}};l.il?(0,d.b2)((()=>a()),!0):a()}shouldImportAgg(e,t){return e!==r.D.sessionReplay||!!n.Yu.MO&&(!1!==(0,n.Mt)(this.agentIdentifier,"session_trace.enabled")&&(!!t?.isNew||!!t?.state.sessionReplayMode))}}var h=i(7633);class p extends f{static featureName=h.t;constructor(e,t){let r=!(arguments.length>2&&void 0!==arguments[2])||arguments[2];super(e,t,h.t,r),this.importAggregator()}}var g=i(1117),m=i(1284);class v extends g.w{constructor(e){super(e),this.aggregatedData={}}store(e,t,r,n,i){var o=this.getBucket(e,t,r,i);return o.metrics=function(e,t){t||(t={count:0});return t.count+=1,(0,m.D)(e,(function(e,r){t[e]=b(r,t[e])})),t}(n,o.metrics),o}merge(e,t,r,n,i){var o=this.getBucket(e,t,n,i);if(o.metrics){var a=o.metrics;a.count+=r.count,(0,m.D)(r,(function(e,t){if("count"!==e){var n=a[e],i=r[e];i&&!i.c?a[e]=b(i.t,n):a[e]=function(e,t){if(!t)return e;t.c||(t=y(t.t));return t.min=Math.min(e.min,t.min),t.max=Math.max(e.max,t.max),t.t+=e.t,t.sos+=e.sos,t.c+=e.c,t}(i,a[e])}}))}else o.metrics=r}storeMetric(e,t,r,n){var i=this.getBucket(e,t,r);return i.stats=b(n,i.stats),i}getBucket(e,t,r,n){this.aggregatedData[e]||(this.aggregatedData[e]={});var i=this.aggregatedData[e][t];return i||(i=this.aggregatedData[e][t]={params:r||{}},n&&(i.custom=n)),i}get(e,t){return t?this.aggregatedData[e]&&this.aggregatedData[e][t]:this.aggregatedData[e]}take(e){for(var t={},r="",n=!1,i=0;i<e.length;i++)t[r=e[i]]=A(this.aggregatedData[r]),t[r].length&&(n=!0),delete this.aggregatedData[r];return n?t:null}}function b(e,t){return null==e?function(e){e?e.c++:e={c:1};return e}(t):t?(t.c||(t=y(t.t)),t.c+=1,t.t+=e,t.sos+=e*e,e>t.max&&(t.max=e),e<t.min&&(t.min=e),t):{t:e}}function y(e){return{t:e,min:e,max:e,sos:e*e,c:1}}function A(e){return"object"!=typeof e?[]:(0,m.D)(e,w)}function w(e,t){return t}var x=i(8632),E=i(4402),_=i(4351);var T=i(5546),S=i(7956),R=i(3239),D=i(7894),N=i(9251);class O extends f{static featureName=N.t;constructor(e,t){let r=!(arguments.length>2&&void 0!==arguments[2])||arguments[2];super(e,t,N.t,r),l.il&&((0,S.N)((()=>(0,T.p)("docHidden",[(0,D.z)()],void 0,N.t,this.ee)),!0),(0,R.bP)("pagehide",(()=>(0,T.p)("winPagehide",[(0,D.z)()],void 0,N.t,this.ee))),this.importAggregator())}}var I=i(3081);class j extends f{static featureName=I.t9;constructor(e,t){let r=!(arguments.length>2&&void 0!==arguments[2])||arguments[2];super(e,t,I.t9,r),this.importAggregator()}}var P=i(6660);class C{constructor(e,t,r,n){this.name="UncaughtError",this.message=e,this.sourceURL=t,this.line=r,this.column=n}}class k extends f{static featureName=P.t;#t=new Set;constructor(e,t){let n=!(arguments.length>2&&void 0!==arguments[2])||arguments[2];super(e,t,P.t,n);try{this.removeOnAbort=new AbortController}catch(e){}this.ee.on("fn-err",((e,t,n)=>{this.abortHandler&&!this.#t.has(n)&&(this.#t.add(n),(0,T.p)("err",[this.#r(n),(0,D.z)()],void 0,r.D.jserrors,this.ee))})),this.ee.on("internal-error",(e=>{this.abortHandler&&(0,T.p)("ierr",[this.#r(e),(0,D.z)(),!0],void 0,r.D.jserrors,this.ee)})),l._A.addEventListener("unhandledrejection",(e=>{this.abortHandler&&(0,T.p)("err",[this.#n(e),(0,D.z)(),!1,{unhandledPromiseRejection:1}],void 0,r.D.jserrors,this.ee)}),(0,R.m$)(!1,this.removeOnAbort?.signal)),l._A.addEventListener("error",(e=>{this.abortHandler&&(this.#t.has(e.error)?this.#t.delete(e.error):(0,T.p)("err",[this.#i(e),(0,D.z)()],void 0,r.D.jserrors,this.ee))}),(0,R.m$)(!1,this.removeOnAbort?.signal)),this.abortHandler=this.#o,this.importAggregator()}#o(){this.removeOnAbort?.abort(),this.#t.clear(),this.abortHandler=void 0}#r(e){return e instanceof Error?e:void 0!==e?.message?new C(e.message,e.filename||e.sourceURL,e.lineno||e.line,e.colno||e.col):new C("string"==typeof e?e:(0,_.P)(e))}#n(e){let t="Unhandled Promise Rejection: ";if(e?.reason instanceof Error)try{return e.reason.message=t+e.reason.message,e.reason}catch(t){return e.reason}if(void 0===e.reason)return new C(t);const r=this.#r(e.reason);return r.message=t+r.message,r}#i(e){return e.error instanceof Error?e.error:new C(e.message,e.filename,e.lineno,e.colno)}}var M=i(2210);let H=1;const L="nr@id";function z(e){const t=typeof e;return!e||"object"!==t&&"function"!==t?-1:e===l._A?0:(0,M.X)(e,L,(function(){return H++}))}function F(e){if("string"==typeof e&&e.length)return e.length;if("object"==typeof e){if("undefined"!=typeof ArrayBuffer&&e instanceof ArrayBuffer&&e.byteLength)return e.byteLength;if("undefined"!=typeof Blob&&e instanceof Blob&&e.size)return e.size;if(!("undefined"!=typeof FormData&&e instanceof FormData))try{return(0,_.P)(e).length}catch(e){return}}}var B=i(1214),U=i(7243);class V{constructor(e){this.agentIdentifier=e}generateTracePayload(e){if(!this.shouldGenerateTrace(e))return null;var t=(0,n.DL)(this.agentIdentifier);if(!t)return null;var r=(t.accountID||"").toString()||null,i=(t.agentID||"").toString()||null,o=(t.trustKey||"").toString()||null;if(!r||!i)return null;var a=(0,E.M)(),s=(0,E.Ht)(),c=Date.now(),u={spanId:a,traceId:s,timestamp:c};return(e.sameOrigin||this.isAllowedOrigin(e)&&this.useTraceContextHeadersForCors())&&(u.traceContextParentHeader=this.generateTraceContextParentHeader(a,s),u.traceContextStateHeader=this.generateTraceContextStateHeader(a,c,r,i,o)),(e.sameOrigin&&!this.excludeNewrelicHeader()||!e.sameOrigin&&this.isAllowedOrigin(e)&&this.useNewrelicHeaderForCors())&&(u.newrelicHeader=this.generateTraceHeader(a,s,c,r,i,o)),u}generateTraceContextParentHeader(e,t){return"00-"+t+"-"+e+"-01"}generateTraceContextStateHeader(e,t,r,n,i){return i+"@nr=0-1-"+r+"-"+n+"-"+e+"----"+t}generateTraceHeader(e,t,r,n,i,o){if(!("function"==typeof l._A?.btoa))return null;var a={v:[0,1],d:{ty:"Browser",ac:n,ap:i,id:e,tr:t,ti:r}};return o&&n!==o&&(a.d.tk=o),btoa((0,_.P)(a))}shouldGenerateTrace(e){return this.isDtEnabled()&&this.isAllowedOrigin(e)}isAllowedOrigin(e){var t=!1,r={};if((0,n.Mt)(this.agentIdentifier,"distributed_tracing")&&(r=(0,n.P_)(this.agentIdentifier).distributed_tracing),e.sameOrigin)t=!0;else if(r.allowed_origins instanceof Array)for(var i=0;i<r.allowed_origins.length;i++){var o=(0,U.e)(r.allowed_origins[i]);if(e.hostname===o.hostname&&e.protocol===o.protocol&&e.port===o.port){t=!0;break}}return t}isDtEnabled(){var e=(0,n.Mt)(this.agentIdentifier,"distributed_tracing");return!!e&&!!e.enabled}excludeNewrelicHeader(){var e=(0,n.Mt)(this.agentIdentifier,"distributed_tracing");return!!e&&!!e.exclude_newrelic_header}useNewrelicHeaderForCors(){var e=(0,n.Mt)(this.agentIdentifier,"distributed_tracing");return!!e&&!1!==e.cors_use_newrelic_header}useTraceContextHeadersForCors(){var e=(0,n.Mt)(this.agentIdentifier,"distributed_tracing");return!!e&&!!e.cors_use_tracecontext_headers}}var q=i(7825),G=["load","error","abort","timeout"],Z=G.length,W=n.Yu.REQ,X=n.Yu.XHR;class K extends f{static featureName=q.t;constructor(e,t){let i=!(arguments.length>2&&void 0!==arguments[2])||arguments[2];if(super(e,t,q.t,i),(0,n.OP)(e).xhrWrappable){this.dt=new V(e),this.handler=(e,t,r,n)=>(0,T.p)(e,t,r,n,this.ee);try{const e={xmlhttprequest:"xhr",fetch:"fetch",beacon:"beacon"};l._A?.performance?.getEntriesByType("resource").forEach((t=>{if(t.initiatorType in e&&0!==t.responseStatus){const n={status:t.responseStatus},i={rxSize:t.transferSize,duration:Math.floor(t.duration),cbTime:0};Y(n,t.name),this.handler("xhr",[n,i,t.startTime,t.responseEnd,e[t.initiatorType]],void 0,r.D.ajax)}}))}catch(e){}(0,B.u5)(this.ee),(0,B.Kf)(this.ee),function(e,t,i,o){function a(e){var t=this;t.totalCbs=0,t.called=0,t.cbTime=0,t.end=x,t.ended=!1,t.xhrGuids={},t.lastSize=null,t.loadCaptureCalled=!1,t.params=this.params||{},t.metrics=this.metrics||{},e.addEventListener("load",(function(r){E(t,e)}),(0,R.m$)(!1)),l.IF||e.addEventListener("progress",(function(e){t.lastSize=e.loaded}),(0,R.m$)(!1))}function s(e){this.params={method:e[0]},Y(this,e[1]),this.metrics={}}function c(t,r){var i=(0,n.DL)(e);i.xpid&&this.sameOrigin&&r.setRequestHeader("X-NewRelic-ID",i.xpid);var a=o.generateTracePayload(this.parsedOrigin);if(a){var s=!1;a.newrelicHeader&&(r.setRequestHeader("newrelic",a.newrelicHeader),s=!0),a.traceContextParentHeader&&(r.setRequestHeader("traceparent",a.traceContextParentHeader),a.traceContextStateHeader&&r.setRequestHeader("tracestate",a.traceContextStateHeader),s=!0),s&&(this.dt=a)}}function u(e,r){var n=this.metrics,i=e[0],o=this;if(n&&i){var a=F(i);a&&(n.txSize=a)}this.startTime=(0,D.z)(),this.body=i,this.listener=function(e){try{"abort"!==e.type||o.loadCaptureCalled||(o.params.aborted=!0),("load"!==e.type||o.called===o.totalCbs&&(o.onloadCalled||"function"!=typeof r.onload)&&"function"==typeof o.end)&&o.end(r)}catch(e){try{t.emit("internal-error",[e])}catch(e){}}};for(var s=0;s<Z;s++)r.addEventListener(G[s],this.listener,(0,R.m$)(!1))}function d(e,t,r){this.cbTime+=e,t?this.onloadCalled=!0:this.called+=1,this.called!==this.totalCbs||!this.onloadCalled&&"function"==typeof r.onload||"function"!=typeof this.end||this.end(r)}function f(e,t){var r=""+z(e)+!!t;this.xhrGuids&&!this.xhrGuids[r]&&(this.xhrGuids[r]=!0,this.totalCbs+=1)}function h(e,t){var r=""+z(e)+!!t;this.xhrGuids&&this.xhrGuids[r]&&(delete this.xhrGuids[r],this.totalCbs-=1)}function p(){this.endTime=(0,D.z)()}function g(e,r){r instanceof X&&"load"===e[0]&&t.emit("xhr-load-added",[e[1],e[2]],r)}function m(e,r){r instanceof X&&"load"===e[0]&&t.emit("xhr-load-removed",[e[1],e[2]],r)}function v(e,t,r){t instanceof X&&("onload"===r&&(this.onload=!0),("load"===(e[0]&&e[0].type)||this.onload)&&(this.xhrCbStart=(0,D.z)()))}function b(e,r){this.xhrCbStart&&t.emit("xhr-cb-time",[(0,D.z)()-this.xhrCbStart,this.onload,r],r)}function y(e){var t,r=e[1]||{};if("string"==typeof e[0]?0===(t=e[0]).length&&l.il&&(t=""+l._A.location.href):e[0]&&e[0].url?t=e[0].url:l._A?.URL&&e[0]&&e[0]instanceof URL?t=e[0].href:"function"==typeof e[0].toString&&(t=e[0].toString()),"string"==typeof t&&0!==t.length){t&&(this.parsedOrigin=(0,U.e)(t),this.sameOrigin=this.parsedOrigin.sameOrigin);var n=o.generateTracePayload(this.parsedOrigin);if(n&&(n.newrelicHeader||n.traceContextParentHeader))if(e[0]&&e[0].headers)s(e[0].headers,n)&&(this.dt=n);else{var i={};for(var a in r)i[a]=r[a];i.headers=new Headers(r.headers||{}),s(i.headers,n)&&(this.dt=n),e.length>1?e[1]=i:e.push(i)}}function s(e,t){var r=!1;return t.newrelicHeader&&(e.set("newrelic",t.newrelicHeader),r=!0),t.traceContextParentHeader&&(e.set("traceparent",t.traceContextParentHeader),t.traceContextStateHeader&&e.set("tracestate",t.traceContextStateHeader),r=!0),r}}function A(e,t){this.params={},this.metrics={},this.startTime=(0,D.z)(),this.dt=t,e.length>=1&&(this.target=e[0]),e.length>=2&&(this.opts=e[1]);var r,n=this.opts||{},i=this.target;"string"==typeof i?r=i:"object"==typeof i&&i instanceof W?r=i.url:l._A?.URL&&"object"==typeof i&&i instanceof URL&&(r=i.href),Y(this,r);var o=(""+(i&&i instanceof W&&i.method||n.method||"GET")).toUpperCase();this.params.method=o,this.body=n.body,this.txSize=F(n.body)||0}function w(e,t){var n;this.endTime=(0,D.z)(),this.params||(this.params={}),this.params.status=t?t.status:0,"string"==typeof this.rxSize&&this.rxSize.length>0&&(n=+this.rxSize);var o={txSize:this.txSize,rxSize:n,duration:(0,D.z)()-this.startTime};i("xhr",[this.params,o,this.startTime,this.endTime,"fetch"],this,r.D.ajax)}function x(e){var t=this.params,n=this.metrics;if(!this.ended){this.ended=!0;for(var o=0;o<Z;o++)e.removeEventListener(G[o],this.listener,!1);t.aborted||(n.duration=(0,D.z)()-this.startTime,this.loadCaptureCalled||4!==e.readyState?null==t.status&&(t.status=0):E(this,e),n.cbTime=this.cbTime,i("xhr",[t,n,this.startTime,this.endTime,"xhr"],this,r.D.ajax))}}function E(e,t){e.params.status=t.status;var r=function(e,t){var r=e.responseType;return"json"===r&&null!==t?t:"arraybuffer"===r||"blob"===r||"json"===r?F(e.response):"text"===r||""===r||void 0===r?F(e.responseText):void 0}(t,e.lastSize);if(r&&(e.metrics.rxSize=r),e.sameOrigin){var n=t.getResponseHeader("X-NewRelic-App-Data");n&&(e.params.cat=n.split(", ").pop())}e.loadCaptureCalled=!0}t.on("new-xhr",a),t.on("open-xhr-start",s),t.on("open-xhr-end",c),t.on("send-xhr-start",u),t.on("xhr-cb-time",d),t.on("xhr-load-added",f),t.on("xhr-load-removed",h),t.on("xhr-resolved",p),t.on("addEventListener-end",g),t.on("removeEventListener-end",m),t.on("fn-end",b),t.on("fetch-before-start",y),t.on("fetch-start",A),t.on("fn-start",v),t.on("fetch-done",w)}(e,this.ee,this.handler,this.dt),this.importAggregator()}}}function Y(e,t){var r=(0,U.e)(t),n=e.params||e;n.hostname=r.hostname,n.port=r.port,n.protocol=r.protocol,n.host=r.hostname+":"+r.port,n.pathname=r.pathname,e.parsedOrigin=r,e.sameOrigin=r.sameOrigin}var J=i(3614);const{BST_RESOURCE:Q,RESOURCE:ee,START:te,END:re,FEATURE_NAME:ne,FN_END:ie,FN_START:oe,PUSH_STATE:ae}=J;var se=i(7056),ce=i(7144);class ue extends f{static featureName=ce.t9;constructor(e,t){let r=!(arguments.length>2&&void 0!==arguments[2])||arguments[2];super(e,t,ce.t9,r);try{const e=JSON.parse(localStorage.getItem("NRBA_SESSION"));e.sessionReplayMode!==se.IK.OFF?this.#a(e.sessionReplayMode):this.importAggregator({})}catch(e){this.importAggregator({})}}async#a(e){const{Recorder:t}=await Promise.all([i.e(111),i.e(433)]).then(i.bind(i,4136));this.recorder=new t({mode:e,agentIdentifier:this.agentIdentifier}),this.recorder.startRecording(),this.importAggregator({recorder:this.recorder})}}var de=i(7836);const{FEATURE_NAME:le,START:fe,END:he,BODY:pe,CB_END:ge,JS_TIME:me,FETCH:ve,FN_START:be,CB_START:ye,FN_END:Ae}=de;var we=i(4649);class xe extends f{static featureName=we.t;constructor(e,t){let r=!(arguments.length>2&&void 0!==arguments[2])||arguments[2];super(e,t,we.t,r),this.importAggregator()}}new class extends t{constructor(t){let r=arguments.length>1&&void 0!==arguments[1]?arguments[1]:(0,E.ky)(16);super(),l._A?(this.agentIdentifier=r,this.sharedAggregator=new v({agentIdentifier:this.agentIdentifier}),this.features={},(0,x.h5)(r,this),this.desiredFeatures=new Set(t.features||[]),this.desiredFeatures.add(p),(0,s.j)(this,t,t.loaderType||"agent"),this.run()):(0,e.Z)("Failed to initial the agent. Could not determine the runtime environment.")}get config(){return{info:(0,n.C5)(this.agentIdentifier),init:(0,n.P_)(this.agentIdentifier),loader_config:(0,n.DL)(this.agentIdentifier),runtime:(0,n.OP)(this.agentIdentifier)}}run(){try{const t=a(this.agentIdentifier),n=[...this.desiredFeatures];n.sort(((e,t)=>r.p[e.featureName]-r.p[t.featureName])),n.forEach((n=>{if(t[n.featureName]||n.featureName===r.D.pageViewEvent){const i=function(e){switch(e){case r.D.ajax:return[r.D.jserrors];case r.D.sessionTrace:return[r.D.ajax,r.D.pageViewEvent];case r.D.sessionReplay:return[r.D.sessionTrace];case r.D.pageViewTiming:return[r.D.pageViewEvent];default:return[]}}(n.featureName);i.every((e=>t[e]))||(0,e.Z)("".concat(n.featureName," is enabled but one or more dependent features has been disabled (").concat((0,_.P)(i),"). This may cause unintended consequences or missing data...")),this.features[n.featureName]=new n(this.agentIdentifier,this.sharedAggregator)}}))}catch(t){(0,e.Z)("Failed to initialize all enabled instrument classes (agent aborted) -",t);for(const e in this.features)this.features[e].abortHandler?.();const r=(0,x.fP)();return delete r.initializedAgents[this.agentIdentifier]?.api,delete r.initializedAgents[this.agentIdentifier]?.features,delete this.sharedAggregator,r.ee?.abort(),delete r.ee?.get(this.agentIdentifier),!1}}}({features:[K,p,O,class extends f{static featureName=ne;constructor(e,t){if(super(e,t,ne,!(arguments.length>2&&void 0!==arguments[2])||arguments[2]),!l.il)return;const n=this.ee;let i;(0,B.QU)(n),this.eventsEE=(0,B.em)(n),this.eventsEE.on(oe,(function(e,t){this.bstStart=(0,D.z)()})),this.eventsEE.on(ie,(function(e,t){(0,T.p)("bst",[e[0],t,this.bstStart,(0,D.z)()],void 0,r.D.sessionTrace,n)})),n.on(ae+te,(function(e){this.time=(0,D.z)(),this.startPath=location.pathname+location.hash})),n.on(ae+re,(function(e){(0,T.p)("bstHist",[location.pathname+location.hash,this.startPath,this.time],void 0,r.D.sessionTrace,n)}));try{i=new PerformanceObserver((e=>{const t=e.getEntries();(0,T.p)(Q,[t],void 0,r.D.sessionTrace,n)})),i.observe({type:ee,buffered:!0})}catch(e){}this.importAggregator({resourceObserver:i})}},ue,j,xe,k,class extends f{static featureName=le;constructor(e,t){if(super(e,t,le,!(arguments.length>2&&void 0!==arguments[2])||arguments[2]),!l.il)return;if(!(0,n.OP)(e).xhrWrappable)return;try{this.removeOnAbort=new AbortController}catch(e){}let r,i=0;const o=this.ee.get("tracer"),a=(0,B._L)(this.ee),s=(0,B.Lg)(this.ee),c=(0,B.BV)(this.ee),u=(0,B.Kf)(this.ee),d=this.ee.get("events"),f=(0,B.u5)(this.ee),h=(0,B.QU)(this.ee),p=(0,B.Gm)(this.ee);function g(e,t){h.emit("newURL",[""+window.location,t])}function m(){i++,r=window.location.hash,this[be]=(0,D.z)()}function v(){i--,window.location.hash!==r&&g(0,!0);var e=(0,D.z)();this[me]=~~this[me]+e-this[be],this[Ae]=e}function b(e,t){e.on(t,(function(){this[t]=(0,D.z)()}))}this.ee.on(be,m),s.on(ye,m),a.on(ye,m),this.ee.on(Ae,v),s.on(ge,v),a.on(ge,v),this.ee.buffer([be,Ae,"xhr-resolved"],this.featureName),d.buffer([be],this.featureName),c.buffer(["setTimeout"+he,"clearTimeout"+fe,be],this.featureName),u.buffer([be,"new-xhr","send-xhr"+fe],this.featureName),f.buffer([ve+fe,ve+"-done",ve+pe+fe,ve+pe+he],this.featureName),h.buffer(["newURL"],this.featureName),p.buffer([be],this.featureName),s.buffer(["propagate",ye,ge,"executor-err","resolve"+fe],this.featureName),o.buffer([be,"no-"+be],this.featureName),a.buffer(["new-jsonp","cb-start","jsonp-error","jsonp-end"],this.featureName),b(f,ve+fe),b(f,ve+"-done"),b(a,"new-jsonp"),b(a,"jsonp-end"),b(a,"cb-start"),h.on("pushState-end",g),h.on("replaceState-end",g),window.addEventListener("hashchange",g,(0,R.m$)(!0,this.removeOnAbort?.signal)),window.addEventListener("load",g,(0,R.m$)(!0,this.removeOnAbort?.signal)),window.addEventListener("popstate",(function(){g(0,i>1)}),(0,R.m$)(!0,this.removeOnAbort?.signal)),this.abortHandler=this.#o,this.importAggregator()}#o(){this.removeOnAbort?.abort(),this.abortHandler=void 0}}],loaderType:"spa"})})()})();</script>
+<script>window.dataLayer = window.dataLayer || []; window.dataLayer.push({"drupalLanguage":"en","drupalCountry":"US","siteName":"City of San Diego Official Website","entityCreated":"1635950281","entityLangcode":"en","entityStatus":"1","entityUid":"356","entityUuid":"924e83d2-0931-4f7b-b865-b246fd7bbe3b","entityVid":"1592180","entityName":"DDeemer","entityType":"node","entityBundle":"blog","entityId":"226394","entityTitle":"Legislative Calendar","entityTaxonomy":{"department":{"3321":"Office of the City Clerk","4583":"City Clerk Official City Documents Home"}},"userUid":0,"deptId":3321,"deptName":"Office of the City Clerk"});</script>
+<meta name="description" content="" />
+<link rel="canonical" href="https://www.sandiego.gov/city-clerk/officialdocs/meetings-calendar" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.sandiego.gov/city-clerk/officialdocs/meetings-calendar" />
+<meta property="og:title" content="Legislative Calendar" />
+<meta property="og:description" content="" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Legislative Calendar" />
+<meta name="twitter:description" content="" />
+<meta name="twitter:url" content="https://www.sandiego.gov/city-clerk/officialdocs/meetings-calendar" />
+<meta name="Generator" content="Drupal 9 (https://www.drupal.org)" />
+<meta name="MobileOptimized" content="width" />
+<meta name="HandheldFriendly" content="true" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" href="/themes/custom/sand/images/favicon.png" type="image/png" />
+
+    <title>Legislative Calendar | City of San Diego Official Website</title>
+    <link rel="apple-touch-icon" href="/themes/custom/sand/images/apple-touch-icon.png" />
+    <link rel="stylesheet" media="all" href="/sites/default/files/css/css_YSsRRwX2n82MqfoavCcHE17S-1Q-EMWRoI3b0mSgK2A.css" />
+<link rel="stylesheet" media="all" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css" />
+<link rel="stylesheet" media="all" href="/sites/default/files/css/css_TNFDInKntoOXcHVk5Xwy4DJen7lbfYga1ZY1H20Yxv4.css" />
+<link rel="stylesheet" media="all" href="/sites/default/files/css/css_Lcr2qAxGwp-GDzHpZ2vm8TU1bqKXGntASNx39-4FjA0.css" />
+<link rel="stylesheet" media="all" href="//fonts.googleapis.com/css?family=Ubuntu:300,400,700" />
+<link rel="stylesheet" media="all" href="//fonts.googleapis.com/css2?family=Merriweather:wght@400;700&amp;family=Open+Sans:wght@400..700&amp;display=swap" />
+<link rel="stylesheet" media="all" href="//cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css" />
+
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body class="path-node node-type-blog">
+        <a href="#main-content" class="visually-hidden focusable">
+      Skip to main content
+    </a>
+    
+      <div class="dialog-off-canvas-main-canvas" data-off-canvas-main-canvas>
+    
+      <div class="preheader">
+        <div class="high-contrast-switch block block-high-contrast" data-drupal-selector="high-contrast-switch" id="block-highcontrast">
+  
+    
+      <form action="/city-clerk/officialdocs/meetings-calendar?calendar_timestamp=1706774400&amp;previous=1706774400&amp;current=1709280000&amp;next=1711954800&amp;date_format=custom&amp;date_pattern=F&amp;use_previous_next=0&amp;display_reset=0&amp;pager_type=calendar_year" method="post" id="high-contrast-switch" accept-charset="UTF-8">
+  <a href="/high-contrast/enable?destination=/city-clerk/officialdocs/meetings-calendar" data-drupal-selector="edit-toggle-link" id="edit-toggle-link">Enable</a><input autocomplete="off" data-drupal-selector="form-gq5f7lts-adxxngtaesbfwbyjfnfsdt49gc2ep0ut6w" type="hidden" name="form_build_id" value="form-GQ5F7LtS-aDxxNGtAesbfWByJFnFsDT49gc2EP0ut6w" />
+<input data-drupal-selector="edit-high-contrast-switch" type="hidden" name="form_id" value="high_contrast_switch" />
+
+</form>
+
+  </div>
+<div id="block-sitewidealert" class="block block-sitewide-alert-block">
+  
+    
+      <div data-sitewide-alert></div>
+  </div>
+
+
+    </div>
+  <div class="off-canvas-wrapper alto-bg">
+  <section class="off-canvas off-canvas-main-menu position-right hide-for-large" id="offCanvas" data-off-canvas data-content-scroll="false" data-close-on-click="false">
+    <div class="menu-wrapper">
+      <span class="fine-print">Menu</span>
+      <label for="togglenav" class="burger-wrapper">
+        <input type="checkbox" id="togglenav" class="menu-trigger" data-toggle="offCanvas">
+      </label>
+    </div>
+    <nav role="navigation" aria-labelledby="block-mainnavigation-menu" id="block-mainnavigation" class="block block-menu navigation menu--main">
+            
+  <h2 class="visually-hidden" id="block-mainnavigation-menu">Main navigation</h2>
+  
+
+        
+              <ul class="sidebar-menu">
+              
+      <li>
+        <a href="/" data-drupal-link-system-path="&lt;front&gt;">Home</a>
+              </li>
+          
+      <li>
+        <a href="/leisure" title="Explore, Play, Events" data-drupal-link-system-path="node/12031">Leisure</a>
+              </li>
+          
+      <li>
+        <a href="/resident-resources" title="Pay Now, Parking + Help" data-drupal-link-system-path="node/12030">Resident Resources</a>
+              </li>
+          
+      <li>
+        <a href="/doing-business" title="Fix, Plan + Build" data-drupal-link-system-path="node/12029">Doing Business</a>
+              </li>
+          
+      <li>
+        <a href="/public-library" title="Learn, Connect + Discover" data-drupal-link-system-path="node/224157">Library</a>
+              </li>
+          
+      <li>
+        <a href="/public-safety" title="Police, Fire + Lifeguards">Public Safety</a>
+              </li>
+          
+      <li class="menu-item--expanded menu-item--active-trail">
+        <a href="/city-hall" title="City Officials + Departments" data-drupal-link-system-path="node/12028">City Hall</a>
+                                <ul>
+              
+      <li>
+        <span title="Learn more about City government">[Title]City Hall</span>
+              </li>
+          
+      <li>
+        <span>2nd Column</span>
+              </li>
+          
+      <li class="menu-item--expanded menu-item--active-trail">
+        <span>3rd Column</span>
+                                <ul>
+              
+      <li class="menu-item--active-trail">
+        <a href="/city-clerk/officialdocs/meetings-calendar" title="[Image]https://www.sandiego.gov/sites/default/files/council-meetings.jpg" data-drupal-link-system-path="node/226394">Council Meetings</a>
+              </li>
+          
+      <li>
+        <a href="/council-committees" title="[Image]https://www.sandiego.gov/sites/default/files/committee-meeting.jpg" data-drupal-link-system-path="node/254718">Council Committees</a>
+              </li>
+          
+      <li>
+        <a href="/finance/annual" title="[Image]https://www.sandiego.gov/sites/default/files/2023-11/fy24-budget-tile.jpg" data-drupal-link-system-path="node/257767">FY24 Adopted Budget</a>
+              </li>
+        </ul>
+  
+              </li>
+        </ul>
+  
+              </li>
+        </ul>
+  
+
+
+  </nav>
+
+  </section>
+
+
+  <section class="main-content" data-off-canvas-content>
+    <header role="banner" class="header">
+      
+  <section class="header-first">
+    <div class="grid-container l-padding-mobile-hd">
+      <div class="grid-x grid-margin-y">
+        <div class="site-branding cell small-4 medium-9">
+          <div id="block-sitebranding" class="block block-system block-system-branding-block">
+  
+    
+        <a href="/" rel="home" class="site-logo">
+      <img src="/themes/custom/sand/images/cosd-logo/cosd-logo-primary-white-color-sails.svg" alt="City of San Diego logo" class="hide-on-mobile" width="205" height="50"/>
+      <img src="/themes/custom/sand/images/cosd-logo/cosd-logo-initials-blue-color-sails.svg" alt="City of San Diego logo" class="hide-on-desktop logo-mobile l-margin-ts" width="163" height="auto" />
+    </a>
+        <h1 class="visually-hidden">City of San Diego Official Website</h1>
+    </div>
+
+        </div>
+        <div class="cell small-4 text-center l-padding-td hidden">
+          <a href="#" class="no-underline"><i class="icon-translate icon--lg"></i></a>
+        </div>
+        <div class="search-bar cell medium-3 grid-container">
+          <div class="header-tools hide-on-mobile grid-x">
+            <div class="sd-weather cell medium-2 hide-on-mobile">
+              <div id="block-sandiegoweather" class="block block-sand-weather">
+  
+    
+      <!--div class="six columns text-center hide-on-mobile l-padding-desktop-tm l-margin-desktop-ts">
+    <div class="card--weather">
+        <i class="icon-cloud"></i>
+        <p class="temperature"><span class="degrees">55</span>&deg;</p>
+        <p><strong>San Diego <br> Weather</strong></p>
+    </div>
+</div-->
+<!-- // Weather -->
+<a href="https://w1.weather.gov/xml/current_obs/KSAN.xml" rel="noopener"><i class="icon-cloud" title="Mostly Cloudy" aria-hidden="true"></i><span class="visuallyhidden">Mostly Cloudy</span> 55&deg;</a>
+  </div>
+
+            </div>
+            <div class="accessibility-toggle cell medium-5">
+              <a href="#" data-open="accessibility-modal">Accessibility Tools</a>
+            </div>
+            <div id="google_translate_element" class="cell medium-3"></div>
+          </div>
+          <div class="form--search grid-x">
+            <div class="cell medium-auto">
+             <form class="views-exposed-form" data-drupal-selector="views-exposed-form-search-site-all" action="/search/site" method="get" id="views-exposed-form-search-site-all" accept-charset="UTF-8">
+  <div class="form--inline clearfix">
+  <div class="js-form-item form-item js-form-type-textfield form-type-textfield js-form-item-search-api-fulltext form-item-search-api-fulltext">
+      <label for="edit-search-api-fulltext">&nbsp;</label>
+        <input data-drupal-selector="edit-search-api-fulltext" type="text" id="edit-search-api-fulltext" name="search_api_fulltext" value="" size="30" maxlength="128" class="form-text" />
+
+        </div>
+<div class="js-form-item form-item js-form-type-select form-type-select js-form-item-entity-type form-item-entity-type">
+      <label for="edit-entity-type">Type</label>
+        <select data-drupal-selector="edit-entity-type" id="edit-entity-type" name="entity_type" class="form-select"><option value="All" selected="selected">- Any -</option><option value="1">Web Pages</option><option value="2">Documents</option></select>
+        </div>
+<div data-drupal-selector="edit-actions" class="form-actions js-form-wrapper form-wrapper" id="edit-actions--2"><input data-drupal-selector="edit-submit-search-site" type="submit" id="edit-submit-search-site" value="Search" class="button js-form-submit form-submit" />
+</div>
+
+</div>
+
+</form>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="header-second">
+    <div class="grid-container main-grid-container show-for-medium">
+      <div class="grid-x">
+        <div class="main-menu cell medium-12">
+          <div class="grid-x">
+            <div class="cell medium-12">
+              <div id="block-mainnavigation-mega-menu" class="block block-tb-megamenu block-tb-megamenu-menu-blockmain">
+  
+    
+      <div  class="tb-megamenu tb-megamenu-main" role="navigation" aria-label="Main navigation">
+      <button data-target=".nav-collapse" data-toggle="collapse" class="btn btn-navbar tb-megamenu-button" type="button">
+      <i class="fa fa-reorder"></i>
+    </button>
+    <div class="nav-collapse  always-show">
+    <ul  class="tb-megamenu-nav nav level-0 items-7" role="list" >
+              <li  class="tb-megamenu-item level-1 mega" data-id="standard.front_page" data-level="1" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="1" >
+              <a href="/" >
+                Home
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-1 mega mega-align-justify dropdown" data-id="menu_link_content:6e77ea4c-a2f5-4745-8836-9a9bdb42f879" data-level="1" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="justify" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="1" >
+              <a href="/leisure"  class="dropdown-toggle" title="Explore, Play, Events" aria-expanded="false">
+                Leisure
+                      </a>
+                <div  class="tb-megamenu-submenu dropdown-menu mega-dropdown-menu nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-1">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-1 items-3 grid-x grid-margin-x" role="list">
+                    <li class="cell medium-4 tb-megamenu-block">
+    <h2>Leisure</h2>
+    <p>With its great weather, miles of sandy beaches, and major attractions, San Diego is known worldwide as one of the best tourist destinations and a great place for residents to relax year round.</p>
+  </li>
+
+                <li  class="tb-megamenu-item level-2 mega mega-group cell medium-5 submenu-major" data-id="menu_link_content:a262e000-3ce8-47c5-a388-6d4939f7a25e" data-level="2" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="2" >
+          <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-2">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-2 items-3 grid-x grid-margin-x" role="list">
+                  <li  class="tb-megamenu-item level-3 mega mega-group" data-id="menu_link_content:30b8bec3-99ef-4f44-ba92-715338970691" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+              <div class="mega-group-title tb-megamenu-no-link cell medium-5">
+          <h4 class="heading--snug">Parks</h4>
+        </div>
+                <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-3">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-3 items-4 grid-x grid-margin-x" role="list">
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:70a746ec-e5cf-48fe-9e3d-cdda260ce214" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/park-and-recreation/parks/regional" >
+                Regional Parks
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:10a21a87-329d-42ce-8121-ad60ec237d1d" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/park-and-recreation/centers/map" >
+                Community Parks
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:96dbf1ee-44b0-4915-bd51-6f66a0cf3f2c" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/park-and-recreation/centers" >
+                Recreation Centers
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:9761c6b0-35a9-4eaa-a813-1686c8ccbce2" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/park-and-recreation/parks/permits" >
+                Book an Event
+                      </a>
+            
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+  
+                  <li  class="tb-megamenu-item level-3 mega mega-group" data-id="menu_link_content:8f03ec83-a12f-49c1-aca7-d38dc25e9b9a" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+              <div class="mega-group-title tb-megamenu-no-link cell medium-5">
+          <h4 class="heading--snug">Outdoors</h4>
+        </div>
+                <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-4">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-3 items-2 grid-x grid-margin-x" role="list">
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:668b1ef5-f50f-4283-9972-86b791037092" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/leisure/beaches-and-bays" >
+                Beaches &amp; Bays
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:01c2e01e-a5b2-45ca-ab0b-81a15d903cce" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/park-and-recreation/golf" >
+                Golf
+                      </a>
+            
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+  
+              <li  class="tb-megamenu-item level-3 mega" data-id="menu_link_content:fef536ca-abfb-4a63-9079-9829f204ec74" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3">
+      <a href="/leisure" style="margin-left: 51%">More Leisure</a>
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+
+                <li  class="tb-megamenu-item level-2 mega mega-group cell medium-3 submenu-minor" data-id="menu_link_content:50cd2cdf-08a3-43c4-a93c-1ee4ff767745" data-level="2" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="2" >
+          <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-5">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-2 items-4 grid-x grid-margin-x" role="list">
+              <li  class="tb-megamenu-item level-3 mega" data-id="menu_link_content:9c6465ba-dbeb-49ad-b559-9d441a205435" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+        <a href="/park-and-recreation/parks/regional/balboa">
+        <div class="grid-x nav__event">
+        <div class="cell small-3"><img alt="" height="74" src="https://www.sandiego.gov/sites/default/files/blaboa-park_0.jpg" width="74"></div>
+        <div class="cell auto">Balboa Park</div>
+        </div></a>
+    </li>
+  
+              <li  class="tb-megamenu-item level-3 mega" data-id="menu_link_content:4bc934c9-5f8a-45bd-ae23-b811a5472a2e" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+        <a href="/park-and-recreation/golf/torreypines">
+        <div class="grid-x nav__event">
+        <div class="cell small-3"><img alt="" height="74" src="https://www.sandiego.gov/sites/default/files/torrey-pines.jpg" width="74"></div>
+        <div class="cell auto">Torrey Pines Golf Course</div>
+        </div></a>
+    </li>
+  
+              <li  class="tb-megamenu-item level-3 mega" data-id="menu_link_content:7a0b06e5-7367-4f27-b885-40fb7473d551" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+        <a href="/specialevents-filming">
+        <div class="grid-x nav__event">
+        <div class="cell small-3"><img alt="" height="74" src="https://www.sandiego.gov/sites/default/files/special-events.jpg" width="74"></div>
+        <div class="cell auto">Special Events &amp; Filming</div>
+        </div></a>
+    </li>
+  
+              <li  class="tb-megamenu-item level-3 mega" data-id="menu_link_content:c0e50241-0e52-4b23-b7c8-8c637d33d52c" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+        <a href="/arts-culture">
+        <div class="grid-x nav__event">
+        <div class="cell small-3"><img alt="" height="74" src="https://www.sandiego.gov/sites/default/files/arts-culture-th.jpg" width="74"></div>
+        <div class="cell auto">Arts &amp; Culture</div>
+        </div></a>
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+  
+              <li  class="tb-megamenu-item level-1 mega mega-align-justify dropdown" data-id="menu_link_content:6a216db6-800b-4aa8-b810-708319d994ea" data-level="1" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="justify" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="1" >
+              <a href="/resident-resources"  class="dropdown-toggle" title="Pay Now, Parking + Help" aria-expanded="false">
+                Resident Resources
+                      </a>
+                <div  class="tb-megamenu-submenu dropdown-menu mega-dropdown-menu nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-6">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-1 items-3 grid-x grid-margin-x" role="list">
+                    <li class="cell medium-4 tb-megamenu-block">
+    <h2>Resident Resources</h2>
+    <p>From neighborhoods and parks to streets and parking, find what you need in your community and report your concerns.</p>
+  </li>
+
+                <li  class="tb-megamenu-item level-2 mega mega-group cell medium-5 submenu-major" data-id="menu_link_content:400992c5-7807-4c5a-91e4-c767d566da22" data-level="2" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="2" >
+          <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-7">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-2 items-4 grid-x grid-margin-x" role="list">
+                  <li  class="tb-megamenu-item level-3 mega mega-group" data-id="menu_link_content:6f027afc-dc3e-4d24-972d-447e99bfabee" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+              <div class="mega-group-title tb-megamenu-no-link cell medium-5">
+          <h4 class="heading--snug">Neighborhoods</h4>
+        </div>
+                <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-8">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-3 items-1 grid-x grid-margin-x" role="list">
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:86164191-ea48-442a-bdcc-6d71e2c8e9c4" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/planning/community-plans" >
+                Community Plans
+                      </a>
+            
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+  
+                  <li  class="tb-megamenu-item level-3 mega mega-group" data-id="menu_link_content:5b18cf00-4f09-4851-849a-e8cea0360381" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+              <div class="mega-group-title tb-megamenu-no-link cell medium-5">
+          <h4 class="heading--snug">Recreational Activities</h4>
+        </div>
+                <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-9">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-3 items-1 grid-x grid-margin-x" role="list">
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:a046ec09-b71f-49ff-8f10-f17889fd2ff0" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/pools" >
+                Pools
+                      </a>
+            
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+  
+                  <li  class="tb-megamenu-item level-3 mega mega-group" data-id="menu_link_content:679c12d2-4d88-4b8e-bed8-083bb7a06a4e" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+              <div class="mega-group-title tb-megamenu-no-link cell medium-5">
+          <h4 class="heading--snug">Street Maintenance</h4>
+        </div>
+                <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-10">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-3 items-3 grid-x grid-margin-x" role="list">
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:6606f2b9-8565-4391-ae52-585b4e19a799" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/street-div/services/street-resurfacing-pothole-repair" >
+                Potholes
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:bc981d44-6246-4291-8a57-caa82f77d7a4" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/streetsweeping" >
+                Street Sweeping
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:38d6c078-e0d0-4eda-badb-873657ee34d9" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/street-div/services/electrical/strlight" >
+                Streetlights
+                      </a>
+            
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+  
+              <li  class="tb-megamenu-item level-3 mega" data-id="menu_link_content:ce6c22e0-63d0-41ba-a8ad-75880c6de68a" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3">
+      <a href="/resident-resources" style="margin-left: 51%">More Resident Resources</a>
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+
+                <li  class="tb-megamenu-item level-2 mega mega-group cell medium-3 submenu-minor" data-id="menu_link_content:3c90ca99-eaf7-422b-8c7a-ceae346641da" data-level="2" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="2" >
+          <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-11">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-2 items-4 grid-x grid-margin-x" role="list">
+              <li  class="tb-megamenu-item level-3 mega" data-id="menu_link_content:3c8acaa6-615b-42fe-99c8-3972291f1b8c" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+        <a href="/public-utilities/customer-service/billing">
+        <div class="grid-x nav__event">
+        <div class="cell small-3"><img alt="" height="74" src="https://www.sandiego.gov/sites/default/files/waterbill.jpg" width="74"></div>
+        <div class="cell auto">View/Pay Water Bill</div>
+        </div></a>
+    </li>
+  
+              <li  class="tb-megamenu-item level-3 mega" data-id="menu_link_content:47811c84-5216-43dd-99d6-7e5939c0fc28" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+        <a href="/environmental-services/collection/schedule">
+        <div class="grid-x nav__event">
+        <div class="cell small-3"><img alt="" height="74" src="https://www.sandiego.gov/sites/default/files/trash-schedule.jpg" width="74"></div>
+        <div class="cell auto">View Trash Collection Schedule</div>
+        </div></a>
+    </li>
+  
+              <li  class="tb-megamenu-item level-3 mega" data-id="menu_link_content:067798c7-2919-4f6e-ba62-fe6cb296be1c" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+        <a href="/parking/citations">
+        <div class="grid-x nav__event">
+        <div class="cell small-3"><img alt="" height="74" src="https://www.sandiego.gov/sites/default/files/featureparkingmeter_0.jpg" width="74"></div>
+        <div class="cell auto">Parking Citations</div>
+        </div></a>
+    </li>
+  
+              <li  class="tb-megamenu-item level-3 mega" data-id="menu_link_content:c655fad9-0c34-4178-bdf4-55657948da4c" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+        <a href="https://performance.sandiego.gov/">
+        <div class="grid-x nav__event">
+        <div class="cell small-3"><img alt="" height="74" src="https://www.sandiego.gov/sites/default/files/strategic-plan-sm.jpg" width="74"></div>
+        <div class="cell auto">City Strategic Plan</div>
+        </div></a>
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+  
+              <li  class="tb-megamenu-item level-1 mega mega-align-justify dropdown" data-id="menu_link_content:311fc11f-88f5-48f7-82b7-3d5f93fcf2ac" data-level="1" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="justify" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="1" >
+              <a href="/doing-business"  class="dropdown-toggle" title="Fix, Plan + Build" aria-expanded="false">
+                Doing Business
+                      </a>
+                <div  class="tb-megamenu-submenu dropdown-menu mega-dropdown-menu nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-12">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-1 items-3 grid-x grid-margin-x" role="list">
+                    <li class="cell medium-4 tb-megamenu-block">
+    <h2>Doing Business</h2>
+    <p>Incentives and programs are available to help launch, grow and expand your business, and provide support for homeowners and contractors to get work done.</p>
+  </li>
+
+                <li  class="tb-megamenu-item level-2 mega mega-group cell medium-5 submenu-major" data-id="menu_link_content:a01e6150-f487-4342-a281-0f12bea32251" data-level="2" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="2" >
+          <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-13">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-2 items-3 grid-x grid-margin-x" role="list">
+                  <li  class="tb-megamenu-item level-3 mega mega-group" data-id="menu_link_content:6b630821-ede0-417a-a9b6-7170d3e934c5" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+              <div class="mega-group-title tb-megamenu-no-link cell medium-5">
+          <h4 class="heading--snug">Plan</h4>
+        </div>
+                <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-13">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-3 items-3 grid-x grid-margin-x" role="list">
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:d0979710-5a91-4f15-b1ff-526fc2f440a8" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/purchasing/bids-contracts" >
+                Bid on a Contract
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:c71ecd57-23c0-4bd1-ad7a-a5c18b437ce6" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/economic-development/industry" >
+                Explore Incentives
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:23898558-7e16-41da-b6b4-28aa6fa3506d" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/development-services/codes-regulations" >
+                Development Codes &amp; Regulations
+                      </a>
+            
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+  
+                  <li  class="tb-megamenu-item level-3 mega mega-group" data-id="menu_link_content:2de8e3d7-a632-4ca1-99ab-56ce3ffccc94" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+              <div class="mega-group-title tb-megamenu-no-link cell medium-5">
+          <h4 class="heading--snug">Fix</h4>
+        </div>
+                <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-13">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-3 items-2 grid-x grid-margin-x" role="list">
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:9fa4f8e7-325e-409f-8688-89a2108b0a6d" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/publicutilities/customerservices" >
+                Set Up Utilities
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:943a1e9b-ade7-47a2-b29f-524abae3b5ae" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/development-services" >
+                Renovations &amp; Remodels
+                      </a>
+            
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+  
+                  <li  class="tb-megamenu-item level-3 mega mega-group" data-id="menu_link_content:d505def3-23b5-4d52-adf7-876d624f5793" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+              <div class="mega-group-title tb-megamenu-no-link cell medium-5">
+          <h4 class="heading--snug">Build</h4>
+        </div>
+                <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-13">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-3 items-3 grid-x grid-margin-x" role="list">
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:7f9ef0a9-5aa7-4bc5-afe5-67a47495a17d" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/development-services/permits" >
+                Get Permits
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:f4c113de-d894-4a58-85e0-0e6a3c6e8970" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/development-services" >
+                Track Your Project
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:6ca24e6b-21b2-4e1b-9a2d-81979d606a71" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/development-services/zoning" >
+                Learn about Zoning
+                      </a>
+            
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+
+                <li  class="tb-megamenu-item level-2 mega mega-group cell medium-3 submenu-minor" data-id="menu_link_content:dbdbd1e7-8cdb-4801-837b-62d8df0ffe59" data-level="2" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="2" >
+          <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-13">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-2 items-3 grid-x grid-margin-x" role="list">
+              <li  class="tb-megamenu-item level-3 mega" data-id="menu_link_content:0e6517d0-0d6e-471e-8bcb-87e0d5966b28" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+        <a href="/treasurer/taxesfees/btax/btaxhow">
+        <div class="grid-x nav__event">
+        <div class="cell small-3"><img alt="" height="74" src="https://www.sandiego.gov/sites/default/files/business-tax.jpg" width="74"></div>
+        <div class="cell auto">Business Tax Certificate</div>
+        </div></a>
+    </li>
+  
+              <li  class="tb-megamenu-item level-3 mega" data-id="menu_link_content:da5634de-18ee-4e97-95d6-958e37f0784e" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+        <a href="/economic-development/business/starting/tenkeysteps">
+        <div class="grid-x nav__event">
+        <div class="cell small-3"><img alt="" height="74" src="https://www.sandiego.gov/sites/default/files/business-steps_0.jpg" width="74"></div>
+        <div class="cell auto">Ten Key Steps to Starting Your Business</div>
+        </div></a>
+    </li>
+  
+              <li  class="tb-megamenu-item level-3 mega" data-id="menu_link_content:73281fb4-2762-4ae3-8e4b-3392aaf90280" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+              <a href="/green-business-network" >
+                Go Green
+                      </a>
+            
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+  
+              <li  class="tb-megamenu-item level-1 mega mega-align-justify dropdown" data-id="menu_link_content:35837742-c72e-4dc6-a9e7-8784b5fa6908" data-level="1" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="justify" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="1" >
+              <a href="/public-library"  class="dropdown-toggle" title="Learn, Connect + Discover" aria-expanded="false">
+                Library
+                      </a>
+                <div  class="tb-megamenu-submenu dropdown-menu mega-dropdown-menu nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-13">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-1 items-3 grid-x grid-margin-x" role="list">
+                    <li class="cell medium-4 tb-megamenu-block">
+    <h2>Library</h2>
+    <p>The San Diego Public Library is a popular destination that connects our diverse community to free educational and cultural resources that will enrich their lives.</p>
+  </li>
+
+                <li  class="tb-megamenu-item level-2 mega mega-group cell medium-5 submenu-major" data-id="menu_link_content:1c159586-18f6-4d74-9553-f560941e8c15" data-level="2" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="2" >
+          <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-13">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-2 items-5 grid-x grid-margin-x" role="list">
+                  <li  class="tb-megamenu-item level-3 mega mega-group" data-id="menu_link_content:40c151d6-7bfd-41e0-81bf-d1d19e750ed3" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+              <div class="mega-group-title tb-megamenu-no-link cell medium-5">
+          <h4 class="heading--snug">Programs &amp; Events</h4>
+        </div>
+                <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-13">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-3 items-3 grid-x grid-margin-x" role="list">
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:dbc7b6f0-5f00-4a5b-9259-b2d5e1f28b63" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/public-library/news-events/onebook" >
+                One Book, One San Diego
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:485efe63-fa92-4494-a5a4-bd7567b28352" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="https://sandiego.librarymarket.com/" >
+                Event Calendar
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:9327c893-d559-490a-8ed8-5d1013a8e2e2" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/public-library/news-events" >
+                More Programs &amp; Events
+                      </a>
+            
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+  
+                  <li  class="tb-megamenu-item level-3 mega mega-group" data-id="menu_link_content:00d01d31-39bc-45bf-b478-450e57369467" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+              <div class="mega-group-title tb-megamenu-no-link cell medium-5">
+          <h4 class="heading--snug">Services</h4>
+        </div>
+                <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-13">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-3 items-3 grid-x grid-margin-x" role="list">
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:e9134c75-8232-40ba-ad86-33c632bd2b37" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/public-library/services/lending/finesfees" >
+                Fines &amp; Fees
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:a6bf61a0-62d2-493c-a128-2627e2348ce1" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/public-library/services/lending/renewhold" >
+                Renewals &amp; Holds
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:aafcc036-b03c-4c94-985d-9ca391288ea5" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/public-library/services" >
+                More Services
+                      </a>
+            
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+  
+                  <li  class="tb-megamenu-item level-3 mega mega-group" data-id="menu_link_content:8791aa8b-7b07-469e-81f5-5cccf5a1b581" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+              <div class="mega-group-title tb-megamenu-no-link cell medium-5">
+          <h4 class="heading--snug">Kids &amp; Teens</h4>
+        </div>
+                <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-13">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-3 items-3 grid-x grid-margin-x" role="list">
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:1b845f18-1710-44c0-9034-f30e0a565abe" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/public-library/kidsandteens/hwcenter" >
+                Homework Help Center
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:50580372-7ff8-4579-b785-ed381697714f" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/public-library/kidsandteens/parentsteachers" >
+                Parents &amp; Teachers
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:067e266e-5b07-4466-83b9-6213a781f6b0" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/public-library/kidsandteens" >
+                More Kids &amp; Teens
+                      </a>
+            
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+  
+                  <li  class="tb-megamenu-item level-3 mega mega-group" data-id="menu_link_content:8457101a-533f-4d2f-bf09-1d2b4b8ffe62" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+              <div class="mega-group-title tb-megamenu-no-link cell medium-5">
+          <h4 class="heading--snug">eCollection</h4>
+        </div>
+                <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-13">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-3 items-2 grid-x grid-margin-x" role="list">
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:db6712bd-84ca-4621-ac08-2692e5930fc9" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/public-library/elibrary" >
+                eBooks
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:8d4ae67f-0510-4d61-a3dc-5a959873d4ab" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="http://search.ebscohost.com/login.aspx?authtype=ip%2Ccpid&amp;custid=s8329812&amp;groupid=main&amp;profile=eon" >
+                Digital Magazines
+                      </a>
+            
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+  
+              <li  class="tb-megamenu-item level-3 mega" data-id="menu_link_content:80693027-368d-4aad-b5af-ec779cfead0d" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3">
+      <a href="/public-library" style="margin-left: 51%">Library Website</a>
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+
+                <li  class="tb-megamenu-item level-2 mega mega-group cell medium-3 submenu-minor" data-id="menu_link_content:c2916239-0aa9-46ca-adb4-3559349a762e" data-level="2" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="2" >
+          <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-13">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-2 items-4 grid-x grid-margin-x" role="list">
+              <li  class="tb-megamenu-item level-3 mega" data-id="menu_link_content:37e645ae-e7c7-4aea-bd15-a71a59e5fe20" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+        <a href="https://sandiego.bibliocommons.com/">
+        <div class="grid-x nav__event">
+        <div class="cell small-3"><img alt="" height="74" src="https://www.sandiego.gov/sites/default/files/library-catalog.jpg" width="74"></div>
+        <div class="cell auto">Browse the Catalog</div>
+        </div></a>
+    </li>
+  
+              <li  class="tb-megamenu-item level-3 mega" data-id="menu_link_content:6b092b5a-8a5b-4ea3-8002-b4b56d2143de" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+        <a href="/public-library/services/lending/librarycard">
+        <div class="grid-x nav__event">
+        <div class="cell small-3"><img alt="" height="74" src="https://www.sandiego.gov/sites/default/files/library-card.jpg" width="74"></div>
+        <div class="cell auto">Apply for a Library Card</div>
+        </div></a>
+    </li>
+  
+              <li  class="tb-megamenu-item level-3 mega" data-id="menu_link_content:5c29f6c7-45ca-464f-88b9-7275b6df9ef0" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+        <a href="/volunteer-program/opportunities/communityservices/library">
+        <div class="grid-x nav__event">
+        <div class="cell small-3"><img alt="" height="74" src="https://www.sandiego.gov/sites/default/files/library-volunteer.jpg" width="74"></div>
+        <div class="cell auto">Volunteer</div>
+        </div></a>
+    </li>
+  
+              <li  class="tb-megamenu-item level-3 mega" data-id="menu_link_content:ca97e393-2508-41e7-bb9c-bdff054e83af" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+        <a href="https://www.governmentjobs.com/careers/sandiego">
+        <div class="grid-x nav__event">
+        <div class="cell small-3"><img alt="" height="74" src="https://www.sandiego.gov/sites/default/files/employment.jpg" width="74"></div>
+        <div class="cell auto">Employment Opportunities</div>
+        </div></a>
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+  
+              <li  class="tb-megamenu-item level-1 mega mega-align-justify dropdown" data-id="menu_link_content:316edf26-9200-442d-bcdd-69c2fc2f6e6c" data-level="1" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="justify" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="1" >
+              <a href="/public-safety"  class="dropdown-toggle" title="Police, Fire + Lifeguards" aria-expanded="false">
+                Public Safety
+                      </a>
+                <div  class="tb-megamenu-submenu dropdown-menu mega-dropdown-menu nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-13">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-1 items-3 grid-x grid-margin-x" role="list">
+                    <li class="cell medium-4 tb-megamenu-block">
+    <h2>Public Safety</h2>
+    <p>The Police and Fire-Rescue departments work together within our communities to provide the highest level of quality service and protection. From neighborhood watch to 9-1-1 services, our team is here for you 24 hours a day, seven days a week.</p>
+  </li>
+
+                <li  class="tb-megamenu-item level-2 mega mega-group cell medium-5 submenu-major" data-id="menu_link_content:34def47a-a436-4fc4-9ce9-1c2b5520c7e0" data-level="2" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="2" >
+          <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-13">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-2 items-4 grid-x grid-margin-x" role="list">
+                  <li  class="tb-megamenu-item level-3 mega mega-group" data-id="menu_link_content:be571be6-4e57-42c9-b948-a318ff4f8913" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+              <div class="mega-group-title tb-megamenu-no-link cell medium-5">
+          <h4 class="heading--snug">Police</h4>
+        </div>
+                <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-13">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-3 items-4 grid-x grid-margin-x" role="list">
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:7c7574b2-afe2-41e0-9a4b-269cbafb7909" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/police/services/file-police-report" >
+                File a Police Report
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:3648b904-0909-4568-9673-dab0e1f6adaf" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/police/services" >
+                Police Services
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:ac1b07a5-38b2-43fd-861c-1d624ea82937" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/join-san-diego-police-department" >
+                Join SDPD
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:532c45e7-a853-4040-962f-8850c152e894" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/police" >
+                Police Website
+                      </a>
+            
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+  
+                  <li  class="tb-megamenu-item level-3 mega mega-group" data-id="menu_link_content:0d365631-95fa-4c68-81e1-02ac77f52849" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+              <div class="mega-group-title tb-megamenu-no-link cell medium-5">
+          <h4 class="heading--snug">Fire-Rescue</h4>
+        </div>
+                <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-13">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-3 items-4 grid-x grid-margin-x" role="list">
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:2eabd662-5d0e-4d3e-b8ca-cccd50d4a0b3" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/fire/services" >
+                Fire Services &amp; Programs
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:2f064e56-7178-43b4-b603-481957d47958" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/fire/services/fireprev" >
+                Community Risk Reduction
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:f4502afb-b6a3-4e25-916f-0efff5167a26" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/join-fire-rescue" >
+                Join Fire-Rescue
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:42868b2a-ec16-44ee-b073-d09f40aac184" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/fire" >
+                Fire-Rescue Website
+                      </a>
+            
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+  
+                  <li  class="tb-megamenu-item level-3 mega mega-group" data-id="menu_link_content:343b8f76-30d0-4c15-b5d8-ade0e8e7a427" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+              <div class="mega-group-title tb-megamenu-no-link cell medium-5">
+          <h4 class="heading--snug">Lifeguards</h4>
+        </div>
+                <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-13">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-3 items-3 grid-x grid-margin-x" role="list">
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:6cd81043-9ec0-4238-88a6-900ff99624a8" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/lifeguards/safety" >
+                Beach Safety
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:c180aabe-037e-4438-adb8-7594a4fa9eb2" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/lifeguards/junior" >
+                Junior Lifeguards
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:5c8fdee5-11ee-44f0-9ae0-e58235a8dd7e" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/lifeguards" >
+                Lifeguards Website
+                      </a>
+            
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+  
+              <li  class="tb-megamenu-item level-3 mega" data-id="menu_link_content:8df4b70d-710b-4f17-ba6a-032fc0dc6c51" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3">
+      <a href="/public-safety" style="margin-left: 51%">More Public Safety</a>
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+
+                <li  class="tb-megamenu-item level-2 mega mega-group cell medium-3 submenu-minor" data-id="menu_link_content:3e3a64b2-cdbe-482a-ac15-2458965d0a67" data-level="2" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="2" >
+          <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-13">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-2 items-3 grid-x grid-margin-x" role="list">
+              <li  class="tb-megamenu-item level-3 mega" data-id="menu_link_content:dcabd261-332f-420a-aa50-99613fa7035b" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+        <a href="/police/community/neighborhood-watch">
+        <div class="grid-x nav__event">
+        <div class="cell small-3"><img alt="" height="74" src="https://www.sandiego.gov/sites/default/files/neighborhood-watch-logo.jpg" width="74"></div>
+        <div class="cell auto">Neighborhood Watch</div>
+        </div></a>
+    </li>
+  
+              <li  class="tb-megamenu-item level-3 mega" data-id="menu_link_content:38f64754-89bc-4c2c-9f8e-5b7a3bf5dfdd" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+        <a href="/ohs/emergencynotification">
+        <div class="grid-x nav__event">
+        <div class="cell small-3"><img alt="" height="74" src="https://www.sandiego.gov/sites/default/files/alert-sd.jpg" width="74"></div>
+        <div class="cell auto">Get Emergency Alerts</div>
+        </div></a>
+    </li>
+  
+              <li  class="tb-megamenu-item level-3 mega" data-id="menu_link_content:70c337e6-d67e-4f9a-8d86-fdaa4828a5f3" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+        <a href="/oes">
+        <div class="grid-x nav__event">
+        <div class="cell small-3"><img alt="" height="74" src="https://www.sandiego.gov/sites/default/files/flag-th.png" width="74"></div>
+        <div class="cell auto">Office of Emergency Services</div>
+        </div></a>
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+  
+              <li  class="tb-megamenu-item level-1 mega mega-align-justify dropdown active active-trail" data-id="menu_link_content:5f7acd6d-8de6-4561-ac79-10344ba49bda" data-level="1" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="justify" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="1" >
+              <a href="/city-hall"  class="dropdown-toggle active-trail" title="City Officials + Departments" aria-expanded="false">
+                City Hall
+                      </a>
+                <div  class="tb-megamenu-submenu dropdown-menu mega-dropdown-menu nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-13">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-1 items-3 grid-x grid-margin-x" role="list">
+                    <li class="cell medium-4 tb-megamenu-block">
+    <h2>City Hall</h2>
+    <p>Learn more about City government</p>
+  </li>
+
+                <li  class="tb-megamenu-item level-2 mega mega-group cell medium-5 submenu-major" data-id="menu_link_content:4e0a945f-cb2c-458d-8af6-28e933fee1cc" data-level="2" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="2" >
+          <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-13">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-2 items-3 grid-x grid-margin-x" role="list">
+                  <li  class="tb-megamenu-item level-3 mega mega-group" data-id="menu_link_content:0910e75d-b6d7-4df5-a2a3-15dd98a1b6b2" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+              <div class="mega-group-title tb-megamenu-no-link cell medium-5">
+          <h4 class="heading--snug">City Officials</h4>
+        </div>
+                <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-13">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-3 items-6 grid-x grid-margin-x" role="list">
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:b2b3b69f-fb1e-4c99-98b1-b39a1f5cbacb" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/mayor" >
+                Mayor Todd Gloria
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:bc238e75-cdb0-4011-a76d-a9d36579f071" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/citycouncil" >
+                Councilmembers
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:35a9375e-3fdc-4849-a8bb-03a07bb3513e" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/cityattorney" >
+                City Attorney
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:9b5c30de-5103-42cf-9f26-2dccf1aaabc8" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/auditor" >
+                City Auditor
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:54b04919-fd03-4304-a4c1-ece2d059842e" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/city-clerk" >
+                City Clerk
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:c5fb0279-19d8-4402-a058-696095fd6c2d" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/iba" >
+                Independent Budget Analyst
+                      </a>
+            
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+  
+                  <li  class="tb-megamenu-item level-3 mega mega-group" data-id="menu_link_content:5f7546c7-c1c4-4ed4-994b-3bafcdebeeec" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+              <div class="mega-group-title tb-megamenu-no-link cell medium-5">
+          <h4 class="heading--snug">City Government</h4>
+        </div>
+                <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-13">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-3 items-4 grid-x grid-margin-x" role="list">
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:fb14a98a-388f-4909-8086-3cc8f2c01683" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/city-hall/departments" >
+                Departments
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:7b569044-c092-4f7d-bc14-ba8f79b51b43" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/city-hall/programs" >
+                Programs &amp; Initiatives
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:3235ca1a-ce99-42f7-9e53-a1619a671bf2" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/boards-and-commissions" >
+                Boards &amp; Commissions
+                      </a>
+            
+    </li>
+  
+              <li  class="tb-megamenu-item level-4 mega" data-id="menu_link_content:84b8b0c5-5588-407b-bb71-a223d52e9bb0" data-level="4" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="4" >
+              <a href="/city-hall/org-chart" >
+                City Organization Chart
+                      </a>
+            
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+  
+              <li  class="tb-megamenu-item level-3 mega" data-id="menu_link_content:2e4c7815-6cc8-433a-9a0f-47415f72f7a6" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3">
+      <a href="/city-hall" style="margin-left: 51%">More City Hall</a>
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+
+                <li  class="tb-megamenu-item level-2 mega mega-group active active-trail cell medium-3 submenu-minor" data-id="menu_link_content:2eb03f92-4958-49f6-829a-a6a6e6ad3332" data-level="2" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="1" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="2" >
+          <div  class="tb-megamenu-submenu mega-group-ct nav-child cell medium-auto" data-class="" data-width="" role="list">
+      <div class="mega-dropdown-inner">
+                  <div  class="tb-megamenu-row row-fluid">
+      <div  class="tb-megamenu-column span12 mega-col-nav" data-class="" data-width="12" data-hidewcol="0" id="tb-megamenu-column-13">
+  <div class="tb-megamenu-column-inner mega-inner clearfix">
+               <ul  class="tb-megamenu-subnav mega-nav level-2 items-3 grid-x grid-margin-x" role="list">
+              <li  class="tb-megamenu-item level-3 mega active active-trail" data-id="menu_link_content:c79d40dc-f4b6-4aad-abd0-7976e77541f5" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+        <a href="/city-clerk/officialdocs/meetings-calendar">
+        <div class="grid-x nav__event">
+        <div class="cell small-3"><img alt="" height="74" src="https://www.sandiego.gov/sites/default/files/council-meetings.jpg" width="74"></div>
+        <div class="cell auto">Council Meetings</div>
+        </div></a>
+    </li>
+  
+              <li  class="tb-megamenu-item level-3 mega" data-id="menu_link_content:6dec2b53-cf28-47e9-afb5-95e708f740cc" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+        <a href="/council-committees">
+        <div class="grid-x nav__event">
+        <div class="cell small-3"><img alt="" height="74" src="https://www.sandiego.gov/sites/default/files/committee-meeting.jpg" width="74"></div>
+        <div class="cell auto">Council Committees</div>
+        </div></a>
+    </li>
+  
+              <li  class="tb-megamenu-item level-3 mega" data-id="menu_link_content:650e1315-6ab1-414e-a594-1ec33bf51e4f" data-level="3" data-type="menu_item" data-class="" data-xicon="" data-caption="" data-alignsub="" data-group="0" data-hidewcol="0" data-hidesub="0" data-label="" aria-level="3" >
+        <a href="/finance/annual">
+        <div class="grid-x nav__event">
+        <div class="cell small-3"><img alt="" height="74" src="https://www.sandiego.gov/sites/default/files/2023-11/fy24-budget-tile.jpg" width="74"></div>
+        <div class="cell auto">FY24 Adopted Budget</div>
+        </div></a>
+    </li>
+  
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+
+  </ul>
+
+      </div>
+</div>
+
+  </div>
+
+              </div>
+    </div>
+
+    </li>
+  
+  </ul>
+
+      </div>
+  </div>
+
+  </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="accessibility-modal" class="reveal accessibility-tools rounded-corners" title="Accessibility Tools" data-reveal style="width: 400px">
+    <h2 class="h3 heading--snug l-margin-bd">Accessibility Tools</h2>
+
+    <div class="grid-x l-margin-bd">
+      <div class="cell small-6">
+        <p><strong>Audio/Vision Assist:</strong></p>
+      </div>
+      <div class="cell small-6">
+        <p><a title="Turn audio/vision assist on/off" href="javascript:;" onclick="BrowseAloud.panel.toggleBar(true,event);return false;">Turn On/Off</a></p>
+      </div>
+    </div>
+    <div class="grid-x">
+	    <div class="cell small-6">
+        <p><strong>High Contrast:</strong></p>
+      </div>
+      <div class="cell small-6">
+        <div class="highcontrast"><div class="high-contrast-switch block block-high-contrast" data-drupal-selector="high-contrast-switch" id="block-highcontrast">
+  
+    
+      <form action="/city-clerk/officialdocs/meetings-calendar?calendar_timestamp=1706774400&amp;previous=1706774400&amp;current=1709280000&amp;next=1711954800&amp;date_format=custom&amp;date_pattern=F&amp;use_previous_next=0&amp;display_reset=0&amp;pager_type=calendar_year" method="post" id="high-contrast-switch" accept-charset="UTF-8">
+  <a href="/high-contrast/enable?destination=/city-clerk/officialdocs/meetings-calendar" data-drupal-selector="edit-toggle-link" id="edit-toggle-link">Enable</a><input autocomplete="off" data-drupal-selector="form-gq5f7lts-adxxngtaesbfwbyjfnfsdt49gc2ep0ut6w" type="hidden" name="form_build_id" value="form-GQ5F7LtS-aDxxNGtAesbfWByJFnFsDT49gc2EP0ut6w" />
+<input data-drupal-selector="edit-high-contrast-switch" type="hidden" name="form_id" value="high_contrast_switch" />
+
+</form>
+
+  </div>
+</div>
+      </div>
+    </div>
+    <p class="text-center l-margin-tm l-margin-bn"><a title="More information on accessibility" href="/accessibility" class="btn btn--outline btn--sm">More Info<span class="visuallyhidden"> on accessibility</span></a></p>
+
+    <button class="close-button" data-close aria-label="Close reveal" type="button">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+
+    </header>
+
+    
+
+      <div data-drupal-messages-fallback class="hidden"></div>
+
+
+    
+
+                  <div id="hero-bg-image" class="hero__bg hero__bg--secondary" style="background-image: url('/sites/default/files/2023-10/home-hero-1.jpg');">
+      </div>
+      <div id="hero--credit" class="hero--credit" style="display: none;">
+        <p id="hero-bg-credit" ></p>
+      </div>
+      <div class="block block-if-components block-hero-block">
+  
+    
+      
+  </div>
+
+
+      <div class="grid-container main-grid-container page-with-hero">
+                  
+          <main role="main">
+            <a id="main-content" tabindex="-1"></a>
+            
+            <div class="layout-content clearfix col">
+                
+          <div class="main__message main__message--transparent">
+        <p class="h1 main__heading">Office of the City Clerk</p>
+      </div>
+    
+
+
+    <div class="hide-on-mobile top-menu">
+    <nav>
+      <ul id="department-top-menu" class="department-menu">
+                          <li><a href="/city-clerk">City Clerk Home</a></li>
+                                  <li><a href="/city-clerk/aboutus">About Us</a></li>
+                                  <li class="is_active"><a href="/city-clerk/officialdocs">Official City Documents</a></li>
+                                  <li><a href="/city-clerk/information-lobbying-economic-interests">Lobbying, Campaign &amp; Economic Interests</a></li>
+                                  <li><a href="/city-clerk/elections">City Elections</a></li>
+                                  <li><a href="/city-clerk/boards-commissions">City Boards &amp; Commissions</a></li>
+                                  <li><a href="/city-clerk/inforecords">Records Management and Archives</a></li>
+                                  <li><a href="/digitalarchives">Digital Archives</a></li>
+                      </ul>
+    </nav>
+  </div>
+  <div class="hide-on-desktop sub-navigation-mobile">
+	  <div class="accordions js-toggle-accordion">
+      <div class="accordion">
+        <p class="accordion__heading"><a class="accordion__link" href="#"><i class="icon-menu l-margin-rs"></i> Site Menu  <span class="toggle-icon"> </span></a></p>
+        <div class="accordion__drawer" style="display: none;">
+          <ul id="department-top-menu" class="department-menu">
+                            <li class=><a href="/city-clerk">City Clerk Home</a></li>
+                            <li class=><a href="/city-clerk/aboutus">About Us</a></li>
+                            <li class=><a href="/city-clerk/officialdocs">Official City Documents</a></li>
+                            <li class=><a href="/city-clerk/information-lobbying-economic-interests">Lobbying, Campaign &amp; Economic Interests</a></li>
+                            <li class=><a href="/city-clerk/elections">City Elections</a></li>
+                            <li class=><a href="/city-clerk/boards-commissions">City Boards &amp; Commissions</a></li>
+                            <li class=><a href="/city-clerk/inforecords">Records Management and Archives</a></li>
+                            <li class=><a href="/digitalarchives">Digital Archives</a></li>
+                      </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="block-sand-content" class="block block-system block-system-main-block">
+  
+    
+      
+<article data-history-node-id="226394" role="article" class="node node--type-blog node--view-mode-full">
+
+  <div  class="node__content">
+    <div class="grid-x">
+      <div class="cell small-12 medium-auto blog-title l-padding-mobile-hm">
+        <h1 class="main__heading">Legislative Calendar</h1>
+
+        
+                  <div class="top_content l-margin-td">
+            
+            <p>You may view legislative meetings on <a href="http://sandiego.granicus.com/ViewPublisher.php?view_id=31">CityTV</a>.</p>
+<p><a href="https://www.sandiego.gov/sites/default/files/2023-12/2024%20Legislative%20Calendar%20FINAL-%20Approved%2011.7.2023~.pdf" media_library="Media Library">Printable Legislative Calendar</a> (approved by the Council 1/30/23 REV)</p>
+<p class="legis-cal hidden"><a class="btn btn--outline btn--primary" href="/city-clerk/officialdocs/meetings-calendar/print">Print this calendar</a></p>
+
+      
+          </div>
+              </div>
+
+          </div>
+    <div class="content-body">
+      <div class="grid-x">
+        <div class="cell small-12 medium-auto l-padding-am l-padding-desktop-hl">
+          
+            <div class="clearfix text-formatted field field--name-body field--type-text-with-summary field--label-hidden field__item"><div>
+	<div class="view view-legis-calendar view-id-legis_calendar view-display-id-default js-view-dom-id-8e36d333720e5801cffbad539dce641f153ebe41ae60d67d18f72c8c9291551e">
+  
+    
+        <div class="view-filters">
+      <form class="views-exposed-form" data-drupal-selector="views-exposed-form-legis-calendar-default" action="/city-clerk/officialdocs/meetings-calendar" method="get" id="views-exposed-form-legis-calendar-default" accept-charset="UTF-8">
+  <div class="form--inline clearfix">
+  <div class="js-form-item form-item js-form-type-textfield form-type-textfield js-form-item-title form-item-title">
+      <label for="edit-title--2">Search Meetings</label>
+        <input placeholder="Search for a meeting..." data-drupal-selector="edit-title" type="text" id="edit-title--2" name="title" value="" size="30" maxlength="128" class="form-text" />
+
+        </div>
+<div data-drupal-selector="edit-actions" class="form-actions js-form-wrapper form-wrapper" id="edit-actions--3"><input data-drupal-selector="edit-submit-legis-calendar-2" type="submit" id="edit-submit-legis-calendar--2" value="Search" class="button js-form-submit form-submit" />
+</div>
+
+</div>
+
+</form>
+
+    </div>
+    
+        
+  <ul  class="pager__items js-pager__items calendar-view-pager">
+          <li class="pager__item pager__previous"><a href="?calendar_timestamp=1704096000&amp;previous=1704096000&amp;current=1706774400&amp;next=1709280000&amp;date_format=custom&amp;date_pattern=F&amp;use_previous_next=0&amp;display_reset=0&amp;pager_type=calendar_year" aria-label="Previous month, January 2024">January</a></li>
+          <li class="pager__item pager__current"><div class="js-form-item form-item js-form-type-item form-type-item js-form-item- form-item- form-no-label">
+        February
+        </div>
+</li>
+          <li class="pager__item pager__next"><a href="?calendar_timestamp=1709280000&amp;previous=1704096000&amp;current=1706774400&amp;next=1709280000&amp;date_format=custom&amp;date_pattern=F&amp;use_previous_next=0&amp;display_reset=0&amp;pager_type=calendar_year" aria-label="Next month, March 2024">March</a></li>
+      </ul>
+
+  
+  
+      <div class="view-content">
+      
+
+
+
+  <div class="view-calendar">
+    <table class="calendar-view-table calendar-view-month responsive-enabled" data-calendar-view="calendar_month" data-calendar-view-month="02" data-calendar-view-view-display="default" data-calendar-view-view-id="legis_calendar" data-calendar-view-year="2024" summary="Legis Calendar" data-striping="1">
+      <caption>February 2024</caption>
+  
+  
+      <thead>
+      <tr>
+                            <th>Sunday</th>
+                            <th>Monday</th>
+                            <th>Tuesday</th>
+                            <th>Wednesday</th>
+                            <th>Thursday</th>
+                            <th>Friday</th>
+                            <th>Saturday</th>
+              </tr>
+    </thead>
+  
+      <tbody>
+                      <tr class="odd">
+                      <td data-calendar-view-day="28" data-calendar-view-month="01" data-calendar-view-year="24" class="past sunday previous-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-01-28PST00:00:00" title="0 results for 2024-01-28">
+      28 <span class="dow">Sunday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="29" data-calendar-view-month="01" data-calendar-view-year="24" class="past monday previous-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-01-29PST00:00:00" title="4 results for 2024-01-29">
+      29 <span class="dow">Monday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+                                      <li data-calendar-view-hash="81e928a303e429027f5156e6f33a61d5" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecouncil">City Council</a><br>
+<span class="fine-print">10:00 am</span>
+<span class="pull-right"></span></li>
+                                      <li data-calendar-view-hash="6b3111fab17a0969a96b8cffab6ec2c2" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecouncil">Closed Session</a><br>
+<span class="fine-print">10:00 am</span>
+<span class="pull-right"></span></li>
+                                      <li data-calendar-view-hash="9a59970e172d19fea4931d339559195e" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecouncil">City Council</a><br>
+<span class="fine-print">2:00 pm</span>
+<span class="pull-right"></span></li>
+                                      <li data-calendar-view-hash="6bdf1048efa396072025f7ad5eb2f64c" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecouncil">Special Closed Session</a><br>
+<span class="fine-print">10:00 am</span>
+<span class="pull-right"></span></li>
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="30" data-calendar-view-month="01" data-calendar-view-year="24" class="past tuesday previous-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-01-30PST00:00:00" title="2 results for 2024-01-30">
+      30 <span class="dow">Tuesday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+                                      <li data-calendar-view-hash="e39837b1298189d163c1aaf118d12599" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecouncil">City Council</a><br>
+<span class="fine-print">10:00 am</span>
+<span class="pull-right"></span></li>
+                                      <li data-calendar-view-hash="0bd38b234892524bf18af4bc82667f5b" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecouncil">City Council</a><br>
+<span class="fine-print">2:00 pm</span>
+<span class="pull-right"></span></li>
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="31" data-calendar-view-month="01" data-calendar-view-year="24" class="past wednesday previous-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-01-31PST00:00:00" title="1 result for 2024-01-31">
+      31 <span class="dow">Wednesday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+                                      <li data-calendar-view-hash="eadfd3934ae1f59b55f2742077921aba" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecomm/Meetings/ViewMeeting?id=5897&amp;doctype=1&amp;site=comm">Special Rules Committee Meeting</a><br>
+<span class="fine-print">1:00 pm</span>
+<span class="pull-right"></span></li>
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="01" data-calendar-view-month="02" data-calendar-view-year="24" class="past thursday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-01PST00:00:00" title="1 result for 2024-02-01">
+      1 <span class="dow">Thursday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+                                      <li data-calendar-view-hash="b720f30ff8ce5cbebec96c6965de6f89" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecomm/Meetings/Search?dropid=4&amp;mtids=132">Land Use &amp; Housing Committee</a><br>
+<span class="fine-print">1:00 pm</span>
+<span class="pull-right"></span></li>
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="02" data-calendar-view-month="02" data-calendar-view-year="24" class="past friday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-02PST00:00:00" title="0 results for 2024-02-02">
+      2 <span class="dow">Friday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="03" data-calendar-view-month="02" data-calendar-view-year="24" class="past saturday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-03PST00:00:00" title="0 results for 2024-02-03">
+      3 <span class="dow">Saturday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+              </ul>
+      </div>
+</td>
+                  </tr>
+                      <tr class="even">
+                      <td data-calendar-view-day="04" data-calendar-view-month="02" data-calendar-view-year="24" class="past sunday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-04PST00:00:00" title="0 results for 2024-02-04">
+      4 <span class="dow">Sunday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="05" data-calendar-view-month="02" data-calendar-view-year="24" class="past monday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-05PST00:00:00" title="2 results for 2024-02-05">
+      5 <span class="dow">Monday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+                                      <li data-calendar-view-hash="d9a55623a73277a294e050834205175c" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecouncil">City Council</a><br>
+<span class="fine-print">2:00 pm</span>
+<span class="pull-right"></span></li>
+                                      <li data-calendar-view-hash="37f1e48c35e2cc6a0f266c4183346625" class="calendar-view-day__row">
+<a href="/event/closed-session-adjourned-4">Closed Session Adjourned</a><br>
+<span class="fine-print">10:00 am</span>
+<span class="pull-right"></span></li>
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="06" data-calendar-view-month="02" data-calendar-view-year="24" class="today tuesday current-month" data-calendar-view-today>
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-06PST00:00:00" title="2 results for 2024-02-06">
+      6 <span class="dow">Tuesday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+                                      <li data-calendar-view-hash="e49da17cb8d9cc5bb0cebc8175162834" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecouncil">City Council</a><br>
+<span class="fine-print">10:00 am</span>
+<span class="pull-right"></span></li>
+                                      <li data-calendar-view-hash="7ff047f1d3e7f788699a8ff3baa75ec5" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecouncil">City Council</a><br>
+<span class="fine-print">2:00 pm</span>
+<span class="pull-right"></span></li>
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="07" data-calendar-view-month="02" data-calendar-view-year="24" class="future wednesday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-07PST00:00:00" title="2 results for 2024-02-07">
+      7 <span class="dow">Wednesday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+                                      <li data-calendar-view-hash="00641a7e196733ea30ea9f213aed4426" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecomm/Meetings/Search?dropid=4&amp;mtids=116">B&amp;GE Committee Meeting</a><br>
+<span class="fine-print">9:00 am</span>
+<span class="pull-right"></span></li>
+                                      <li data-calendar-view-hash="2233e2f1110159e22457683d0a1facfc" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecomm/Meetings/Search?dropid=4&amp;mtids=122">ED&amp;IR Committee</a><br>
+<span class="fine-print">2:00 pm</span>
+<span class="pull-right"></span></li>
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="08" data-calendar-view-month="02" data-calendar-view-year="24" class="future thursday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-08PST00:00:00" title="1 result for 2024-02-08">
+      8 <span class="dow">Thursday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+                                      <li data-calendar-view-hash="cc2b5882bc8683899cd7bf44964d72aa" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecomm/Meetings/Search?dropid=4&amp;mtids=133">Community &amp; Neighborhood Services Committee</a><br>
+<span class="fine-print">1:00 pm</span>
+<span class="pull-right"></span></li>
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="09" data-calendar-view-month="02" data-calendar-view-year="24" class="future friday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-09PST00:00:00" title="0 results for 2024-02-09">
+      9 <span class="dow">Friday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="10" data-calendar-view-month="02" data-calendar-view-year="24" class="future saturday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-10PST00:00:00" title="0 results for 2024-02-10">
+      10 <span class="dow">Saturday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+              </ul>
+      </div>
+</td>
+                  </tr>
+                      <tr class="odd">
+                      <td data-calendar-view-day="11" data-calendar-view-month="02" data-calendar-view-year="24" class="future sunday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-11PST00:00:00" title="0 results for 2024-02-11">
+      11 <span class="dow">Sunday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="12" data-calendar-view-month="02" data-calendar-view-year="24" class="future monday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-12PST00:00:00" title="3 results for 2024-02-12">
+      12 <span class="dow">Monday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+                                      <li data-calendar-view-hash="ce76c5879a4a4204a9c1f4ebb8b2416f" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecouncil">City Council</a><br>
+<span class="fine-print">10:00 am</span>
+<span class="pull-right"></span></li>
+                                      <li data-calendar-view-hash="18a0372ae8f02b93e3ec3efc242cb4ac" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecouncil">Closed Session</a><br>
+<span class="fine-print">10:00 am</span>
+<span class="pull-right"></span></li>
+                                      <li data-calendar-view-hash="140107237058b31f5a112cdcd48d6479" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecouncil">City Council</a><br>
+<span class="fine-print">2:00 pm</span>
+<span class="pull-right"></span></li>
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="13" data-calendar-view-month="02" data-calendar-view-year="24" class="future tuesday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-13PST00:00:00" title="4 results for 2024-02-13">
+      13 <span class="dow">Tuesday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+                                      <li data-calendar-view-hash="76e3ffb2ca9f210d8e9ddcf3b51578fe" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecouncil">City Council</a><br>
+<span class="fine-print">10:00 am</span>
+<span class="pull-right"></span></li>
+                                      <li data-calendar-view-hash="0022c28d32f795f54c613290fcb80d94" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecouncil">City Council</a><br>
+<span class="fine-print">2:00 pm</span>
+<span class="pull-right"></span></li>
+                                      <li data-calendar-view-hash="112586c750908f99dde343edaec4ee58" class="calendar-view-day__row">
+<a href="https://sdhc.org/governance-legislative-affairs/housing-authority-of-the-city-of-san-diego/meeting/">Housing Authority</a><br>
+<span class="fine-print">2:00 pm</span>
+<span class="pull-right"></span></li>
+                                      <li data-calendar-view-hash="f082cd0e8fd681158f23f150eb44cab9" class="calendar-view-day__row">
+<a href="/event/public-facilities-financing-authority-2">Public Facilities Financing Authority</a><br>
+<span class="fine-print">2:00 pm</span>
+<span class="pull-right"></span></li>
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="14" data-calendar-view-month="02" data-calendar-view-year="24" class="future wednesday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-14PST00:00:00" title="2 results for 2024-02-14">
+      14 <span class="dow">Wednesday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+                                      <li data-calendar-view-hash="66499cec7e45174a292514020eb90c59" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecomm/Meetings/Search?dropid=4&amp;mtids=123">Public Safety Committee</a><br>
+<span class="fine-print">2:00 pm</span>
+<span class="pull-right"></span></li>
+                                      <li data-calendar-view-hash="cfe07537668ce79aaa655cf2de8b7cb1" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecomm/Meetings/Search?dropid=4&amp;mtids=119">Audit Committee</a><br>
+<span class="fine-print">9:00 am</span>
+<span class="pull-right"></span></li>
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="15" data-calendar-view-month="02" data-calendar-view-year="24" class="future thursday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-15PST00:00:00" title="1 result for 2024-02-15">
+      15 <span class="dow">Thursday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+                                      <li data-calendar-view-hash="1e02c7f0b6504edd50dc9361b2676137" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecomm/Meetings/Search?dropid=4&amp;mtids=120">Environment Committee</a><br>
+<span class="fine-print">1:00 pm</span>
+<span class="pull-right"></span></li>
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="16" data-calendar-view-month="02" data-calendar-view-year="24" class="future friday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-16PST00:00:00" title="0 results for 2024-02-16">
+      16 <span class="dow">Friday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="17" data-calendar-view-month="02" data-calendar-view-year="24" class="future saturday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-17PST00:00:00" title="0 results for 2024-02-17">
+      17 <span class="dow">Saturday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+              </ul>
+      </div>
+</td>
+                  </tr>
+                      <tr class="even">
+                      <td data-calendar-view-day="18" data-calendar-view-month="02" data-calendar-view-year="24" class="future sunday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-18PST00:00:00" title="0 results for 2024-02-18">
+      18 <span class="dow">Sunday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="19" data-calendar-view-month="02" data-calendar-view-year="24" class="future monday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-19PST00:00:00" title="1 result for 2024-02-19">
+      19 <span class="dow">Monday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+                                      <li data-calendar-view-hash="ef1d43117ca7d3b571aec4f0805f7662" class="calendar-view-day__row">
+<a href="/event/legislative-recess-28">Legislative Recess</a><br>
+<span class="fine-print">12:00 am</span>
+<span class="pull-right"></span></li>
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="20" data-calendar-view-month="02" data-calendar-view-year="24" class="future tuesday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-20PST00:00:00" title="1 result for 2024-02-20">
+      20 <span class="dow">Tuesday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+                                      <li data-calendar-view-hash="13d653386b1f6531bb02efe5ba39b0ae" class="calendar-view-day__row">
+<a href="/event/legislative-recess-28">Legislative Recess</a><br>
+<span class="fine-print">12:00 am</span>
+<span class="pull-right"></span></li>
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="21" data-calendar-view-month="02" data-calendar-view-year="24" class="future wednesday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-21PST00:00:00" title="2 results for 2024-02-21">
+      21 <span class="dow">Wednesday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+                                      <li data-calendar-view-hash="67ec74caf84e70b9ed81b7515435f3b2" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecomm/Meetings/Search?dropid=4&amp;mtids=117">Rules Committee</a><br>
+<span class="fine-print">9:00 am</span>
+<span class="pull-right"></span></li>
+                                      <li data-calendar-view-hash="6d0ee7b1614feffd08cb3d3b750d45f5" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecomm/Meetings/Search?dropid=4&amp;mtids=131">AT&amp;I Committee</a><br>
+<span class="fine-print">2:00 pm</span>
+<span class="pull-right"></span></li>
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="22" data-calendar-view-month="02" data-calendar-view-year="24" class="future thursday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-22PST00:00:00" title="0 results for 2024-02-22">
+      22 <span class="dow">Thursday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="23" data-calendar-view-month="02" data-calendar-view-year="24" class="future friday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-23PST00:00:00" title="0 results for 2024-02-23">
+      23 <span class="dow">Friday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="24" data-calendar-view-month="02" data-calendar-view-year="24" class="future saturday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-24PST00:00:00" title="0 results for 2024-02-24">
+      24 <span class="dow">Saturday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+              </ul>
+      </div>
+</td>
+                  </tr>
+                      <tr class="odd">
+                      <td data-calendar-view-day="25" data-calendar-view-month="02" data-calendar-view-year="24" class="future sunday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-25PST00:00:00" title="0 results for 2024-02-25">
+      25 <span class="dow">Sunday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="26" data-calendar-view-month="02" data-calendar-view-year="24" class="future monday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-26PST00:00:00" title="3 results for 2024-02-26">
+      26 <span class="dow">Monday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+                                      <li data-calendar-view-hash="26c93ed89776ea579d566c6baea40ae0" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecouncil">City Council</a><br>
+<span class="fine-print">10:00 am</span>
+<span class="pull-right"></span></li>
+                                      <li data-calendar-view-hash="f7e5e5ee4a441f29d218511430648f73" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecouncil">Closed Session</a><br>
+<span class="fine-print">10:00 am</span>
+<span class="pull-right"></span></li>
+                                      <li data-calendar-view-hash="4eb755fc7974257ee1f9d9f9acf28625" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecouncil">City Council</a><br>
+<span class="fine-print">2:00 pm</span>
+<span class="pull-right"></span></li>
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="27" data-calendar-view-month="02" data-calendar-view-year="24" class="future tuesday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-27PST00:00:00" title="2 results for 2024-02-27">
+      27 <span class="dow">Tuesday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+                                      <li data-calendar-view-hash="dcf79150dbc5090af838321877293419" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecouncil">City Council</a><br>
+<span class="fine-print">10:00 am</span>
+<span class="pull-right"></span></li>
+                                      <li data-calendar-view-hash="c90f8958457e8cd8d0f5a939cb45e853" class="calendar-view-day__row">
+<a href="https://sandiego.hylandcloud.com/211agendaonlinecouncil">City Council</a><br>
+<span class="fine-print">2:00 pm</span>
+<span class="pull-right"></span></li>
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="28" data-calendar-view-month="02" data-calendar-view-year="24" class="future wednesday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-28PST00:00:00" title="0 results for 2024-02-28">
+      28 <span class="dow">Wednesday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="29" data-calendar-view-month="02" data-calendar-view-year="24" class="future thursday current-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-02-29PST00:00:00" title="0 results for 2024-02-29">
+      29 <span class="dow">Thursday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="01" data-calendar-view-month="03" data-calendar-view-year="24" class="future friday next-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-03-01PST00:00:00" title="0 results for 2024-03-01">
+      1 <span class="dow">Friday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+              </ul>
+      </div>
+</td>
+                      <td data-calendar-view-day="02" data-calendar-view-month="03" data-calendar-view-year="24" class="future saturday next-month">
+<div class="calendar-view-day">
+      
+		    <time class="calendar-view-day__number" datetime="2024-03-02PST00:00:00" title="0 results for 2024-03-02">
+      2 <span class="dow">Saturday</span>
+    </time>
+	
+                  <ul class="calendar-view-day__rows">
+              </ul>
+      </div>
+</td>
+                  </tr>
+          </tbody>
+    </table>
+
+  </div>
+
+  
+    </div>
+  
+        </div>
+
+</div>
+</div>
+      
+              </div>
+      </div>
+    </div>
+  </div>
+
+</article>
+
+  </div>
+
+
+            </div>
+            
+          </main>
+
+                      <footer role="contentinfo" class="footer alto-bg">
+              
+
+  <div class="region region--footer grid-full layout--pass--content-medium ie11-autorow grid-container alto-bg">
+    <div class="region--footer__inner">
+      <div class="footer--left l-padding-ad">
+        <div class="grid-x">
+
+          <div class="cell medium-12 l-margin-bd">
+            <p class="text-center"><img class="footer--logo" src="/themes/custom/sand/images/cosd-logo/cosd-logo-initials-white.svg" alt="The City of San Diego - logo" width="50" height="auto"></p>
+            <ul class="socials l-margin-desktop-hn text-center">                        
+              <li><a class="icon--facebook" href="https://www.facebook.com/CityofSanDiego" title="Facebook" data-extlink="" target="_blank" rel="noopener noreferrer" class="extlink"><i class="icon-facebook"></i></a></li>
+              <li><a class="icon--twitter" href="https://twitter.com/CityofSanDiego" title="Twitter" data-extlink="" target="_blank" rel="noopener noreferrer" class="extlink"><i class="icon-twitter"></i></a></li>
+              <li><a class="icon--youtube" href="http://www.youtube.com/user/TheCityofSanDiego" title="YouTube" data-extlink="" target="_blank" rel="noopener noreferrer" class="extlink"><i class="icon-youtube"></i></a></li>
+              <li><a class="icon--instagram" href="https://www.instagram.com/cityofsandiego/" title="Instagram" data-extlink="" target="_blank" rel="noopener noreferrer" class="extlink"><i class="icon-instagram"></i></a></li>
+              <li><a class="icon--nextdoor" href="https://nextdoor.com/city/feed/748155/?i=wkjkutqnzmjazcaegxre" title="Nextdoor" data-extlink="" target="_blank" rel="noopener noreferrer" class="extlink"><i class="icon-nextdoor"></i></a></li>
+              <li><a class="icon--linkedin" href="https://www.linkedin.com/company/cityofsandiego" title="LinkedIn" data-extlink="" target="_blank" rel="noopener noreferrer" class="extlink"><i class="icon-linkedin"></i></a></li>
+            </ul>
+          </div>
+
+          <div class="cell medium-12">
+            <p class="text-center"><img src="/sites/default/files/mayor-todd-gloria-logo-white.png?v=1" alt="Mayor Todd Gloria logo" width="100" height="auto"></p>
+            <ul class="socials l-margin-desktop-hn  text-center" style="display: block">                        
+              <li><a class="icon--facebook" href="https://www.facebook.com/MayorToddGloria" title="Facebook" data-extlink="" target="_blank" rel="noopener noreferrer" class="extlink"><i class="icon-facebook"></i></a></li>
+              <li><a class="icon--twitter" href="https://twitter.com/MayorToddGloria" title="Twitter" data-extlink="" target="_blank" rel="noopener noreferrer" class="extlink"><i class="icon-twitter"></i></a></li>
+              <li><a class="icon--instagram" href="https://www.instagram.com/mayortoddgloria" title="Instagram" data-extlink="" target="_blank" rel="noopener noreferrer" class="extlink"><i class="icon-instagram"></i></a></li>
+              <li><a class="icon--linkedin" href="https://www.linkedin.com/in/toddgloria/" title="LinkedIn" data-extlink="" target="_blank" rel="noopener noreferrer" class="extlink"><i class="icon-linkedin"></i></a></li>
+              <li><a class="icon--nextdoor" href="https://nextdoor.com/agency/city-of-san-diego-office-of-the-mayor/?i=nmuhzmmgkbzqqvhqabbn" title="Nextdoor" data-extlink="" target="_blank" rel="noopener noreferrer" class="extlink"><i class="icon-nextdoor"></i></a></li>
+            </ul>
+          </div>
+          <div class="hidden">
+            <img class="footer--logo l-margin-mobile-bd" src="/themes/custom/sand/images/cosd-logo/cosd-logo-initials-white-color-sails.svg" alt="The City of San Diego - logo" width="50" height="auto">
+
+            <ul class="social-links">                        
+              <li><a class="icon--facebook" href="https://www.facebook.com/CityofSanDiego" title="Facebook"><i class="icon-facebook"></i></a></li>
+              <li><a class="icon--twitter" href="https://twitter.com/CityofSanDiego" title="Twitter"><i class="icon-twitter"></i></a></li>
+              <li><a class="icon--youtube" href="http://www.youtube.com/user/TheCityofSanDiego" title="YouTube"><i class="icon-youtube"></i></a></li>
+              <li><a class="icon--instagram" href="https://www.instagram.com/cityofsandiego/" title="Instagram"><i class="icon-instagram"></i></a></li>
+              <li><a class="icon--nextdoor" href="https://nextdoor.com/city/feed/748155/?i=wkjkutqnzmjazcaegxre" title="Nextdoor"><i class="icon-nextdoor"></i></a></li>
+              <li><a class="icon--linkedin" href="https://www.linkedin.com/company/cityofsandiego" title="LinkedIn"><i class="icon-linkedin"></i></a></li>
+            </ul>
+          </div>
+        </div>     
+        <p class="copyright text-center l-margin-tm">
+          Copyrighted © 2002-2024<br>
+          City of San Diego. All rights reserved.
+        </p>
+      </div>
+
+      <nav role="navigation" aria-labelledby="block-footer-menu" id="block-footer" class="block block-menu navigation menu--footer">
+            
+  <h2 class="visually-hidden" id="block-footer-menu">Footer</h2>
+  
+
+        
+              <ul class="sidebar-menu">
+              
+      <li class="menu-item--expanded">
+        <a href="/" data-drupal-link-system-path="&lt;front&gt;">Council Districts</a>
+                                <ul>
+              
+      <li>
+        <a href="/citycouncil/cd1" data-drupal-link-system-path="node/224202">Councilmember Joe LaCava (District 1)</a>
+              </li>
+          
+      <li>
+        <a href="/citycouncil/cd2" data-drupal-link-system-path="node/224188">Councilmember Jennifer Campbell (District 2)</a>
+              </li>
+          
+      <li>
+        <a href="/citycouncil/cd3" data-drupal-link-system-path="node/224203">Councilmember Stephen Whitburn (District 3)</a>
+              </li>
+          
+      <li>
+        <a href="/citycouncil/cd4" data-drupal-link-system-path="node/288067">Council District 4</a>
+              </li>
+          
+      <li>
+        <a href="/citycouncil/cd5" data-drupal-link-system-path="node/224204">Councilmember Marni von Wilpert (District 5)</a>
+              </li>
+          
+      <li>
+        <a href="/citycouncil/cd6" data-drupal-link-system-path="node/224218">Councilmember Kent Lee (District 6)</a>
+              </li>
+          
+      <li>
+        <a href="/citycouncil/cd7" data-drupal-link-system-path="node/224205">Councilmember Raul Campillo (District 7)</a>
+              </li>
+          
+      <li>
+        <a href="/citycouncil/cd8" data-drupal-link-system-path="node/224190">Councilmember Vivian Moreno (District 8)</a>
+              </li>
+          
+      <li>
+        <a href="/citycouncil/cd9" data-drupal-link-system-path="node/224206">Council President Sean Elo-Rivera (District 9)</a>
+              </li>
+        </ul>
+  
+              </li>
+          
+      <li class="menu-item--expanded">
+        <a href="/" data-drupal-link-system-path="&lt;front&gt;">City Officials &amp; Independent Offices</a>
+                                <ul>
+              
+      <li>
+        <a href="/mayor" data-drupal-link-system-path="node/15167">Office of Mayor Todd Gloria</a>
+              </li>
+          
+      <li>
+        <a href="/cityattorney" data-drupal-link-system-path="node/224124">City Attorney Mara W. Elliott</a>
+              </li>
+          
+      <li>
+        <a href="/ethics" data-drupal-link-system-path="node/224146">Ethics Commission</a>
+              </li>
+          
+      <li>
+        <a href="/auditor" data-drupal-link-system-path="node/224217">Office of the City Auditor</a>
+              </li>
+          
+      <li>
+        <a href="/city-clerk" data-drupal-link-system-path="node/224123">Office of the City Clerk</a>
+              </li>
+          
+      <li>
+        <a href="/treasurer" data-drupal-link-system-path="node/224135">Office of the City Treasurer</a>
+              </li>
+          
+      <li>
+        <a href="/iba" data-drupal-link-system-path="node/224127">Office of the Independent Budget Analyst</a>
+              </li>
+          
+      <li>
+        <a href="/empopp" data-drupal-link-system-path="node/224144">Personnel Department</a>
+              </li>
+        </ul>
+  
+              </li>
+          
+      <li class="menu-item--expanded">
+        <a href="/" data-drupal-link-system-path="&lt;front&gt;">Government Agencies</a>
+                                <ul>
+              
+      <li>
+        <a href="http://www.sandiegocounty.gov/">County of San Diego</a>
+              </li>
+          
+      <li>
+        <a href="http://www.ca.gov/">State of California</a>
+              </li>
+          
+      <li>
+        <a href="https://www.usa.gov/">Federal Government</a>
+              </li>
+        </ul>
+  
+              </li>
+        </ul>
+  
+
+
+  </nav>
+
+    </div>
+    <div class="region--footer__bottom">
+      
+    </div>
+
+    <div class="region--footer__privacy">
+      <ul>
+        <li><a href="/disclaimers">Disclaimers</a></li>
+        <li><a href="/privacy-policy">Privacy Policy</a></li>
+        <li><a href="/accessibility">Accessibility</a></li>
+        <li><a href="/translation">Language Translation</a></li>
+        <li><a href="/contact">Contact the City</a></li>
+      </ul>
+    </div>
+  </div>
+
+
+            </footer>
+                  </div>  </section>
+</div>
+
+  </div>
+
+    
+    <script type="application/json" data-drupal-selector="drupal-settings-json">{"path":{"baseUrl":"\/","scriptPath":null,"pathPrefix":"","currentPath":"node\/226394","currentPathIsAdmin":false,"isFront":false,"currentLanguage":"en","currentQuery":{"calendar_timestamp":"1706774400","current":"1709280000","date_format":"custom","date_pattern":"F","display_reset":"0","next":"1711954800","pager_type":"calendar_year","previous":"1706774400","use_previous_next":"0"}},"pluralDelimiter":"\u0003","suppressDeprecationErrors":true,"ajaxPageState":{"libraries":"asset_injector\/js\/google_analytics,calendar\/calendar.theme,calendar_view\/calendar,colorbox\/default,colorbox_inline\/colorbox_inline,colorbox_load\/colorbox_load,core\/drupal.tableresponsive,core\/normalize,datalayer\/behaviors,extlink\/drupal.extlink,mediteran\/global-styling,ng_lightbox\/ng_lightbox,sand\/accordion,sand\/atoms,sand\/beffix,sand\/datatables,sand\/flexslider,sand\/fonts,sand\/foundation,sand\/generic,sand\/helpers,sand\/imagezoom,sand\/initialize,sand\/linkprocessing,sand\/magnific,sand\/modal,sand\/modernizr,sand\/molecules,sand\/organisms,sand\/outreach2a,sand\/outreach2b,sand\/plugins,sand\/slides,sand\/stellar,sand\/tabs,sand\/translate,sand\/zurb-foundation,sand_admin\/google_translate,sitewide_alert\/init,system\/base,tb_megamenu\/theme.tb_megamenu,views\/views.module","theme":"sand","theme_token":null},"ajaxTrustedUrl":{"form_action_p_pvdeGsVG5zNF_XLGPTvYSKCf43t8qZYSwcfZl2uzM":true,"\/search\/site":true,"\/city-clerk\/officialdocs\/meetings-calendar":true},"colorbox":{"transition":"elastic","speed":350,"opacity":0.85,"slideshow":true,"slideshowAuto":true,"slideshowSpeed":3000,"slideshowStart":"start slideshow","slideshowStop":"stop slideshow","current":"{current} of {total}","previous":"\u00ab Prev","next":"Next \u00bb","close":"Close","overlayClose":true,"returnFocus":true,"maxWidth":"98%","maxHeight":"98%","initialWidth":"300","initialHeight":"250","fixed":true,"scrolling":true,"mobiledetect":true,"mobiledevicewidth":"480px"},"dataLayer":{"defaultLang":"en","languages":{"en":{"id":"en","name":"English","direction":"ltr","weight":0}}},"lazyLoadUrl":"\/term_reference_fancytree\/subTree","data":{"extlink":{"extTarget":true,"extTargetNoOverride":false,"extNofollow":false,"extNoreferrer":false,"extFollowNoOverride":false,"extClass":"0","extLabel":"(link is external)","extImgClass":false,"extSubdomains":true,"extExclude":".referenceusa\\.com","extInclude":"(^.+\\.(([pP][dD][fF]))$)|(^.+\\.(([mM][pP][3]))$)|(^.+\\.(([wW][aA][vV]))$)","extCssExclude":"","extCssExplicit":"","extAlert":false,"extAlertText":"This link will take you to an external web site. We are not responsible for their content.","mailtoClass":"0","mailtoLabel":"(link sends email)","extUseFontAwesome":true,"extIconPlacement":"append","extFaLinkClasses":"fa fa-external-link l-margin-ls","extFaMailtoClasses":"fa fa-envelope-o","whitelistedDomains":["referenceusa.com"]}},"TBMegaMenu":{"TBElementsCounter":{"column":13},"theme":"sand"},"sitewideAlert":{"refreshInterval":15000,"automaticRefresh":false},"user":{"uid":0,"permissionsHash":"f075853bdeea3a9fa56d60d03d249ec661015e42e377af01e87059ef30eb5b62"}}</script>
+<script src="/sites/default/files/js/js_gPiHLx5VRQwJTh11rN1IKg3JhyO0kNkGoINHelVmjq4.js"></script>
+<script src="//cdn.rawgit.com/igorlino/elevatezoom-plus/1.1.6/src/jquery.ez-plus.js"></script>
+<script src="/sites/default/files/js/js__QZ7cYH5Z9nMMtlOM9H19GUP2YB_6ib7SNMKUUcbNeY.js"></script>
+<script src="//a.fsdn.com/con/js/sftheme/vendor/modernizr.3.3.1.custom.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery-migrate/3.0.0/jquery-migrate.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/stellar.js/0.6.1/jquery.stellar.min.js"></script>
+<script src="/sites/default/files/js/js_dzX1dBFdajlq2SrmeWdsVKsK2w77nUvUELRQd3lUa3s.js"></script>
+<script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/magnific-popup.js/1.1.0/jquery.magnific-popup.min.js"></script>
+<script src="/sites/default/files/js/js_669jWwk9xB4FnTVte5Fii77ZGySEQcitpdNZkCCqW9I.js"></script>
+<script src="//cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="/sites/default/files/js/js_19wD4vKIJR-inEub6zqJDailUh3JUt_luYFGRqkx4CY.js"></script>
+
+    <script type="text/javascript">var _baTheme=0, _baMode='Audio/vision assist', _baUseCookies=true, _baHideOnLoad=true;</script>
+    <script type="text/javascript" src="//www.browsealoud.com/plus/scripts/ba.js"></script>
+    <script type="text/javascript" src="https://resources.digital-cloud-west.medallia.com/wdcwest/12990/onsite/embed.js" async></script>
+  <script type="text/javascript">window.NREUM||(NREUM={});NREUM.info={"beacon":"bam.nr-data.net","licenseKey":"NRJS-f71d0866c6680bc2a95","applicationID":"1330552533","transactionName":"bgdRN0dWV0MFUBBfX1dNcgBBXlZeS3cWQ0BYDm8NWlNcbCdcCkJCVg5fBkdrd18AVjJfVU4hXA1BRVZcCFYWGw5PC1YU","queueTime":0,"applicationTime":12070,"atts":"QkBSQQ9MRE0=","errorBeacon":"bam.nr-data.net","agent":""}</script></body>
+</html>
