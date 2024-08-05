@@ -12,7 +12,7 @@ class SandieCityCouncilSpider(CityScrapersSpider):
     agency = "San Diego City Council"
     timezone = "America/Los_Angeles"
     location = {
-        "address": "1600 Pacific Hwy., San Diego, California",
+        "address": "202 C Street, San Diego",
         "name": "San Diego County Administration Center",
     }
     base_url = "https://www.sandiego.gov/city-clerk/officialdocs/meetings-calendar"
