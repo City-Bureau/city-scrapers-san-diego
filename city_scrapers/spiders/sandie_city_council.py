@@ -13,7 +13,7 @@ class SandieCityCouncilSpider(CityScrapersSpider):
     timezone = "America/Los_Angeles"
     location = {
         "address": "202 C Street, San Diego",
-        "name": "San Diego County Administration Center",
+        "name": "San Diego City Administration Center",
     }
     base_url = "https://www.sandiego.gov/city-clerk/officialdocs/meetings-calendar"
 
