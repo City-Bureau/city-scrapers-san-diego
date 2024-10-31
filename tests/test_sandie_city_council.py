@@ -56,8 +56,8 @@ def test_status():
 
 def test_location():
     assert parsed_items[20]["location"] == {
-        "name": "San Diego County Administration Center",
-        "address": "1600 Pacific Hwy., San Diego, California",
+        "name": "San Diego City Administration Center",
+        "address": "202 C Street, San Diego",
     }
 
 
