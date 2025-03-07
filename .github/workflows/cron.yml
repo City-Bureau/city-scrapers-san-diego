@@ -4,9 +4,6 @@ on:
   schedule:
     - cron: "27 6 * * *"
   workflow_dispatch:
-  push:
-    branches:
-      - bug/fix-cache-action-deprecated-v1
 
 env:
   CI: true
