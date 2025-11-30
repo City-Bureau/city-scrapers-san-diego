@@ -72,7 +72,7 @@ class TulokUnionpsSpider(CityScrapersSpider):
 
     def _parse_links(self, item):
         """Parse or generate links."""
-        return [{"href": "", "title": ""}]
+        return []
 
     def _parse_source(self, response):
         """Parse or generate source."""

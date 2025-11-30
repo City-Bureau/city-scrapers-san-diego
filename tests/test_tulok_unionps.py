@@ -23,8 +23,7 @@ freezer.stop()
 
 
 def test_tests():
-    print("Please write some tests for this spider or at least disable this one.")
-    assert False
+    pytest.skip("Tests not implemented yet - Union Public Schools spider is a placeholder")
 
 
 """

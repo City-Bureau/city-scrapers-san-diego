@@ -1,9 +1,10 @@
+import re
 from datetime import datetime, timedelta
 
 from city_scrapers_core.constants import CITY_COUNCIL, COMMITTEE, NOT_CLASSIFIED
 from city_scrapers_core.items import Meeting
 from city_scrapers_core.spiders import CityScrapersSpider
-from scrapy import FormRequest, Request
+from scrapy import FormRequest, Request, Selector
 
 
 class TulokCityCouncilSpider(CityScrapersSpider):
@@ -122,17 +123,15 @@ class TulokCityCouncilSpider(CityScrapersSpider):
             if not start_time and "search_date" in response.meta:
                 try:
                     # Use the search date as fallback
-                    from datetime import datetime
                     search_date = response.meta["search_date"]
                     start_time = datetime.strptime(search_date, "%m/%d/%Y")
                     self.logger.warning(
                         f"Could not parse date from '{date_time_text}', "
                         f"using search date {search_date} as fallback"
                     )
-                except Exception as e:
-                    self.logger.error(
-                        f"Failed to parse date '{date_time_text}' "
-                        f"and fallback failed: {e}"
+                except ValueError:
+                    self.logger.exception(
+                        f"Failed to parse date '{date_time_text}' and fallback failed"
                     )
 
             # Only skip if we absolutely cannot determine a date
@@ -151,7 +150,7 @@ class TulokCityCouncilSpider(CityScrapersSpider):
                 all_day=self._parse_all_day(None),
                 time_notes=self._parse_time_notes(None),
                 location=self._parse_location(None),
-                links=self._parse_links_archive(row, doc_link),
+                links=self._parse_links_archive(row),
                 source=self._parse_source(response),
             )
 
@@ -204,7 +203,6 @@ class TulokCityCouncilSpider(CityScrapersSpider):
             date_str = item.css(".Date::text").get()
         else:
             # Parse from the HTML cell content
-            from scrapy import Selector
             cell_selector = Selector(text=date_cell)
             # Get all text and join, handling nbsp and line breaks
             text_parts = cell_selector.css("::text").getall()
@@ -214,7 +212,6 @@ class TulokCityCouncilSpider(CityScrapersSpider):
             return None
 
         # Clean up the date string (remove extra spaces, nbsp entities)
-        import re
         date_str = re.sub(r'\s+', ' ', date_str).strip()
         date_str = date_str.replace('\xa0', ' ')  # Replace nbsp
 
@@ -259,7 +256,6 @@ class TulokCityCouncilSpider(CityScrapersSpider):
 
         # Last resort: try to extract date components manually
         try:
-            import re
             # Match M/D/YYYY or MM/DD/YYYY with optional time
             match = re.match(r'(\d{1,2})/(\d{1,2})/(\d{4})(?:\s+(\d{1,2}):(\d{2})\s*(AM|PM))?', date_time_text)
             if match:
@@ -274,8 +270,8 @@ class TulokCityCouncilSpider(CityScrapersSpider):
                     hour = 0
 
                 return datetime(int(year), int(month), int(day), hour, minute)
-        except Exception:
-            pass
+        except (ValueError, AttributeError) as e:
+            self.logger.debug(f"Regex date parsing failed for '{date_time_text}': {e}")
 
         return None
 
@@ -320,7 +316,7 @@ class TulokCityCouncilSpider(CityScrapersSpider):
 
         return links
 
-    def _parse_links_archive(self, row, doc_link):
+    def _parse_links_archive(self, row):
         """Parse links from Council Archive listing."""
         links = []
 

@@ -1,7 +1,7 @@
 from datetime import datetime
 from os.path import dirname, join
 
-import pytest  # noqa
+import pytest
 from city_scrapers_core.constants import CITY_COUNCIL, COMMITTEE, TENTATIVE
 from city_scrapers_core.utils import file_response
 from freezegun import freeze_time
