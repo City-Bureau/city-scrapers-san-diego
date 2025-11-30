@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from city_scrapers_core.constants import CITY_COUNCIL, COMMITTEE, NOT_CLASSIFIED
 from city_scrapers_core.items import Meeting
 from city_scrapers_core.spiders import CityScrapersSpider
-from scrapy import FormRequest, Request, Selector
+from scrapy import Request, Selector
 
 
 class TulokCityCouncilSpider(CityScrapersSpider):
@@ -113,9 +113,6 @@ class TulokCityCouncilSpider(CityScrapersSpider):
             if not meeting_type:
                 continue
             meeting_type = meeting_type.strip()
-
-            # Get document links
-            doc_link = cells[1].css("a::attr(href)").get()
 
             start_time = self._parse_start_archive(date_time_text)
 
