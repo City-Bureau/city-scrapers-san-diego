@@ -11,13 +11,6 @@ from city_scrapers.mixins.sandie_citychula import ChulaVistaMixin
 
 spider_configs = [
     {
-        "class_name": "ChulaVistaSafetyCommissionSpider",
-        "name": "chula_vista_safety_commission",
-        "agency": "City of Chula Vista - Safety Commission",
-        "id": "chula_vista_safety",
-        "meeting_view_id": 29,
-    },
-    {
         "class_name": "ChulaVistaBoardOfEthicsSpider",
         "name": "chula_vista_board_of_ethics",
         "agency": "City of Chula Vista - Board of Ethics",
