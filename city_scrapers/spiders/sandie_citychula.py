@@ -16,7 +16,6 @@ spider_configs = [
         "agency": "City of Chula Vista - Safety Commission",
         "id": "chula_vista_safety",
         "meeting_view_id": 29,
-        "expanded_filter": "Safety Commission - Special",
     },
     {
         "class_name": "ChulaVistaBoardOfEthicsSpider",

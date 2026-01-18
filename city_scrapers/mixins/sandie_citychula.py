@@ -41,7 +41,6 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
     agency = None
     id = None
     meeting_view_id = None
-    # expanded_filter = None
 
     timezone = "America/Los_Angeles"
 
@@ -205,7 +204,7 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
                 seen_urls.add(url)
 
         if item.get("HasVideo") and item.get("VideoUrl"):
-            video_url = self._make_absolute_url(item["VideoUrl"])
+            video_url = self._make_absolute_url(item("VideoUrl"))
             if video_url and video_url not in seen_urls:
                 links.append({"href": video_url, "title": "Video"})
                 seen_urls.add(video_url)

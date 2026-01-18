@@ -79,7 +79,6 @@ def test_status(parsed_items):
     assert parsed_items[0]["status"] in ("tentative", "passed", "cancelled")
 
 
-@pytest.mark.parametrize("item", ["parsed_items"])
-def test_all_day(item, parsed_items):
+def test_all_day(parsed_items):
     for item in parsed_items:
         assert item["all_day"] is False
