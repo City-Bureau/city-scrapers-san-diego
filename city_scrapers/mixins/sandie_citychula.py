@@ -33,7 +33,6 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
     Required class attributes:
     - name: Spider name
     - agency: Agency name
-    - id: Unique identifier
     - meeting_view_id: eScribe meeting view ID
     """
 
@@ -41,6 +40,7 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
     agency = None
     id = None
     meeting_view_id = None
+    time_notes = None
 
     timezone = "America/Los_Angeles"
 
@@ -118,7 +118,6 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
                 yield meeting
 
     def _create_meeting(self, item):
-        source_url = self.api_url_calendar
 
         meeting = Meeting(
             title=self._parse_title(item),
@@ -127,10 +126,10 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
             start=self._parse_start(item),
             end=self._parse_end(item),
             all_day=False,
-            time_notes=item.get("TimeOverride", ""),
+            time_notes=self.time_notes,
             location=self._parse_location(item),
             links=self._parse_links(item),
-            source=source_url,
+            source=self.api_url_calendar,
         )
 
         if meeting["start"] is None:
@@ -188,6 +187,11 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         }
 
     def _parse_links(self, item):
+        """
+        Parse all links associated with a meeting.
+        :param item: Raw meeting data
+        :return: List of link dicts with 'href' and 'title' keys
+        """
         links = []
         seen_urls = set()
 
@@ -208,9 +212,5 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
             if video_url and video_url not in seen_urls:
                 links.append({"href": video_url, "title": "Video"})
                 seen_urls.add(video_url)
-
-        meeting_url = self._make_absolute_url(item.get("Url"))
-        if meeting_url and meeting_url not in seen_urls:
-            links.append({"href": meeting_url, "title": "Meeting Details"})
 
         return links
