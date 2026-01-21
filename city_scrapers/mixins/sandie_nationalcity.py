@@ -53,7 +53,7 @@ class SandieNationalCityMixin(
     name = None
     agency = None
     event_type = None
-    start_year = 2019  # Only scrape meetings from this year onwards
+    start_year = 2022  # Only scrape meetings from this year onwards
     time_notes = ""
 
     timezone = "America/Los_Angeles"
@@ -70,6 +70,39 @@ class SandieNationalCityMixin(
         "name": "National City Council Chambers",
         "address": "1243 National City Boulevard, National City, CA 91950",
     }
+
+    _MONTH_MAP = {
+        "january": 1,
+        "jan": 1,
+        "february": 2,
+        "feb": 2,
+        "march": 3,
+        "mar": 3,
+        "april": 4,
+        "apr": 4,
+        "may": 5,
+        "june": 6,
+        "jun": 6,
+        "july": 7,
+        "jul": 7,
+        "august": 8,
+        "aug": 8,
+        "september": 9,
+        "sep": 9,
+        "october": 10,
+        "oct": 10,
+        "november": 11,
+        "nov": 11,
+        "december": 12,
+        "dec": 12,
+    }
+
+    _DATE_PATTERNS = [
+        r"(\d{1,2})/(\d{1,2})/(\d{4})",
+        r"(\d{4})-(\d{1,2})-(\d{1,2})",
+        r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2}),?\s+(\d{4})",  # noqa
+        r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\.?\s+(\d{1,2}),?\s+(\d{4})",  # noqa
+    ]
 
     def _get_headers(self):
         """Return the request headers."""
@@ -493,77 +526,6 @@ class SandieNationalCityMixin(
         """Parse or generate all-day status. Defaults to False."""
         return False
 
-    def _parse_location(self, row):
-        """Parse or generate location."""
-        cells = row.css("td")
-
-        for cell in cells:
-            cell_text = " ".join(cell.css("::text").getall()).strip()
-
-            location_keywords = [
-                "room",
-                "chambers",
-                "hall",
-                "building",
-                "center",
-                "civic",
-                "conference",
-            ]
-            has_address = re.search(
-                r"\d+\s+[A-Za-z\s]+(?:Blvd|Boulevard|St|Street|Ave|Avenue|Rd|Road|Dr|Drive)",  # noqa
-                cell_text,
-                re.IGNORECASE,
-            )
-            has_location_keyword = any(
-                keyword in cell_text.lower() for keyword in location_keywords
-            )
-
-            if has_location_keyword or has_address:
-                location_info = self._extract_location_info(cell_text)
-                if location_info and (
-                    location_info.get("name") or location_info.get("address")
-                ):
-                    return location_info
-
-        return self.location
-
-    def _extract_location_info(self, text):
-        """Extract location name and address from text."""
-        if not text:
-            return None
-
-        text = re.sub(r"\s+", " ", text).strip()
-
-        address_pattern = r"(\d+\s+[A-Za-z\s]+(?:Blvd|Boulevard|St|Street|Ave|Avenue|Rd|Road|Dr|Drive)\.?\s*[A-Za-z\s,]*\s*\d{5})"  # noqa
-        address_match = re.search(address_pattern, text, re.IGNORECASE)
-
-        if address_match:
-            address = address_match.group(1).strip()
-
-            name_part = text[: address_match.start()].strip()
-
-            venue_keywords = ["room", "chambers", "hall", "center", "building"]
-            if name_part and any(
-                keyword in name_part.lower() for keyword in venue_keywords
-            ):
-                name = name_part
-            else:
-                name = None
-
-            return {
-                "name": name or "",
-                "address": address,
-            }
-
-        venue_keywords = ["room", "chambers", "hall", "center", "building"]
-        if any(keyword in text.lower() for keyword in venue_keywords):
-            return {
-                "name": text,
-                "address": "",
-            }
-
-        return None
-
     def _parse_links(self, row):
         """Parse or generate links."""
         links = []
@@ -620,87 +582,53 @@ class SandieNationalCityMixin(
         """Parse or generate source."""
         return response.url
 
+    def _parse_date(self, text):
+        """Parse date from text string. Returns datetime object or None."""
+        for pattern in self._DATE_PATTERNS:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                try:
+                    groups = match.groups()
+                    if len(groups) != 3:
+                        continue
+
+                    if groups[0].isdigit() and groups[1].isdigit():
+                        if len(groups[0]) == 4:
+                            year, month, day = (
+                                int(groups[0]),
+                                int(groups[1]),
+                                int(groups[2]),
+                            )
+                        else:
+                            month, day, year = (
+                                int(groups[0]),
+                                int(groups[1]),
+                                int(groups[2]),
+                            )
+                        return datetime(year, month, day)
+                    else:
+                        month_str = groups[0]
+                        day = int(groups[1])
+                        year = int(groups[2])
+                        month = self._MONTH_MAP.get(month_str.lower())
+                        if month:
+                            return datetime(year, month, day)
+                except (ValueError, AttributeError):
+                    continue
+        return None
+
     def _extract_datetime(self, text):
         """Extract datetime from text string."""
-        date_patterns = [
-            r"(\d{1,2})/(\d{1,2})/(\d{4})",
-            r"(\d{4})-(\d{1,2})-(\d{1,2})",
-            r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2}),?\s+(\d{4})",  # noqa
-            r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\.?\s+(\d{1,2}),?\s+(\d{4})",  # noqa
-        ]
-
         time_patterns = [
             r"(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)",
             r"(\d{1,2})\s*(AM|PM|am|pm)",
         ]
 
-        date_match = None
-        for pattern in date_patterns:
-            match = re.search(pattern, text, re.IGNORECASE)
-            if match:
-                date_match = match
-                break
-
-        if not date_match:
+        parsed_date = self._parse_date(text)
+        if not parsed_date:
             return None
 
         try:
-            groups = date_match.groups()
-            if len(groups) == 3:
-                if groups[0].isdigit() and groups[1].isdigit():
-                    if len(groups[0]) == 4:
-                        year, month, day = (
-                            int(groups[0]),
-                            int(groups[1]),
-                            int(groups[2]),
-                        )
-                    else:
-                        month, day, year = (
-                            int(groups[0]),
-                            int(groups[1]),
-                            int(groups[2]),
-                        )
-
-                    parsed_date = datetime(year, month, day)
-                else:
-                    month_str = groups[0]
-                    day = int(groups[1])
-                    year = int(groups[2])
-
-                    month_map = {
-                        "january": 1,
-                        "jan": 1,
-                        "february": 2,
-                        "feb": 2,
-                        "march": 3,
-                        "mar": 3,
-                        "april": 4,
-                        "apr": 4,
-                        "may": 5,
-                        "june": 6,
-                        "jun": 6,
-                        "july": 7,
-                        "jul": 7,
-                        "august": 8,
-                        "aug": 8,
-                        "september": 9,
-                        "sep": 9,
-                        "october": 10,
-                        "oct": 10,
-                        "november": 11,
-                        "nov": 11,
-                        "december": 12,
-                        "dec": 12,
-                    }
-
-                    month = month_map.get(month_str.lower())
-                    if month:
-                        parsed_date = datetime(year, month, day)
-                    else:
-                        return None
-            else:
-                return None
-
             for pattern in time_patterns:
                 time_match = re.search(pattern, text, re.IGNORECASE)
                 if time_match:
@@ -732,54 +660,11 @@ class SandieNationalCityMixin(
             r"to\s+(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)",
         ]
 
-        date_patterns = [
-            r"(\d{1,2})/(\d{1,2})/(\d{4})",
-            r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2}),?\s+(\d{4})",  # noqa
-        ]
-
-        date_match = None
-        for pattern in date_patterns:
-            match = re.search(pattern, text, re.IGNORECASE)
-            if match:
-                date_match = match
-                break
-
-        if not date_match:
+        parsed_date = self._parse_date(text)
+        if not parsed_date:
             return None
 
         try:
-            groups = date_match.groups()
-            if groups[0].isdigit() and groups[1].isdigit():
-                if len(groups[0]) == 4:
-                    year, month, day = int(groups[0]), int(groups[1]), int(groups[2])
-                else:
-                    month, day, year = int(groups[0]), int(groups[1]), int(groups[2])
-                parsed_date = datetime(year, month, day)
-            else:
-                month_str = groups[0]
-                day = int(groups[1])
-                year = int(groups[2])
-
-                month_map = {
-                    "january": 1,
-                    "february": 2,
-                    "march": 3,
-                    "april": 4,
-                    "may": 5,
-                    "june": 6,
-                    "july": 7,
-                    "august": 8,
-                    "september": 9,
-                    "october": 10,
-                    "november": 11,
-                    "december": 12,
-                }
-
-                month = month_map.get(month_str.lower())
-                if not month:
-                    return None
-                parsed_date = datetime(year, month, day)
-
             for pattern in time_range_patterns:
                 time_match = re.search(pattern, text, re.IGNORECASE)
                 if time_match:
