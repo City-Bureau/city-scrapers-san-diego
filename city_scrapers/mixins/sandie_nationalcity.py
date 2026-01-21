@@ -479,12 +479,12 @@ class SandieNationalCityMixin(
 
         if "commission" in title:
             return COMMISSION
+        elif "advisory" in title:
+            return ADVISORY_COMMITTEE
         elif "committee" in title:
             return COMMITTEE
         elif "board" in title:
             return BOARD
-        elif "advisory" in title:
-            return ADVISORY_COMMITTEE
         elif "council" in title:
             return CITY_COUNCIL
 

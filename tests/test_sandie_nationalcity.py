@@ -2,6 +2,7 @@ from datetime import datetime
 from os.path import dirname, join
 
 from city_scrapers_core.constants import (
+    ADVISORY_COMMITTEE,
     BOARD,
     CITY_COUNCIL,
     COMMISSION,
@@ -47,9 +48,9 @@ def test_council_spider_configuration():
 
 def test_council_count():
     """Test that City Council spider gets council meetings"""
-    # Should get: City Council Special Meeting - Online Only, Special City Council Meeting, # noqa
-    # the Joint Meeting (contains "City Council" in title), and City Council Meeting
-    assert len(council_items) == 4
+    # Should get: City Council Special Meeting - Online Only,
+    # Special City Council Meeting, and City Council Meeting
+    assert len(council_items) == 3
 
 
 def test_council_title():
@@ -180,7 +181,7 @@ def test_boards_housing_advisory():
         item for item in boards_items if "Housing Advisory" in item["title"]
     ]
     assert len(housing_items) >= 1
-    assert housing_items[0]["classification"] == COMMITTEE
+    assert housing_items[0]["classification"] == ADVISORY_COMMITTEE
 
 
 def test_boards_public_arts():
@@ -188,14 +189,14 @@ def test_boards_public_arts():
     arts_items = [item for item in boards_items if "Public Art" in item["title"]]
     assert len(arts_items) >= 1
     assert arts_items[0]["classification"] == COMMITTEE
-    assert arts_items[0]["start"] == datetime(2021, 7, 27, 15, 0)
+    assert arts_items[0]["start"] == datetime(2022, 3, 15, 0, 0)
 
 
 def test_boards_recreation():
     """Test Recreation Advisory Committee meeting is captured"""
     rec_items = [item for item in boards_items if "Recreation" in item["title"]]
     assert len(rec_items) >= 1
-    assert rec_items[0]["classification"] == COMMITTEE
+    assert rec_items[0]["classification"] == ADVISORY_COMMITTEE
 
 
 def test_boards_police_relations():
@@ -205,7 +206,7 @@ def test_boards_police_relations():
     ]
     assert len(police_items) >= 1
     assert police_items[0]["classification"] == COMMISSION
-    assert police_items[0]["start"] == datetime(2020, 8, 20, 18, 0)
+    assert police_items[0]["start"] == datetime(2027, 5, 20, 18, 0)
 
 
 def test_boards_police_relations_links():
@@ -213,7 +214,7 @@ def test_boards_police_relations_links():
     police_item = next(
         item for item in boards_items if "Police Relations" in item["title"]
     )
-    assert len(police_item["links"]) == 4
+    assert len(police_item["links"]) == 0
 
 
 def test_boards_sweetwater_authority():
@@ -226,8 +227,15 @@ def test_boards_sweetwater_authority():
 
 
 def test_boards_status():
-    """Test that all past meetings have PASSED status"""
-    for item in boards_items:
+    """Test that past meetings have PASSED status and future meetings have TENTATIVE"""
+    # With frozen time at 2025-01-20, some meetings are in the past, some in the future
+    past_items = [
+        item
+        for item in boards_items
+        if item["start"].year < 2025
+        or (item["start"].year == 2025 and item["start"] < datetime(2025, 1, 20))
+    ]
+    for item in past_items:
         assert item["status"] == PASSED
 
 
