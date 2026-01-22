@@ -21,7 +21,7 @@ class ChulaVistaMixinMeta(type):
     """
 
     def __init__(cls, name, bases, dct):
-        required_static_vars = ["agency", "name", "id", "meeting_view_id"]
+        required_static_vars = ["agency", "name", "meeting_view_id"]
         missing = [v for v in required_static_vars if v not in dct]
         if missing:
             raise NotImplementedError(f"{name} must define: {', '.join(missing)}")
@@ -34,13 +34,16 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
     - name: Spider name
     - agency: Agency name
     - meeting_view_id: eScribe meeting view ID
+
+    Optional class attributes:
+    - allowed_meeting_types: List/set of meeting type names to filter for
     """
 
     name = None
     agency = None
-    id = None
     meeting_view_id = None
     time_notes = None
+    allowed_meeting_types = None
 
     timezone = "America/Los_Angeles"
 
@@ -112,12 +115,21 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
             return
 
         for item in meetings:
-
             meeting = self._create_meeting(item)
             if meeting:
                 yield meeting
 
     def _create_meeting(self, item):
+        # Filter by meeting type if allowed_meeting_types is set
+        if self.allowed_meeting_types:
+            meeting_type = (item.get("MeetingType") or "").strip()
+            meeting_name = (item.get("MeetingName") or "").strip()
+
+            if (
+                meeting_type not in self.allowed_meeting_types
+                and meeting_name not in self.allowed_meeting_types
+            ):
+                return None
 
         meeting = Meeting(
             title=self._parse_title(item),
@@ -186,6 +198,17 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
             "address": address,
         }
 
+    def _normalize_link_title(self, title):
+        if not title:
+            return None
+
+        title = title.strip()
+
+        if title.lower() == "agenda en español":
+            return "Agenda (Spanish)"
+
+        return title
+
     def _parse_links(self, item):
         """
         Parse all links associated with a meeting.
@@ -198,14 +221,20 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         docs = item.get("MeetingDocumentLink", [])
         for doc in docs:
             url = self._make_absolute_url(doc.get("Url"))
-            if url and url not in seen_urls:
-                links.append(
-                    {
-                        "href": url,
-                        "title": doc.get("Title", "").strip(),
-                    }
-                )
-                seen_urls.add(url)
+            if not url or url in seen_urls:
+                continue
+
+            title = self._normalize_link_title(doc.get("Title"))
+            if not title:
+                continue
+
+            links.append(
+                {
+                    "href": url,
+                    "title": title,
+                }
+            )
+            seen_urls.add(url)
 
         if item.get("HasVideo") and item.get("VideoUrl"):
             video_url = self._make_absolute_url(item.get("VideoUrl"))
