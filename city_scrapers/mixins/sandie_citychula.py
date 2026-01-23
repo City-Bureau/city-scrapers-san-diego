@@ -4,6 +4,7 @@ Uses GetCalendarMeetings endpoint only.
 Filters on client side.
 """
 
+import html
 import json
 import re
 from datetime import datetime
@@ -52,6 +53,10 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         "https://pub-chulavista.escribemeetings.com/"
         "MeetingsCalendarView.aspx/GetCalendarMeetings"
     )
+
+    custom_settings = {
+        "ROBOTSTXT_OBEY": False,
+    }
 
     def _make_absolute_url(self, url):
         """Convert relative URL to absolute."""
@@ -108,11 +113,8 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         )
 
     def parse_calendar(self, response):
-        try:
-            data = json.loads(response.text)
-            meetings = data.get("d", [])
-        except json.JSONDecodeError:
-            return
+        data = response.json()
+        meetings = data.get("d", [])
 
         for item in meetings:
             meeting = self._create_meeting(item)
@@ -154,7 +156,8 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         return meeting
 
     def _parse_title(self, item):
-        return (item.get("MeetingName") or item.get("MeetingType", "")).strip()
+        title = (item.get("MeetingName") or item.get("MeetingType", "")).strip()
+        return html.unescape(title)
 
     def _parse_classification(self, item):
         title = item.get("MeetingType", "").lower()
@@ -191,6 +194,10 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
     def _parse_location(self, item):
         name = (item.get("Location") or "").strip()
         address = self._clean_html(item.get("Description", ""))
+
+        if address.startswith(name):
+            address = address[len(name) :].lstrip(", ").strip()
+
         if not address:
             address = name
         return {
