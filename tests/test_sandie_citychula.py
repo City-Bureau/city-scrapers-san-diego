@@ -47,7 +47,7 @@ def test_end(parsed_items):
 def test_location(parsed_items):
     assert parsed_items[0]["location"] == {
         "name": "City Hall, Bldg. A, Executive Conference Room #103",
-        "address": "City Hall, Bldg. A, Executive Conference Room #103, 276 Fourth Avenue, Chula Vista, CA",  # noqa
+        "address": "276 Fourth Avenue, Chula Vista, CA",
     }
 
 
@@ -76,7 +76,7 @@ def test_source(parsed_items):
 
 
 def test_status(parsed_items):
-    assert parsed_items[0]["status"] in ("tentative", "passed", "cancelled")
+    assert parsed_items[0]["status"] == "passed"
 
 
 def test_all_day(parsed_items):
