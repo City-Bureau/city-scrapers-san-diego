@@ -62,9 +62,7 @@ class SandieNationalCityMixin(
         "ROBOTSTXT_OBEY": False,
     }
 
-    start_urls = [
-        "https://www.nationalcityca.gov/government/boards-commissions-committees/-toggle-all/-sortn-EDate/-sortd-desc"  # noqa
-    ]
+    start_urls = "https://www.nationalcityca.gov/government/boards-commissions-committees/-toggle-all/-sortn-EDate/-sortd-desc"  # noqa
 
     location = {
         "name": "National City Council Chambers",
@@ -134,13 +132,9 @@ class SandieNationalCityMixin(
         return headers
 
     def start_requests(self):
-        """Generate requests with custom headers."""
-        for url in self.start_urls:
-            yield self.make_requests_from_url(url)
-
-    def make_requests_from_url(self, url):
-        """Create request with custom headers."""
-        return scrapy.Request(url=url, headers=self._get_headers(), callback=self.parse)
+        yield scrapy.Request(
+            url=self.start_urls, headers=self._get_headers(), callback=self.parse
+        )
 
     def parse(self, response):
         """
@@ -189,7 +183,9 @@ class SandieNationalCityMixin(
                             {
                                 "title": split_title,
                                 "description": self._parse_description(row),
-                                "classification": self._parse_classification(row),
+                                "classification": self._parse_classification_from_title(
+                                    split_title
+                                ),
                                 "start": start_date,
                                 "end": self._parse_end(row),
                                 "all_day": self._parse_all_day(row),
@@ -475,17 +471,22 @@ class SandieNationalCityMixin(
 
     def _parse_classification(self, row):
         """Parse or generate classification from allowed options."""
-        title = self._parse_title(row).lower()
+        title = self._parse_title(row)
+        return self._parse_classification_from_title(title)
 
-        if "commission" in title:
+    def _parse_classification_from_title(self, title):
+        """Determine classification based on title text."""
+        title_lower = title.lower()
+
+        if "commission" in title_lower:
             return COMMISSION
-        elif "advisory" in title:
+        elif "advisory" in title_lower:
             return ADVISORY_COMMITTEE
-        elif "committee" in title:
+        elif "committee" in title_lower:
             return COMMITTEE
-        elif "board" in title:
+        elif "board" in title_lower:
             return BOARD
-        elif "council" in title:
+        elif "council" in title_lower:
             return CITY_COUNCIL
 
         return NOT_CLASSIFIED
