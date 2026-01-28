@@ -11,7 +11,7 @@ spider_configs = [
         "name": "chula_vista_board_of_ethics",
         "agency": "City of Chula Vista - Board of Ethics",
         "meeting_view_id": 15,
-        "time_notes": "Regular meetings are held on the third Wednesday of each month. Please refer to the meeting attachments for more accurate start and end times.",
+        "time_notes": "Regular meetings are held on the third Wednesday of each month. Please refer to the meeting attachments for more accurate start and end times.",  # noqa
     },
     {
         "class_name": "ChulaVistaBoardOfAppealsAdvisorsSpider",

@@ -89,7 +89,7 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
             "Accept": "application/json, text/javascript, */*; q=0.01",
             "X-Requested-With": "XMLHttpRequest",
             "Origin": self.base_url.rstrip("/"),
-            "Referer": f"{self.base_url}?{self.meeting_id_param}={self.meeting_view_id}",
+            "Referer": f"{self.base_url}?{self.meeting_id_param}={self.meeting_view_id}",  # noqa
             "Cookie": "CurrentTab=calendar",
         }
 

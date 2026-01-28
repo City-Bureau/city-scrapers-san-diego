@@ -55,13 +55,19 @@ def test_links(parsed_items):
     links = parsed_items[0]["links"]
 
     # At least one document link should exist
-    assert len(links) >= 1
+    assert len(links) == 6
 
-    # Titles should come from MeetingDocumentLink.Title
-    titles = [link["title"] for link in links]
-    assert "Agenda Cover Page (PDF)" in titles
-    assert "Agenda (PDF)" in titles
-    assert "Agenda (HTML)" in titles
+    # Titles should come from MeetingDocumentLink.Title. Check for all expected titles
+    titles = {link["title"] for link in links}
+    expected_titles = {
+        "Agenda Cover Page (PDF)",
+        "Agenda (PDF)",
+        "Agenda (HTML)",
+        "Post Agenda (PDF)",
+        "Post Agenda (HTML)",
+        "Board of Ethics Regular Meeting Agenda - Spanish",
+    }
+    assert titles == expected_titles
 
     # URLs should be fully qualified and valid
     for link in links:
