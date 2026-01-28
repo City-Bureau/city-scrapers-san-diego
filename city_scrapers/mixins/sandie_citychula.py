@@ -37,12 +37,15 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
     - meeting_view_id: eScribe meeting view ID
 
     Optional class attributes:
+    - meeting_id_param: URL parameter name ("MeetingviewId" or "MeetingtypeId")
+                        Defaults to "MeetingviewId" if not specified
     - allowed_meeting_types: List/set of meeting type names to filter for
     """
 
     name = None
     agency = None
     meeting_view_id = None
+    meeting_id_param = "MeetingviewId"  # DEFAULT VALUE
     time_notes = None
     allowed_meeting_types = None
 
@@ -78,14 +81,15 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         yield from self._request_calendar_meetings()
 
     def _request_calendar_meetings(self):
-        url = f"{self.api_url_calendar}?MeetingViewId={self.meeting_view_id}"
+        # # Use the meeting_id_param (defaults to "MeetingviewId")
+        url = f"{self.api_url_calendar}?{self.meeting_id_param}={self.meeting_view_id}"
 
         headers = {
             "Content-Type": "application/json",
             "Accept": "application/json, text/javascript, */*; q=0.01",
             "X-Requested-With": "XMLHttpRequest",
             "Origin": self.base_url.rstrip("/"),
-            "Referer": f"{self.base_url}?MeetingViewId={self.meeting_view_id}",
+            "Referer": f"{self.base_url}?{self.meeting_id_param}={self.meeting_view_id}",
             "Cookie": "CurrentTab=calendar",
         }
 
