@@ -59,10 +59,24 @@ class SandieNationalCityMixin(
     timezone = "America/Los_Angeles"
 
     custom_settings = {
+        # Playwright (bot detection)
+        "TWISTED_REACTOR": "twisted.internet.asyncioreactor.AsyncioSelectorReactor",
+        "DOWNLOAD_HANDLERS": {
+            "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+            "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+        },
+        "PLAYWRIGHT_BROWSER_TYPE": "firefox",
+        "PLAYWRIGHT_LAUNCH_OPTIONS": {
+            "headless": True,
+        },
+        "DOWNLOAD_DELAY": 1,
         "ROBOTSTXT_OBEY": False,
+        "USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",  # noqa
     }
 
-    start_urls = "https://www.nationalcityca.gov/government/boards-commissions-committees/-toggle-all/-sortn-EDate/-sortd-desc"  # noqa
+    start_urls = [
+        "https://www.nationalcityca.gov/government/boards-commissions-committees/-toggle-all/-sortn-EDate/-sortd-desc"  # noqa
+    ]
 
     location = {
         "name": "National City Council Chambers",
@@ -132,9 +146,13 @@ class SandieNationalCityMixin(
         return headers
 
     def start_requests(self):
-        yield scrapy.Request(
-            url=self.start_urls, headers=self._get_headers(), callback=self.parse
-        )
+        for url in self.start_urls:
+            yield scrapy.Request(
+                url=url,
+                callback=self.parse,
+                headers=self._get_headers(),
+                meta={"playwright": True},
+            )
 
     def parse(self, response):
         """
@@ -220,7 +238,10 @@ class SandieNationalCityMixin(
                         url=detail_url,
                         callback=self.parse_detail,
                         headers=self._get_detail_headers(response.url),
-                        meta={"meeting_data_list": meeting_data_list},
+                        meta={
+                            "meeting_data_list": meeting_data_list,
+                            "playwright": True,
+                        },
                     )
                 else:
                     # No detail page -> yield meetings with fallback location
@@ -250,6 +271,7 @@ class SandieNationalCityMixin(
                     url=next_url,
                     callback=self.parse,
                     headers=self._get_headers(),
+                    meta={"playwright": True},
                 )
 
     def _matches_event_type(self, text):
