@@ -1,4 +1,5 @@
 from datetime import time
+
 from city_scrapers.mixins.sandie_planeboards import SandiePlanboardsMixin
 
 """
@@ -125,6 +126,7 @@ spider_configs = [
         "name": "sandie_navajo",
         "agency": "Navajo Community Planning Group",
         "group_param": "planning/community-plans/navajo/planning-group",
+        "default_time": time(18, 30),
     },
     {
         "class_name": "NormalHeightsSpider",
@@ -154,25 +156,23 @@ spider_configs = [
         "class_name": "OtayMesaSpider",
         "name": "sandie_otay_mesa",
         "agency": "Otay Mesa Community Planning Group",
-        "group_param": "otay-mesa",
+        "group_param": "planning/community-plans/otay-mesa/planning-group",
     },
     {
         "class_name": "OtayMesaNestorSpider",
         "name": "sandie_otay_mesa_nestor",
         "agency": "Otay Mesa-Nestor Community Planning Group",
         "group_param": "planning/community-plans/otay-mesa-nestor/planning-group",
+        "default_location_mesa_nestor": {
+            "name": "St. Charles Catholic School",
+            "address": "929 18th Street, San Diego, CA 92154",
+        },
     },
     {
         "class_name": "PacificBeachSpider",
         "name": "sandie_pacific_beach",
         "agency": "Pacific Beach Planning Group",
         "group_param": "staging/pacific-beach-planning-group",
-    },
-    {
-        "class_name": "PeninsulaSpider",
-        "name": "sandie_peninsula",
-        "agency": "Peninsula Community Planning Group",
-        "group_param": "planning/community-plans/peninsula/planning-group",
     },
     {
         "class_name": "RanchoBernardoSpider",

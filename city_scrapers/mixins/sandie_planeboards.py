@@ -1,14 +1,10 @@
 import re
-from datetime import datetime
+from datetime import datetime, time
 
 import scrapy
-from city_scrapers_core.constants import COMMITTEE, BOARD, CANCELLED
+from city_scrapers_core.constants import BOARD, CANCELLED, COMMITTEE
 from city_scrapers_core.items import Meeting
 from city_scrapers_core.spiders import CityScrapersSpider
-from w3lib.html import remove_tags
-import re
-from datetime import datetime, time
-from dateutil.relativedelta import relativedelta, MO, TU, WE, TH, FR, SA, SU
 
 
 class SandiePlanboardsMixinMeta(type):
@@ -39,9 +35,10 @@ class SandiePlanboardsMixin(CityScrapersSpider, metaclass=SandiePlanboardsMixinM
 
     custom_settings = {
         "ROBOTSTXT_OBEY": False,
+        "FEED_EXPORT_ENCODING": "utf-8",
     }
 
-    _time_notes = "Please refer to the meeting attachments for more accurate meeting time and location."
+    _time_notes = "Please refer to the meeting attachments for more accurate meeting time and location."  # noqa
 
     main_url = "https://www.sandiego.gov/"
 
@@ -70,13 +67,16 @@ class SandiePlanboardsMixin(CityScrapersSpider, metaclass=SandiePlanboardsMixinM
                 source=response.url,
             )
 
-            meeting["status"] = self._get_status(meeting, record["title"])
+            full_li_text = record.get("li_text", record["title"])
+            meeting["status"] = self._get_status(meeting, full_li_text)
             meeting["id"] = self._get_id(meeting)
 
             yield meeting
 
     def _get_status(self, meeting, title):
-        if re.search(r"\b(adjournment|adjourned|date change|no meeting)\b", title, re.IGNORECASE):
+        if re.search(
+            r"\b(adjournment|adjourned|date change|no meeting)\b", title, re.IGNORECASE
+        ):
             return CANCELLED
         return super()._get_status(meeting, title)
 
@@ -105,7 +105,7 @@ class SandiePlanboardsMixin(CityScrapersSpider, metaclass=SandiePlanboardsMixinM
             )
 
         return links
-    
+
     def _extract_date(self, title, meeting_time=None):
         MONTH_TYPOS = {
             "feruary": "february",
@@ -129,25 +129,24 @@ class SandiePlanboardsMixin(CityScrapersSpider, metaclass=SandiePlanboardsMixinM
         title_normalized = re.sub(r"\s*,\s*", ", ", title_normalized)
 
         match = re.search(
-            r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s*\d{4}",
+            r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s*\d{4}",  # noqa
             title_normalized,
             re.IGNORECASE,
         )
         if not match:
             return None
-        
+
         meeting_date = datetime.strptime(match.group(), "%B %d, %Y").date()
 
         return datetime.combine(meeting_date, meeting_time)
-    
+
     def _extract_time(self, response):
         recurring_info = response.xpath(
             '//h2[normalize-space()="Meeting Info"]/following-sibling::div'
         )
 
-        time_elements = (
-            recurring_info.css('div.cell.auto p') or 
-            recurring_info.xpath('.//div[contains(@class, "ten sm-ten columns")]')
+        time_elements = recurring_info.css("div.cell.auto p") or recurring_info.xpath(
+            './/div[contains(@class, "ten sm-ten columns")]'
         )
 
         if time_elements:
@@ -163,17 +162,17 @@ class SandiePlanboardsMixin(CityScrapersSpider, metaclass=SandiePlanboardsMixinM
             raw = meeting_time.group().lower()
             normalized = re.sub(
                 r"\b(\d{1,2})(?::(\d{2}))?\s*(a\.?m\.?|p\.?m\.?)\.?",
-                lambda m: f"{m.group(1)}:{m.group(2) or '00'} {'AM' if m.group(3).startswith('a') else 'PM'}",
+                lambda m: f"{m.group(1)}:{m.group(2) or '00'} {'AM' if m.group(3).startswith('a') else 'PM'}",  # noqa
                 raw,
             )
             meeting_time = datetime.strptime(normalized.strip(), "%I:%M %p").time()
         elif "noon" in time_text.get().lower():
             meeting_time = time(12, 0)
         else:
-            meeting_time = time(0, 0)
+            meeting_time = getattr(self, "default_time", None) or time(0, 0)
 
         return meeting_time
-    
+
     def _parse_meetings(self, response):
         agendas = []
         minutes_by_date = {}
@@ -181,33 +180,60 @@ class SandiePlanboardsMixin(CityScrapersSpider, metaclass=SandiePlanboardsMixinM
         meeting_time = self._extract_time(response)
 
         for agenda in response.xpath(
-            "//div[@id='tab-item-1']//li[a and not(ancestor::li/ul)]/a[contains(@href, '.pdf')]"
+            "//div[@id='tab-item-1']//li[a and not(ancestor::li/ul)]/a[contains(@href, '.pdf')]"  # noqa
         ):
-            title = re.sub(r"\s+", " ", agenda.css("::text").get("")).strip()
-            date = self._extract_date(title, meeting_time)
+            link_title = re.sub(r"\s+", " ", agenda.css("::text").get("")).strip()
+            li_text = re.sub(
+                r"\s+",
+                " ",
+                " ".join(agenda.xpath("./parent::li").css("::text").getall()),
+            ).strip()
+            li_text = re.sub(
+                r"\b([A-Z])\s+([a-z])", r"\1\2", li_text
+            )  # Fix split words like "J anuary"
+            dates = self._split_date_range(li_text, meeting_time)
+            if not dates:
+                single_date = self._extract_date(
+                    li_text, meeting_time
+                ) or self._extract_date(link_title, meeting_time)
+                if single_date:
+                    dates = [single_date]
 
-            if date:
-                agendas.append({
-                    "title": title,
-                    "agenda_url": response.urljoin(agenda.attrib["href"]),
-                    "date": date,
-                })
+            for date in dates or []:
+                agendas.append(
+                    {
+                        "title": link_title,
+                        "li_text": li_text,
+                        "agenda_url": response.urljoin(agenda.attrib["href"]),
+                        "date": date,
+                    }
+                )
+
+        minutes_by_date = {}  # date only — for normal meetings
+        minutes_by_date_title = {}  # date + title — for same-day meetings
 
         for minutes in response.xpath(
-            "//div[@id='tab-item-2']//li[a and not(ancestor::li/ul)]/a[contains(@href, '.pdf')]"
+            "//div[@id='tab-item-2']//li[a and not(ancestor::li/ul)]/a[contains(@href, '.pdf')]"  # noqa
         ):
             title = re.sub(r"\s+", " ", minutes.css("::text").get("")).strip()
             date = self._extract_date(title, meeting_time)
-
             if date:
                 minutes_by_date[date] = response.urljoin(minutes.attrib["href"])
-        
+                minutes_by_date_title[(date, title)] = response.urljoin(
+                    minutes.attrib["href"]
+                )
+
         for agenda in agendas:
-            if minutes_by_date.get(agenda["date"]):
-                agenda["minute_url"] = minutes_by_date[agenda["date"]]
+            minute_url = (
+                minutes_by_date_title.get((agenda["date"], agenda["li_text"]))
+                or minutes_by_date_title.get((agenda["date"], agenda["title"]))
+                or minutes_by_date.get(agenda["date"])
+            )
+            if minute_url:
+                agenda["minute_url"] = minute_url
 
         return agendas
-    
+
     def _parse_title(self, title):
         title_str = title.strip()
 
@@ -224,11 +250,7 @@ class SandiePlanboardsMixin(CityScrapersSpider, metaclass=SandiePlanboardsMixinM
             title_str,
             re.IGNORECASE,
         )
-        regular_pattern = re.fullmatch(
-            r"(agenda)",
-            title_str,
-            re.IGNORECASE
-        )
+        regular_pattern = re.fullmatch(r"(agenda)", title_str, re.IGNORECASE)
 
         regular_condition = not title_str or regular_pattern
 
@@ -246,10 +268,12 @@ class SandiePlanboardsMixin(CityScrapersSpider, metaclass=SandiePlanboardsMixinM
             r"^meeting (cancellation|cancelation|adjournment|Postponement) notice$",
             r"^(cancelled|cancellation|postponement|adjournment) notice$",
             r"^notice of (cancellation|postponement|adjournment)$",
-            r"^Notice of Meeting (cancellation|cancelation|postponement|adjournment|date change)$",
+            r"^Notice of Meeting (cancellation|cancelation|postponement|adjournment|date change)$",  # noqa
         ]
 
-        if any(re.search(p.lower(), title_str.lower()) for p in cancellation_only_patterns):
+        if any(
+            re.search(p.lower(), title_str.lower()) for p in cancellation_only_patterns
+        ):
             return "Regular Meeting"
 
         title_str = re.sub(
@@ -287,26 +311,33 @@ class SandiePlanboardsMixin(CityScrapersSpider, metaclass=SandiePlanboardsMixinM
                 return parts[-1]
 
         return title_str or "Regular Meeting"
-    
+
     def _parse_location(self, response):
         meeting_info = response.xpath(
             '//h2[normalize-space()="Meeting Info"]/following-sibling::div'
         )
 
-        location_elements = (
-            meeting_info.xpath('.//div[contains(@class, "cell auto")]') or
-            meeting_info.xpath('.//div[contains(@class, "ten sm-ten columns")]')
-        )
+        location_elements = meeting_info.xpath(
+            './/div[contains(@class, "cell auto")]'
+        ) or meeting_info.xpath('.//div[contains(@class, "ten sm-ten columns")]')
 
         if location_elements:
             raw_location_info = location_elements[1]
 
-        location_info = [text.strip() for text in raw_location_info.xpath('.//p//text()').getall() if text.strip()]
+        location_info = [
+            text.strip()
+            for text in raw_location_info.xpath(".//p//text()").getall()
+            if text.strip()
+        ]
         test_text = " ".join(text.lower() for text in location_info)
         location = {}
 
         location_text = " ".join(location_info)
-        location_text = re.sub(r'\s,', ',', location_text).strip()
+        location_text = location_text.replace("\u00a0", " ")  # Fix non-breaking spaces
+        location_text = re.sub(
+            r"\s+", " ", location_text
+        ).strip()  # Collapse extra spaces and trim
+        location_text = re.sub(r"\s,", ",", location_text).strip()
         location_match = re.search(r"\b\d{1,5}\s+[A-Za-z]", location_text)
 
         if "check" in test_text and "agenda" in test_text:
@@ -316,12 +347,46 @@ class SandiePlanboardsMixin(CityScrapersSpider, metaclass=SandiePlanboardsMixinM
             location["name"] = "Virtual Meeting"
             location["address"] = ""
         else:
-            # location["name"] = " ".join(self._normalize_p_text(location_info[:2])) if len(location_info) > 3 else self._normalize_p_text(location_info[0])
-            # location["address"] = ", ".join(location_info[2:]) if len(location_info) > 3 else ", ".join(location_info[1:])
-            location["name"] = location_text[:location_match.start()].strip(" ,")
-            location["address"] = location_text[location_match.start():].strip(" ,")
+            if location_match:
+                location["name"] = location_text[: location_match.start()].strip(" ,")
+                location["address"] = location_text[location_match.start() :].strip(
+                    " ,"
+                )
+            else:
+                default_location_mesa_nestor = getattr(
+                    self, "default_location_mesa_nestor", None
+                )
+                if default_location_mesa_nestor:
+                    return default_location_mesa_nestor
+                # No street address pattern found, store everything as name
+                location["name"] = location_text.strip(" ,")
+                location["address"] = ""
 
         return location
 
     def _normalize_p_text(self, p):
-        return re.sub(r'\s+', ' ', p).strip()
+        return re.sub(r"\s+", " ", p).strip()
+
+    def _split_date_range(self, title, meeting_time):
+        match = re.search(
+            r"(January|February|March|April|May|June|July|August|September|October|November|December)"  # noqa
+            r"\s+(\d{1,2}),?\s*[&,]\s*(\d{1,2})\s+(\d{4})",
+            title,
+            re.IGNORECASE,
+        )
+        if not match:
+            return None
+
+        month, day1, day2, year = (
+            match.group(1),
+            match.group(2),
+            match.group(3),
+            match.group(4),
+        )
+        date1 = datetime.strptime(f"{month} {day1}, {year}", "%B %d, %Y").date()
+        date2 = datetime.strptime(f"{month} {day2}, {year}", "%B %d, %Y").date()
+
+        return [
+            datetime.combine(date1, meeting_time),
+            datetime.combine(date2, meeting_time),
+        ]
