@@ -6,9 +6,10 @@ name = "pypi"
 [packages]
 scrapy = "*"
 scrapy-sentry-errors = "*"
-city-scrapers-core = {ref = "main", git = "https://github.com/City-Bureau/city-scrapers-core.git", extras = ["azure"]}
+city-scrapers-core = {path = "/Users/duongcaochanh/duong.cao/city-scrapers-core", editable = true, extras = ["azure"]}
 scrapy-wayback-middleware = "*"
 pytz = "*"
+scrapy-playwright = "*"
 
 [dev-packages]
 freezegun = "*"
