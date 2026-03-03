@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-scrapy = "*"
+scrapy = "==2.11.2"
 scrapy-sentry-errors = "*"
 city-scrapers-core = {path = "/Users/duongcaochanh/duong.cao/city-scrapers-core", editable = true, extras = ["azure"]}
 scrapy-wayback-middleware = "*"
