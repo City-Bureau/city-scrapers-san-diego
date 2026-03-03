@@ -41,7 +41,7 @@ freezer.stop()
 
 def test_council_spider_configuration():
     """Test that City Council spider is properly configured"""
-    assert council_spider.name == "sandie_citycouncil"
+    assert council_spider.name == "sandie_national_council_committees"
     assert council_spider.agency == "Sandie City Council"
     assert council_spider.event_type == "City Council"
 
@@ -130,7 +130,7 @@ def test_council_source():
 def test_council_id():
     """Test that unique ID is generated"""
     for item in council_items:
-        assert item["id"].startswith("sandie_citycouncil/")
+        assert item["id"].startswith("sandie_national_council_committees/")
 
 
 # ============ Boards & Commissions Spider Tests ============
@@ -138,7 +138,7 @@ def test_council_id():
 
 def test_boards_spider_configuration():
     """Test that Boards & Commissions spider is properly configured"""
-    assert boards_spider.name == "sandie_boards_commissions"
+    assert boards_spider.name == "sandie_national_boards_commissions"
     assert boards_spider.agency == "Sandie Boards and Commissions"
     assert isinstance(boards_spider.event_type, list)
 

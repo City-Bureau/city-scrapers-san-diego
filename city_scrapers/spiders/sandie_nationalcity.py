@@ -32,13 +32,13 @@ Boards & Commissions:
 spider_configs = [
     {
         "class_name": "SandieCityCouncilSpider",
-        "name": "sandie_citycouncil",
+        "name": "sandie_national_council_committees",
         "agency": "Sandie City Council",
         "event_type": "City Council",
     },
     {
         "class_name": "SandieBoardsCommissionsSpider",
-        "name": "sandie_boards_commissions",
+        "name": "sandie_national_boards_commissions",
         "agency": "Sandie Boards and Commissions",
         "event_type": [
             "Board of Library Trustees",
