@@ -74,9 +74,7 @@ class SandieNationalCityMixin(
         "USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",  # noqa
     }
 
-    start_urls = [
-        "https://www.nationalcityca.gov/government/boards-commissions-committees/-toggle-all/-sortn-EDate/-sortd-desc"  # noqa
-    ]
+    start_url = "https://www.nationalcityca.gov/government/boards-commissions-committees/-toggle-all/-sortn-EDate/-sortd-desc"  # noqa
 
     location = {
         "name": "National City Council Chambers",
@@ -146,13 +144,12 @@ class SandieNationalCityMixin(
         return headers
 
     def start_requests(self):
-        for url in self.start_urls:
-            yield scrapy.Request(
-                url=url,
-                callback=self.parse,
-                headers=self._get_headers(),
-                meta={"playwright": True},
-            )
+        yield scrapy.Request(
+            url=self.start_url,
+            callback=self.parse,
+            headers=self._get_headers(),
+            meta={"playwright": True},
+        )
 
     def parse(self, response):
         """
