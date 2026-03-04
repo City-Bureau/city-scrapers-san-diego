@@ -14,7 +14,13 @@ class SandiePlanboardsMixinMeta(type):
     """
 
     def __init__(cls, name, bases, dct):
-        required_static_vars = ["agency", "name", "group_param", "meeting_time", "meeting_location"]  # noqa
+        required_static_vars = [
+            "agency",
+            "name",
+            "group_param",
+            "meeting_time",
+            "meeting_location",
+        ]  # noqa
         missing_vars = [var for var in required_static_vars if var not in dct]
 
         if missing_vars:
