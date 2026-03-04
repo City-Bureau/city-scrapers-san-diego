@@ -197,12 +197,15 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
             ):
                 return None
 
+        meeting_start = self._parse_datetime(item.get("StartDate"))
+        meeting_end = self._parse_datetime(item.get("EndDate"))
+
         meeting = Meeting(
             title=self._parse_title(item),
             description="",
             classification=self._parse_classification(item),
-            start=self._parse_start(item),
-            end=self._parse_datetime(item.get("EndDate")),
+            start=meeting_start,
+            end=meeting_end,
             all_day=False,
             time_notes=self.time_notes,
             location=self._parse_location(item),
@@ -309,10 +312,6 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
             return datetime.strptime(date_str, "%Y/%m/%d %H:%M:%S")
         except ValueError:
             return None
-
-    def _parse_start(self, item):
-        """Parse meeting start datetime."""
-        return self._parse_datetime(item.get("StartDate"))
 
     def _parse_location(self, item):
         name = (item.get("Location") or "").strip()
