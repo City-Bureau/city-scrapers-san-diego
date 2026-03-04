@@ -97,6 +97,7 @@ def test_all_day(parsed_items):
 
 # --- upcoming meeting tests from city main calendar ---
 
+
 def test_upcoming_title(parsed_items_with_upcoming):
     upcoming = [i for i in parsed_items_with_upcoming if i["status"] == "tentative"]
     assert any("Board of Ethics" in i["title"] for i in upcoming)

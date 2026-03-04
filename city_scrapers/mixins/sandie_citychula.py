@@ -255,7 +255,7 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
                 try:
                     if time_match:
                         start = datetime.strptime(
-                            f"{year}-{month:02d}-{day:02d} {time_match.group(1).strip()}", # noqa
+                            f"{year}-{month:02d}-{day:02d} {time_match.group(1).strip()}",  # noqa
                             "%Y-%m-%d %I:%M %p",
                         )
                     else:
