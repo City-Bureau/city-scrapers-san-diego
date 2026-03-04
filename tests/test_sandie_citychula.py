@@ -1,5 +1,6 @@
 from datetime import datetime
 from os.path import dirname, join
+from unittest.mock import patch
 
 import pytest
 from city_scrapers_core.constants import BOARD
@@ -8,19 +9,31 @@ from freezegun import freeze_time
 
 from city_scrapers.spiders.sandie_citychula import ChulaVistaBoardOfEthicsSpider
 
-# Load a saved JSON response (example)
 test_response = file_response(
     join(dirname(__file__), "files", "sandie_citychula.json"),
     url="https://pub-chulavista.escribemeetings.com/MeetingsCalendarView.aspx/GetCalendarMeetings?MeetingViewId=15",  # noqa
 )
 
-spider = ChulaVistaBoardOfEthicsSpider()  # ← Changed spider name
+# Load saved city calendar HTML
+with open(join(dirname(__file__), "files", "sandie_citychula_calendar.html")) as f:
+    calendar_html = f.read()
+
+spider = ChulaVistaBoardOfEthicsSpider()
 
 
 @pytest.fixture
 def parsed_items():
     with freeze_time("2026-01-09"):
         return list(spider.parse_calendar(test_response))
+
+
+@pytest.fixture
+def parsed_items_with_upcoming():
+    with freeze_time("2026-01-09"):
+        with patch.object(spider, "_fetch_city_calendar", return_value=calendar_html):
+            spider._calendar_meetings = []
+            requests = list(spider.start_requests())  # triggers city calendar fetch
+            return list(spider.parse_calendar(test_response))
 
 
 def test_count(parsed_items):
@@ -40,7 +53,6 @@ def test_start(parsed_items):
 
 
 def test_end(parsed_items):
-    # Add test for end time since you added it
     assert parsed_items[0]["end"] == datetime(2025, 12, 17, 18, 15)
 
 
@@ -53,11 +65,7 @@ def test_location(parsed_items):
 
 def test_links(parsed_items):
     links = parsed_items[0]["links"]
-
-    # At least one document link should exist
     assert len(links) == 6
-
-    # Titles should come from MeetingDocumentLink.Title. Check for all expected titles
     titles = {link["title"] for link in links}
     expected_titles = {
         "Agenda Cover Page (PDF)",
@@ -68,15 +76,12 @@ def test_links(parsed_items):
         "Board of Ethics Regular Meeting Agenda - Spanish",
     }
     assert titles == expected_titles
-
-    # URLs should be fully qualified and valid
     for link in links:
         assert link["href"].startswith("http")
 
 
 def test_source(parsed_items):
-    source = parsed_items[0]["source"]
-    assert source.startswith(
+    assert parsed_items[0]["source"].startswith(
         "https://pub-chulavista.escribemeetings.com/MeetingsCalendarView.aspx/GetCalendarMeetings"  # noqa
     )
 
@@ -88,3 +93,22 @@ def test_status(parsed_items):
 def test_all_day(parsed_items):
     for item in parsed_items:
         assert item["all_day"] is False
+
+
+# --- upcoming meeting tests from city main calendar ---
+
+def test_upcoming_title(parsed_items_with_upcoming):
+    upcoming = [i for i in parsed_items_with_upcoming if i["status"] == "tentative"]
+    assert any("Board of Ethics" in i["title"] for i in upcoming)
+
+
+def test_upcoming_start_in_future(parsed_items_with_upcoming):
+    upcoming = [i for i in parsed_items_with_upcoming if i["status"] == "tentative"]
+    for item in upcoming:
+        assert item["start"] >= datetime(2026, 1, 9)
+
+
+def test_upcoming_links_empty(parsed_items_with_upcoming):
+    upcoming = [i for i in parsed_items_with_upcoming if i["status"] == "tentative"]
+    for item in upcoming:
+        assert item["links"] == []
