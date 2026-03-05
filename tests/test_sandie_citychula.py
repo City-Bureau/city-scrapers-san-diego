@@ -15,7 +15,11 @@ test_response = file_response(
 )
 
 # Load saved city calendar HTML
-with open(join(dirname(__file__), "files", "sandie_citychula_calendar.html"), "r", encoding="utf-8") as f:
+with open(
+    join(dirname(__file__), "files", "sandie_citychula_calendar.html"),
+    "r",
+    encoding="utf-8",
+) as f:
     calendar_html = f.read()
 
 spider = ChulaVistaBoardOfEthicsSpider()
