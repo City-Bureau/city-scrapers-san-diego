@@ -36,7 +36,7 @@ def parsed_items_with_upcoming():
     with freeze_time("2026-01-09"):
         with patch.object(spider, "_fetch_city_calendar", return_value=calendar_html):
             spider._calendar_meetings = []
-            requests = list(spider.start_requests())  # triggers city calendar fetch
+            list(spider.start_requests())  # triggers city calendar fetch
             return list(spider.parse_calendar(test_response))
 
 

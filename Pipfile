@@ -10,6 +10,7 @@ city-scrapers-core = {path = "/Users/duongcaochanh/duong.cao/city-scrapers-core"
 scrapy-wayback-middleware = "*"
 pytz = "*"
 scrapy-playwright = "*"
+curl-cffi = "*"
 
 [dev-packages]
 freezegun = "*"
