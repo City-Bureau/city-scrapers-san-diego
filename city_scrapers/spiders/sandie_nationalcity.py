@@ -33,13 +33,13 @@ spider_configs = [
     {
         "class_name": "SandieCityCouncilSpider",
         "name": "sandie_national_council_committees",
-        "agency": "Sandie City Council",
+        "agency": "San Diego National City - City Council",
         "event_type": "City Council",
     },
     {
         "class_name": "SandieBoardsCommissionsSpider",
         "name": "sandie_national_boards_commissions",
-        "agency": "Sandie Boards and Commissions",
+        "agency": "San Diego National City - Boards and Commissions",
         "event_type": [
             "Board of Library Trustees",
             "Library Board",
