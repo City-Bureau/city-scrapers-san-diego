@@ -9,6 +9,7 @@ scrapy-sentry-errors = "*"
 city-scrapers-core = {ref = "main", git = "https://github.com/City-Bureau/city-scrapers-core.git", extras = ["azure"]}
 scrapy-wayback-middleware = "*"
 pytz = "*"
+curl-cffi = "*"
 
 [dev-packages]
 freezegun = "*"
