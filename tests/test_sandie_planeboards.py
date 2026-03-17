@@ -22,7 +22,7 @@ def parsed_items():
 
 
 def test_count(parsed_items):
-    assert len(parsed_items) == 108
+    assert len(parsed_items) == 111
 
 
 def test_title(parsed_items):
