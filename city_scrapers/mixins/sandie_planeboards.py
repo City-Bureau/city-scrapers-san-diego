@@ -20,7 +20,7 @@ class SandiePlanboardsMixinMeta(type):
             "group_param",
             "meeting_time",
             "meeting_location",
-        ]  # noqa
+        ]
         missing_vars = [var for var in required_static_vars if var not in dct]
 
         if missing_vars:
@@ -75,8 +75,7 @@ class SandiePlanboardsMixin(CityScrapersSpider, metaclass=SandiePlanboardsMixinM
                 source=response.url,
             )
 
-            full_li_text = record.get("li_text", record["title"])
-            meeting["status"] = self._get_status(meeting, full_li_text)
+            meeting["status"] = self._get_status(meeting, record["title"])
             meeting["id"] = self._get_id(meeting)
 
             yield meeting
@@ -150,25 +149,21 @@ class SandiePlanboardsMixin(CityScrapersSpider, metaclass=SandiePlanboardsMixinM
 
     def _parse_meetings(self, response):
         agendas = []
-        minutes_by_date = {}
 
         for agenda in response.xpath(
-            "//div[@id='tab-item-1']//li[a and not(ancestor::li/ul)]/a[contains(@href, '.pdf')]"  # noqa
+            "//div[@id='tab-item-1']//li[not(ancestor::li/ul)]"
         ):
-            link_title = re.sub(r"\s+", " ", agenda.css("::text").get("")).strip()
-            li_text = re.sub(
-                r"\s+",
-                " ",
-                " ".join(agenda.xpath("./parent::li").css("::text").getall()),
-            ).strip()
-            li_text = re.sub(
-                r"\b([A-Z])\s+([a-z])", r"\1\2", li_text
-            )  # Fix split words like "J anuary"
-            dates = self._split_date_range(li_text, self.meeting_time)
+            anchor = agenda.xpath("./a")
+            if anchor:
+                link_title = re.sub(r"\s+", " ", anchor.css("::text").get("")).strip()
+                href = anchor.xpath("@href").get()
+            else:
+                link_title = re.sub(r"\s+", " ", agenda.css("::text").get("")).strip()
+                href = None
+
+            dates = self._split_date_range(link_title, self.meeting_time)
             if not dates:
-                single_date = self._extract_date(
-                    li_text, self.meeting_time
-                ) or self._extract_date(link_title, self.meeting_time)
+                single_date = self._extract_date(link_title, self.meeting_time)
                 if single_date:
                     dates = [single_date]
 
@@ -176,8 +171,7 @@ class SandiePlanboardsMixin(CityScrapersSpider, metaclass=SandiePlanboardsMixinM
                 agendas.append(
                     {
                         "title": link_title,
-                        "li_text": li_text,
-                        "agenda_url": response.urljoin(agenda.attrib["href"]),
+                        "agenda_url": response.urljoin(href) if href else None,
                         "date": date,
                     }
                 )
@@ -186,22 +180,27 @@ class SandiePlanboardsMixin(CityScrapersSpider, metaclass=SandiePlanboardsMixinM
         minutes_by_date_title = {}  # date + title — for same-day meetings
 
         for minutes in response.xpath(
-            "//div[@id='tab-item-2']//li[a and not(ancestor::li/ul)]/a[contains(@href, '.pdf')]"  # noqa
+            "//div[@id='tab-item-2']//li[a and not(ancestor::li/ul)]"
         ):
-            title = re.sub(r"\s+", " ", minutes.css("::text").get("")).strip()
+            anchor = minutes.xpath("./a")
+            if anchor:
+                title = re.sub(r"\s+", " ", anchor.css("::text").get("")).strip()
+                href = anchor.xpath("@href").get()
+            else:
+                title = re.sub(r"\s+", " ", minutes.css("::text").get("")).strip()
+                href = None
+
             date = self._extract_date(title, self.meeting_time)
             if date:
-                minutes_by_date[date] = response.urljoin(minutes.attrib["href"])
-                minutes_by_date_title[(date, title)] = response.urljoin(
-                    minutes.attrib["href"]
+                minutes_by_date[date] = response.urljoin(href) if href else None
+                minutes_by_date_title[(date, title)] = (
+                    response.urljoin(href) if href else None
                 )
 
         for agenda in agendas:
-            minute_url = (
-                minutes_by_date_title.get((agenda["date"], agenda["li_text"]))
-                or minutes_by_date_title.get((agenda["date"], agenda["title"]))
-                or minutes_by_date.get(agenda["date"])
-            )
+            minute_url = minutes_by_date_title.get(
+                (agenda["date"], agenda["title"])
+            ) or minutes_by_date.get(agenda["date"])
             if minute_url:
                 agenda["minute_url"] = minute_url
 
@@ -253,12 +252,6 @@ class SandiePlanboardsMixin(CityScrapersSpider, metaclass=SandiePlanboardsMixinM
             r"\s*-\s*(meeting\s*)?(notice of\s*)?"
             r"(cancellation|cancelled|postponement|adjournment)"
             r"(\s*notice)?\b.*",
-            "",
-            title_str,
-            flags=re.IGNORECASE,
-        )
-        title_str = re.sub(
-            r"\s*-\s*cancelled.*",
             "",
             title_str,
             flags=re.IGNORECASE,

@@ -297,7 +297,7 @@ spider_configs = [
         "class_name": "PacificBeachSpider",
         "name": "sandie_pacific_beach",
         "agency": "Pacific Beach Planning Group",
-        "group_param": "staging/pacific-beach-planning-group",
+        "group_param": "planning/community-plans/pacific-beach/planning-group",
         "meeting_time": time(18, 30),
         "meeting_location": {
             "name": "Earl Birdie Taylor Library",
