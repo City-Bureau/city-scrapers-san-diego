@@ -63,6 +63,7 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
 
     custom_settings = {
         "ROBOTSTXT_OBEY": False,
+        "FEED_EXPORT_ENCODING": "utf-8",
     }
 
     # HELPERS
@@ -88,7 +89,7 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
 
         title = title.strip()
 
-        if title.lower() == "agenda en español":
+        if title.lower().startswith("agenda en español"):
             return "Agenda (Spanish)"
 
         return title
@@ -110,10 +111,10 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
                 referer = (
                     f"{self.city_calendar_base}/-curm-{prev_month}/-cury-{prev_year}"
                 )
-                html = self._fetch_city_calendar(url, referer)
-                if html:
+                calendar_html = self._fetch_city_calendar(url, referer)
+                if calendar_html:
                     self._calendar_meetings.extend(
-                        self._parse_city_calendar_html(html, url, month, year)
+                        self._parse_city_calendar_html(calendar_html, url, month, year)
                     )
 
         yield from self._request_calendar_meetings()
@@ -248,7 +249,6 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
                 if not any(kw.lower() in title.lower() for kw in keywords):
                     continue
 
-                # href = event_link.attrib.get("href", "")
                 div = event_link.xpath("./parent::div")
                 time_text = div.css("span.calendar_eventtime::text").get("").strip()
                 time_match = re.match(
