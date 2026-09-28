@@ -9,8 +9,10 @@ Required class variables (enforced by metaclass):
 """
 
 import html
+import random
 import re
-from datetime import datetime
+import time
+from datetime import datetime, timedelta
 
 import scrapy
 from city_scrapers_core.constants import (
@@ -23,6 +25,21 @@ from city_scrapers_core.constants import (
 )
 from city_scrapers_core.items import Meeting
 from city_scrapers_core.spiders import CityScrapersSpider
+from curl_cffi import requests as cffi_requests
+from scrapy.http import HtmlResponse
+
+REAL_UA = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+)
+
+# Akamai blocks Scrapy/requests/Playwright based on TLS + HTTP/2 fingerprint.
+# curl-cffi with Chrome impersonation gives us a browser-like network fingerprint.
+# Only the User-Agent is overridden: passing a full custom header set replaces
+# curl-cffi's Chrome headers (and their order), which Akamai rejects with 403.
+IMPERSONATE = "chrome131"
+AKAMAI_TIMEOUT = 30
+ESCRIBE_CALENDAR_PATH = "/MeetingsCalendarView.aspx/GetCalendarMeetings"
 
 
 class SandieNationalCityMixinMeta(type):
@@ -53,25 +70,27 @@ class SandieNationalCityMixin(
     name = None
     agency = None
     event_type = None
-    start_year = 2022  # Only scrape meetings from this year onwards
+    # Only scrape meetings from this many years before today onwards (plus all
+    # future meetings). Rolling, so the window moves forward every run.
+    lookback_years = 2
     time_notes = ""
 
     timezone = "America/Los_Angeles"
 
+    # Seconds to wait between curl-cffi requests (plus up to 1s of jitter).
+    # Bursts of requests get the IP blocked by Akamai.
+    request_delay = 8
+    # Akamai intermittently 403s individual requests; retry these with backoff
+    akamai_retries = 3
+    akamai_retry_backoff = 30
+
+    # Optional eSCRIBE portal (not behind Akamai) used as a fallback when a
+    # website listing page can't be fetched. Only City Council publishes there.
+    escribe_url = None
+
     custom_settings = {
-        # Playwright (bot detection)
-        "TWISTED_REACTOR": "twisted.internet.asyncioreactor.AsyncioSelectorReactor",
-        "DOWNLOAD_HANDLERS": {
-            "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
-            "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
-        },
-        "PLAYWRIGHT_BROWSER_TYPE": "firefox",
-        "PLAYWRIGHT_LAUNCH_OPTIONS": {
-            "headless": True,
-        },
-        "DOWNLOAD_DELAY": 1,
         "ROBOTSTXT_OBEY": False,
-        "USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",  # noqa
+        "USER_AGENT": REAL_UA,
     }
 
     start_url = "https://www.nationalcityca.gov/government/boards-commissions-committees/-toggle-all/-sortn-EDate/-sortd-desc"  # noqa
@@ -81,75 +100,209 @@ class SandieNationalCityMixin(
         "address": "1243 National City Boulevard, National City, CA 91950",
     }
 
-    _MONTH_MAP = {
-        "january": 1,
-        "jan": 1,
-        "february": 2,
-        "feb": 2,
-        "march": 3,
-        "mar": 3,
-        "april": 4,
-        "apr": 4,
-        "may": 5,
-        "june": 6,
-        "jun": 6,
-        "july": 7,
-        "jul": 7,
-        "august": 8,
-        "aug": 8,
-        "september": 9,
-        "sep": 9,
-        "october": 10,
-        "oct": 10,
-        "november": 11,
-        "nov": 11,
-        "december": 12,
-        "dec": 12,
-    }
-
-    _DATE_PATTERNS = [
-        r"(\d{1,2})/(\d{1,2})/(\d{4})",
-        r"(\d{4})-(\d{1,2})-(\d{1,2})",
-        r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2}),?\s+(\d{4})",  # noqa
-        r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\.?\s+(\d{1,2}),?\s+(\d{4})",  # noqa
+    _CLASSIFICATION_MAP = [
+        ("commission", COMMISSION),
+        ("advisory", ADVISORY_COMMITTEE),
+        ("committee", COMMITTEE),
+        ("board", BOARD),
+        ("council", CITY_COUNCIL),
     ]
 
-    def _get_headers(self):
-        """Return the request headers."""
-        return {
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",  # noqa
-            "Accept-Encoding": "gzip, deflate, br, zstd",
-            "Accept-Language": "en-US,en;q=0.9",
-            "Cache-Control": "max-age=0",
-            "Priority": "u=0, i",
-            "Sec-Ch-Ua": '"Chromium";v="140", "Not=A?Brand";v="24", "Google Chrome";v="140"',  # noqa
-            "Sec-Ch-Ua-Mobile": "?0",
-            "Sec-Ch-Ua-Platform": '"macOS"',
-            "Sec-Fetch-Dest": "document",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Site": "cross-site",
-            "Sec-Fetch-User": "?1",
-            "Upgrade-Insecure-Requests": "1",
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",  # noqa
-        }
+    def __init__(self, *args, **kwargs):
+        self._last_akamai_request = None
+        super().__init__(*args, **kwargs)
 
-    def _get_detail_headers(self, referer):
-        """Headers for calendar event detail pages (avoid 403)."""
-        headers = dict(self._get_headers())
-        headers["Referer"] = referer
-        headers["Sec-Fetch-Site"] = "same-origin"
-        headers["Sec-Fetch-Mode"] = "navigate"
-        headers["Sec-Fetch-Dest"] = "document"
-        headers["Sec-Fetch-User"] = "?1"
-        return headers
+    def _start_cutoff(self):
+        """Earliest meeting start to scrape: today minus lookback_years."""
+        now = datetime.now()
+        try:
+            cutoff = now.replace(year=now.year - self.lookback_years)
+        except ValueError:  # today is Feb 29 and the cutoff year has none
+            cutoff = now.replace(year=now.year - self.lookback_years, day=28)
+        return cutoff.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    async def start(self):
+        """Kick off the spider without touching the protected site (Scrapy 2.13+).
+
+        The real pages are fetched inside _run_crawl() using curl-cffi; a
+        data: URL avoids a Scrapy-fingerprinted request that Akamai would 403.
+        """
+        for request in self.start_requests():
+            yield request
 
     def start_requests(self):
-        yield scrapy.Request(
-            url=self.start_url,
-            callback=self.parse,
-            headers=self._get_headers(),
-            meta={"playwright": True},
+        """Same start request for Scrapy < 2.13, which doesn't call start()."""
+        yield scrapy.Request("data:,", callback=self._run_crawl, dont_filter=True)
+
+    def _run_crawl(self, response):
+        """Fetch listing pages via curl-cffi, following pagination.
+
+        parse() still yields a scrapy.Request for the next page; it is fetched
+        here instead of being scheduled through Scrapy. If a listing page can't
+        be fetched, the meetings the website didn't cover come from eSCRIBE
+        (when escribe_url is set).
+        """
+        next_url = self.start_url
+        oldest_listed = None  # oldest date on any listing page fetched so far
+        yielded_starts = set()
+
+        while next_url:
+            listing = self._akamai_get(next_url)
+            if listing is None:
+                self.logger.warning("Could not fetch listing page: %s", next_url)
+                yield from self._escribe_fallback(oldest_listed, yielded_starts)
+                return
+
+            for row in listing.css("table tbody tr"):
+                start = self._parse_start(row)
+                if start and (oldest_listed is None or start < oldest_listed):
+                    oldest_listed = start
+
+            next_url = None
+            for result in self.parse(listing):
+                if isinstance(result, scrapy.Request):
+                    next_url = result.url
+                else:
+                    yielded_starts.add(result["start"])
+                    yield result
+
+    def _escribe_fallback(self, before, yielded_starts):
+        """Yield eSCRIBE meetings from the start cutoff up to `before` (the oldest
+        date the website listing reached; everything if it reached nothing),
+        skipping any start time the website already produced."""
+        if not self.escribe_url:
+            return
+
+        start = self._start_cutoff()
+        # Website pages cover `before` onwards; include that day in case its
+        # meetings continue on the page that failed.
+        end = before or datetime.now() + timedelta(days=730)
+        self.logger.info(
+            "Falling back to eSCRIBE for meetings %s to %s", start.date(), end.date()
         )
+
+        meetings = self._fetch_escribe_meetings(start, end)
+        if meetings is None:
+            return
+        for meeting in self._parse_escribe_meetings(meetings):
+            if meeting["start"] in yielded_starts:
+                continue
+            if before and meeting["start"].date() > before.date():
+                continue
+            yield meeting
+
+    def _fetch_escribe_meetings(self, start, end):
+        """POST to eSCRIBE's calendar endpoint; returns its list of meetings."""
+        try:
+            response = cffi_requests.post(
+                self.escribe_url + ESCRIBE_CALENDAR_PATH,
+                impersonate=IMPERSONATE,
+                timeout=AKAMAI_TIMEOUT,
+                json={
+                    "calendarStartDate": start.strftime("%Y-%m-%d"),
+                    "calendarEndDate": end.strftime("%Y-%m-%d"),
+                },
+            )
+            response.raise_for_status()
+            return response.json()["d"]
+        except Exception as e:
+            self.logger.warning("eSCRIBE fallback failed: %s", e)
+            return None
+
+    def _parse_escribe_meetings(self, meetings):
+        """Turn eSCRIBE calendar entries into Meeting items."""
+        for item in meetings:
+            start = datetime.strptime(item["StartDate"], "%Y/%m/%d %H:%M:%S")
+            if start < self._start_cutoff():
+                continue
+            name = self._normalize_title(item["MeetingName"])
+            # Match the website's titles so meeting ids agree across sources
+            title = re.sub(r"^Cancellation Notice of an? ", "", name, flags=re.I)
+            title = re.sub(r"^Regular ", "", title)
+
+            meeting = Meeting(
+                title=title,
+                description="",
+                classification=self._parse_classification_from_title(title),
+                start=start,
+                # eSCRIBE's EndDate is a scheduled block (often 11pm), not a
+                # published end time; leave it empty like the website does so
+                # the pipeline fills it in
+                end=None,
+                all_day=False,
+                time_notes=self.time_notes,
+                location=self._parse_escribe_location(item.get("Location", "")),
+                links=[
+                    {"href": self.escribe_url + link["Url"], "title": link["Title"]}
+                    for link in item.get("MeetingDocumentLink", [])
+                ],
+                # Same source as website meetings: the main listing page
+                source=self.start_url,
+            )
+            meeting["status"] = self._get_status(meeting, text=name)
+            meeting["id"] = self._get_id(meeting)
+            yield meeting
+
+    def _parse_escribe_location(self, location):
+        """Map eSCRIBE's location text to a location dict."""
+        if not location or "1243 National City" in location:
+            return self.location
+        return {"name": location.strip(), "address": ""}
+
+    def _akamai_get(self, url):
+        """GET an Akamai-protected URL with curl-cffi Chrome impersonation.
+
+        Akamai intermittently rejects individual requests with 403, so these are
+        retried with an increasing backoff. Returns a Scrapy HtmlResponse so
+        existing .css()/.xpath() parsing can stay the same, or None if every
+        attempt failed. Blocks the Twisted reactor; callers run sequentially.
+        """
+        for attempt in range(1, self.akamai_retries + 1):
+            self._wait_before_request()
+            try:
+                response = cffi_requests.get(
+                    url,
+                    impersonate=IMPERSONATE,
+                    timeout=AKAMAI_TIMEOUT,
+                    headers={"User-Agent": REAL_UA},
+                )
+            except Exception as e:
+                self.logger.warning("Akamai fetch error for %s: %s", url, e)
+                return None
+
+            # Akamai sometimes answers 200 with its JavaScript challenge page
+            # (bm-verify) instead of the real page; curl-cffi can't run it
+            challenge = response.status_code == 200 and self._is_akamai_challenge(
+                response.content
+            )
+            if response.status_code == 200 and not challenge:
+                self.logger.info("Akamai fetch 200 for %s", url)
+                return HtmlResponse(url=url, body=response.content, encoding="utf-8")
+
+            self.logger.warning(
+                "Akamai fetch returned %s for %s (attempt %s/%s)",
+                "a challenge page" if challenge else response.status_code,
+                url,
+                attempt,
+                self.akamai_retries,
+            )
+            if response.status_code != 403 and not challenge:
+                return None
+            if attempt < self.akamai_retries:
+                time.sleep(self.akamai_retry_backoff * attempt)
+
+        return None
+
+    def _is_akamai_challenge(self, body):
+        """True if the body is Akamai's JavaScript challenge page."""
+        return b"bm-verify" in body and b"<table" not in body
+
+    def _wait_before_request(self):
+        """Keep at least request_delay (+ jitter) seconds between requests."""
+        if self._last_akamai_request is not None:
+            elapsed = time.monotonic() - self._last_akamai_request
+            time.sleep(max(0, self.request_delay + random.random() - elapsed))
+        self._last_akamai_request = time.monotonic()
 
     def parse(self, response):
         """
@@ -170,17 +323,22 @@ class SandieNationalCityMixin(
                 links = self._parse_links(row)
                 start_date = self._parse_start(row)
 
-                # Skip meetings before start_year
-                if start_date and start_date.year < self.start_year:
+                if not start_date:
+                    self.logger.warning(
+                        "Skipping row with no parseable start date on %s: %r",
+                        response.url,
+                        re.sub(r"\s+", " ", row_text).strip()[:200],
+                    )
+                    continue
+
+                # Skip meetings before the start cutoff (today - lookback_years)
+                if start_date < self._start_cutoff():
                     continue
 
                 title = self._parse_title(row)
 
                 # Check if this is a combined meeting (multiple event types in title)
                 combined_types = self._detect_combined_meeting(title)
-
-                # Get detail page URL for accurate location
-                detail_url = self._get_detail_url(row)
 
                 # Build a list of meeting_data dicts (single or combined)
                 meeting_data_list = []
@@ -190,9 +348,7 @@ class SandieNationalCityMixin(
                         filtered_links = self._filter_links_by_event_type(
                             links, event_type
                         )
-                        split_title = self._extract_title_for_event_type(
-                            title, event_type
-                        )
+                        split_title = self._extract_title_for_event_type(event_type)
 
                         meeting_data_list.append(
                             {
@@ -229,26 +385,19 @@ class SandieNationalCityMixin(
                         }
                     )
 
-                # If we have a detail page, fetch it ONCE and apply location to all meetings from this row # noqa
-                if detail_url:
-                    yield scrapy.Request(
-                        url=detail_url,
-                        callback=self.parse_detail,
-                        headers=self._get_detail_headers(response.url),
-                        meta={
-                            "meeting_data_list": meeting_data_list,
-                            "playwright": True,
-                        },
-                    )
-                else:
-                    # No detail page -> yield meetings with fallback location
-                    for meeting_data in meeting_data_list:
-                        meeting = Meeting(**meeting_data, location=self.location)
-                        meeting["status"] = self._get_status(meeting)
-                        meeting["id"] = self._get_id(meeting)
-                        yield meeting
+                yield from self._build_meetings(meeting_data_list, self.location)
 
         # pagination (OUTSIDE the loop)
+        # The listing is sorted newest first: once this page reaches meetings
+        # before the start cutoff, every later page is older too, so stop here.
+        if self._page_reaches_before_cutoff(response):
+            self.logger.info(
+                "Reached meetings before %s on %s, stopping pagination",
+                self._start_cutoff().date(),
+                response.url,
+            )
+            return
+
         # Look for the "Next »" button specifically - it contains the text "Next" and has -npage- in URL # noqa
         # We need to be more specific to avoid sort/filter links
         next_links = response.xpath(
@@ -264,12 +413,16 @@ class SandieNationalCityMixin(
                 next_url = response.urljoin(next_href)
                 # Remove the fragment/anchor part
                 next_url = next_url.split("#")[0]
-                yield scrapy.Request(
-                    url=next_url,
-                    callback=self.parse,
-                    headers=self._get_headers(),
-                    meta={"playwright": True},
-                )
+                yield scrapy.Request(url=next_url, callback=self.parse)
+
+    def _page_reaches_before_cutoff(self, response):
+        """True if any row on the page (any agency) is before the start cutoff."""
+        cutoff = self._start_cutoff()
+        for row in response.css("table tbody tr"):
+            start = self._parse_start(row)
+            if start and start < cutoff:
+                return True
+        return False
 
     def _matches_event_type(self, text):
         """Check if row matches the event type filter."""
@@ -282,91 +435,13 @@ class SandieNationalCityMixin(
 
         return False
 
-    def _get_detail_url(self, row):
-        """Extract the calendar event detail page URL from a row."""
-        for link in row.css("a"):
-            href = (link.attrib.get("href") or "").strip()
-            if not href:
-                continue
-
-            if "/Home/Components/Calendar/Event/" not in href:
-                continue
-
-            if href.startswith("/"):
-                return f"https://www.nationalcityca.gov{href}"
-            if not href.startswith("http"):
-                return f"https://www.nationalcityca.gov/{href.lstrip('/')}"
-            return href
-
-        return None
-
-    def parse_detail(self, response):
-        """Parse the detail page to extract accurate location information."""
-        meeting_data_list = response.meta.get("meeting_data_list", [])
-
-        location = self._parse_detail_location(response)
-
+    def _build_meetings(self, meeting_data_list, location):
+        """Create Meeting items from parsed row data and a location."""
         for meeting_data in meeting_data_list:
-            meeting = Meeting(
-                title=meeting_data["title"],
-                description=meeting_data["description"],
-                classification=meeting_data["classification"],
-                start=meeting_data["start"],
-                end=meeting_data["end"],
-                all_day=meeting_data["all_day"],
-                time_notes=meeting_data["time_notes"],
-                location=location,
-                links=meeting_data["links"],
-                source=meeting_data["source"],
-            )
-
+            meeting = Meeting(**meeting_data, location=location)
             meeting["status"] = self._get_status(meeting)
             meeting["id"] = self._get_id(meeting)
             yield meeting
-
-    def _parse_detail_location(self, response):
-        """Parse location from the detail page HTML."""
-        li = response.xpath(
-            "//ul[contains(@class,'detail-list')]/li"
-            "[span[contains(@class,'detail-list-label') and "
-            "contains(normalize-space(.), 'Location')]]"
-        )
-
-        if not li:
-            return self.location
-
-        name = li.xpath(".//span[@itemprop='name']/text()").get()
-        street = li.xpath(".//span[@itemprop='street-address']/text()").get()
-        locality = li.xpath(".//span[@itemprop='locality']/text()").get()
-        region = li.xpath(".//span[@itemprop='region']/text()").get()
-
-        address_text = " ".join(
-            li.xpath(".//span[@itemprop='address']//text()").getall()
-        )
-        address_text = re.sub(r"\s+", " ", address_text).strip()
-        zip_match = re.search(r"\b\d{5}\b", address_text)
-        zip_code = zip_match.group(0) if zip_match else ""
-
-        parts = []
-        if street:
-            parts.append(street.strip().rstrip(","))
-        if locality:
-            parts.append(locality.strip().rstrip(","))
-        if region:
-            parts.append(region.strip().rstrip(","))
-
-        address = ""
-        if parts:
-            address = ", ".join(parts)
-            if zip_code:
-                address = f"{address} {zip_code}"
-        elif address_text:
-            address = address_text
-
-        if (name and name.strip()) or address:
-            return {"name": (name or "").strip(), "address": address}
-
-        return self.location
 
     def _detect_combined_meeting(self, title):
         """
@@ -411,7 +486,7 @@ class SandieNationalCityMixin(
 
         return filtered
 
-    def _extract_title_for_event_type(self, title, event_type):
+    def _extract_title_for_event_type(self, event_type):
         """Extract the appropriate title for a specific event type from a combined title."""  # noqa
         # For combined meetings, use just the event type name as the title
         return f"{event_type} Meeting"
@@ -496,51 +571,70 @@ class SandieNationalCityMixin(
     def _parse_classification_from_title(self, title):
         """Determine classification based on title text."""
         title_lower = title.lower()
-
-        if "commission" in title_lower:
-            return COMMISSION
-        elif "advisory" in title_lower:
-            return ADVISORY_COMMITTEE
-        elif "committee" in title_lower:
-            return COMMITTEE
-        elif "board" in title_lower:
-            return BOARD
-        elif "council" in title_lower:
-            return CITY_COUNCIL
-
+        for keyword, classification in self._CLASSIFICATION_MAP:
+            if keyword in title_lower:
+                return classification
         return NOT_CLASSIFIED
 
-    def _parse_start(self, row):
-        """Parse start datetime as a naive datetime object."""
+    _DATE_RE = r"(\d{1,2}/\d{1,2}/\d{4})"
+    _TIME_RE = r"(\d{1,2}:\d{2}\s*[AaPp][Mm])"
+
+    def _date_cell(self, row):
+        """Return the Date/Time cell (td.event_datetime, else the 2nd cell)."""
+        cell = row.css("td.event_datetime")
+        if cell:
+            return cell[0]
         cells = row.css("td")
+        return cells[1] if len(cells) > 1 else None
 
-        # First pass: look for datetime with time component
-        for cell in cells:
-            cell_text = " ".join(cell.css("::text").getall()).strip()
-            dt = self._extract_datetime(cell_text)
-            if dt and (dt.hour != 0 or dt.minute != 0):
-                return dt
+    def _parse_start(self, row):
+        """Parse start datetime as a naive datetime object.
 
-        # Second pass: accept any datetime (fallback to date-only)
-        for cell in cells:
-            cell_text = " ".join(cell.css("::text").getall()).strip()
-            dt = self._extract_datetime(cell_text)
-            if dt:
-                return dt
-
-        return None
+        Uses the hidden <time itemprop="startDate"> text when present, otherwise
+        the first date (and time) in the Date/Time cell. Only that cell is read,
+        so dates in link titles can't be mistaken for the meeting date.
+        """
+        cell = self._date_cell(row)
+        if cell is None:
+            return None
+        text = cell.css("time[itemprop='startDate']::text").get() or " ".join(
+            cell.css("::text").getall()
+        )
+        match = re.search(rf"{self._DATE_RE}(?:\s+{self._TIME_RE})?", text)
+        if not match:
+            return None
+        return self._to_datetime(match.group(1), match.group(2))
 
     def _parse_end(self, row):
         """Parse end datetime as a naive datetime object. Added by pipeline if None"""
-        cells = row.css("td")
+        cell = self._date_cell(row)
+        if cell is None:
+            return None
 
-        for cell in cells:
-            cell_text = " ".join(cell.css("::text").getall()).strip()
-            end_dt = self._extract_end_datetime(cell_text)
-            if end_dt:
-                return end_dt
+        # Hidden endDate only counts if it has a time (it's date-only otherwise)
+        end_text = cell.css("time[itemprop='endDate']::text").get() or ""
+        match = re.search(rf"{self._DATE_RE}\s+{self._TIME_RE}", end_text)
+        if match:
+            return self._to_datetime(match.group(1), match.group(2))
 
+        # Otherwise look for a range like "6/13/2024 6:00 PM - 8:00 PM"
+        text = " ".join(cell.xpath("./text()").getall())
+        match = re.search(
+            rf"{self._DATE_RE}\s+{self._TIME_RE}\s*-\s*{self._TIME_RE}", text
+        )
+        if match:
+            return self._to_datetime(match.group(1), match.group(3))
         return None
+
+    def _to_datetime(self, date_str, time_str=None):
+        """Combine "M/D/YYYY" and optional "H:MM PM" into a naive datetime."""
+        try:
+            if time_str:
+                time_str = re.sub(r"\s+", "", time_str).upper()
+                return datetime.strptime(f"{date_str} {time_str}", "%m/%d/%Y %I:%M%p")
+            return datetime.strptime(date_str, "%m/%d/%Y")
+        except ValueError:
+            return None
 
     def _parse_all_day(self, row):
         """Parse or generate all-day status. Defaults to False."""
@@ -599,108 +693,6 @@ class SandieNationalCityMixin(
         return links
 
     def _parse_source(self, response):
-        """Parse or generate source."""
-        return response.url
-
-    def _parse_date(self, text):
-        """Parse date from text string. Returns datetime object or None."""
-        for pattern in self._DATE_PATTERNS:
-            match = re.search(pattern, text, re.IGNORECASE)
-            if match:
-                try:
-                    groups = match.groups()
-                    if len(groups) != 3:
-                        continue
-
-                    if groups[0].isdigit() and groups[1].isdigit():
-                        if len(groups[0]) == 4:
-                            year, month, day = (
-                                int(groups[0]),
-                                int(groups[1]),
-                                int(groups[2]),
-                            )
-                        else:
-                            month, day, year = (
-                                int(groups[0]),
-                                int(groups[1]),
-                                int(groups[2]),
-                            )
-                        return datetime(year, month, day)
-                    else:
-                        month_str = groups[0]
-                        day = int(groups[1])
-                        year = int(groups[2])
-                        month = self._MONTH_MAP.get(month_str.lower())
-                        if month:
-                            return datetime(year, month, day)
-                except (ValueError, AttributeError):
-                    continue
-        return None
-
-    def _extract_datetime(self, text):
-        """Extract datetime from text string."""
-        time_patterns = [
-            r"(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)",
-            r"(\d{1,2})\s*(AM|PM|am|pm)",
-        ]
-
-        parsed_date = self._parse_date(text)
-        if not parsed_date:
-            return None
-
-        try:
-            for pattern in time_patterns:
-                time_match = re.search(pattern, text, re.IGNORECASE)
-                if time_match:
-                    time_groups = time_match.groups()
-                    hour = int(time_groups[0])
-                    minute = (
-                        int(time_groups[1])
-                        if len(time_groups) > 2 and time_groups[1].isdigit()
-                        else 0
-                    )
-                    period = time_groups[-1].upper()
-
-                    if period == "PM" and hour != 12:
-                        hour += 12
-                    elif period == "AM" and hour == 12:
-                        hour = 0
-
-                    return parsed_date.replace(hour=hour, minute=minute)
-
-            return parsed_date
-
-        except (ValueError, AttributeError):
-            return None
-
-    def _extract_end_datetime(self, text):
-        """Extract end datetime from text with time ranges like '5:30 PM - 6:30 PM'."""
-        time_range_patterns = [
-            r"-\s*(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)",
-            r"to\s+(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)",
-        ]
-
-        parsed_date = self._parse_date(text)
-        if not parsed_date:
-            return None
-
-        try:
-            for pattern in time_range_patterns:
-                time_match = re.search(pattern, text, re.IGNORECASE)
-                if time_match:
-                    time_groups = time_match.groups()
-                    hour = int(time_groups[0])
-                    minute = int(time_groups[1])
-                    period = time_groups[2].upper()
-
-                    if period == "PM" and hour != 12:
-                        hour += 12
-                    elif period == "AM" and hour == 12:
-                        hour = 0
-
-                    return parsed_date.replace(hour=hour, minute=minute)
-
-            return None
-
-        except (ValueError, AttributeError, IndexError):
-            return None
+        """Main listing URL: page URLs (-npage-N) shift as new meetings are added,
+        so a meeting's page number doesn't stay accurate."""
+        return self.start_url
