@@ -470,10 +470,11 @@ class SandieNationalCityMixin(
         event_keywords = event_type.lower().split()
 
         for link in links:
-            search_text = link.get(link["title"], "").lower()
+            search_text = link.get("original_title", link["title"]).lower()
 
             # Check if link text contains keywords from this event type
             if any(keyword in search_text for keyword in event_keywords):
+                # Create clean link without original_title
                 clean_link = {"href": link["href"], "title": link["title"]}
                 filtered.append(clean_link)
 
@@ -657,10 +658,14 @@ class SandieNationalCityMixin(
             else:
                 title = self._normalize_title(title.strip())
 
+            # Preserve original title for filtering
+            original_title = title
+
             links.append(
                 {
                     "href": href,
                     "title": title,
+                    "original_title": original_title,  # Store for filtering
                 }
             )
 
