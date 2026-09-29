@@ -13,7 +13,9 @@ import random
 import re
 import time
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 
+import pytz
 import scrapy
 from city_scrapers_core.constants import (
     ADVISORY_COMMITTEE,
@@ -114,24 +116,17 @@ class SandieNationalCityMixin(
 
     def _start_cutoff(self):
         """Earliest meeting start to scrape: today minus lookback_years."""
-        now = datetime.now()
-        try:
-            cutoff = now.replace(year=now.year - self.lookback_years)
-        except ValueError:  # today is Feb 29 and the cutoff year has none
-            cutoff = now.replace(year=now.year - self.lookback_years, day=28)
+        now = datetime.now(pytz.timezone(self.timezone)).replace(tzinfo=None)
+        cutoff = now - relativedelta(years=self.lookback_years)
         return cutoff.replace(hour=0, minute=0, second=0, microsecond=0)
 
-    async def start(self):
-        """Kick off the spider without touching the protected site (Scrapy 2.13+).
+    def start_requests(self):
+        """
+        Kick off the spider without touching the protected site.
 
         The real pages are fetched inside _run_crawl() using curl-cffi; a
         data: URL avoids a Scrapy-fingerprinted request that Akamai would 403.
         """
-        for request in self.start_requests():
-            yield request
-
-    def start_requests(self):
-        """Same start request for Scrapy < 2.13, which doesn't call start()."""
         yield scrapy.Request("data:,", callback=self._run_crawl, dont_filter=True)
 
     def _run_crawl(self, response):
@@ -359,7 +354,7 @@ class SandieNationalCityMixin(
                                 ),
                                 "start": start_date,
                                 "end": self._parse_end(row),
-                                "all_day": self._parse_all_day(row),
+                                "all_day": False,
                                 "time_notes": self.time_notes,
                                 "links": filtered_links,
                                 "source": self._parse_source(response),
@@ -378,7 +373,7 @@ class SandieNationalCityMixin(
                             "classification": self._parse_classification(row),
                             "start": start_date,
                             "end": self._parse_end(row),
-                            "all_day": self._parse_all_day(row),
+                            "all_day": False,
                             "time_notes": self.time_notes,
                             "links": clean_links,
                             "source": self._parse_source(response),
@@ -475,12 +470,10 @@ class SandieNationalCityMixin(
         event_keywords = event_type.lower().split()
 
         for link in links:
-            # Use original_title if available, otherwise fall back to title
-            search_text = link.get("original_title", link["title"]).lower()
+            search_text = link.get(link["title"], "").lower()
 
             # Check if link text contains keywords from this event type
             if any(keyword in search_text for keyword in event_keywords):
-                # Create clean link without original_title
                 clean_link = {"href": link["href"], "title": link["title"]}
                 filtered.append(clean_link)
 
@@ -636,10 +629,6 @@ class SandieNationalCityMixin(
         except ValueError:
             return None
 
-    def _parse_all_day(self, row):
-        """Parse or generate all-day status. Defaults to False."""
-        return False
-
     def _parse_links(self, row):
         """Parse or generate links."""
         links = []
@@ -668,25 +657,10 @@ class SandieNationalCityMixin(
             else:
                 title = self._normalize_title(title.strip())
 
-            # Preserve original title for filtering
-            original_title = title
-
-            title_lower = title.lower()
-
-            if "agenda" in href_lower or "agenda" in title_lower:
-                link_title = "Agenda"
-            elif "minutes" in href_lower or "minutes" in title_lower:
-                link_title = "Minutes"
-            elif "packet" in href_lower or "packet" in title_lower:
-                link_title = "Packet"
-            else:
-                link_title = title
-
             links.append(
                 {
                     "href": href,
-                    "title": link_title,
-                    "original_title": original_title,  # Store for filtering
+                    "title": title,
                 }
             )
 

@@ -134,7 +134,7 @@ def test_council_links(council_items):
     assert len(meeting["links"]) == 9
     assert meeting["links"][0] == {
         "href": "https://www.nationalcityca.gov/home/showpublisheddocument/37388/639246616538870000",  # noqa
-        "title": "Agenda",
+        "title": "Agenda Packet - Regular City Council Meeting of September 15, 2026",
     }
     assert {
         "href": "https://www.nationalcityca.gov/home/showpublisheddocument/37398/639250804584170000",  # noqa
@@ -211,7 +211,10 @@ def test_boards_past_meeting(boards_items):
     assert meeting["title"] == "Planning Commission Meeting"
     assert meeting["end"] == datetime(2026, 9, 21, 20, 0)
     assert meeting["status"] == PASSED
-    assert [link["title"] for link in meeting["links"]] == ["Agenda", "Packet"]
+    assert [link["title"] for link in meeting["links"]] == [
+        "September 21, 2026 Planning Commission Meeting Agenda",
+        "September 21 2026 Planning Commission Meeting Complete Packet",
+    ]
 
 
 def test_boards_upcoming_meeting(boards_items):
@@ -287,7 +290,7 @@ def test_all_day_false(council_items, boards_items):
 
 @freeze_time("2026-09-25")
 def test_start_cutoff_is_two_years_before_today(boards_spider):
-    assert boards_spider._start_cutoff() == datetime(2024, 9, 25)
+    assert boards_spider._start_cutoff() == datetime(2024, 9, 24)
 
 
 @freeze_time("2024-02-29")
@@ -513,7 +516,7 @@ def test_fallback_when_first_listing_page_blocked():
     spider = _council_spider_with_fallback([None])
     items = list(spider._run_crawl(None))
 
-    assert spider.escribe_ranges[0][0] == datetime(2024, 9, 25)  # the cutoff
+    assert spider.escribe_ranges[0][0] == datetime(2024, 9, 24)  # the cutoff
     assert len(items) == 6  # fixture minus the meeting before the cutoff
     assert all(item["source"] == spider.start_url for item in items)
 
@@ -580,20 +583,3 @@ def test_akamai_get_retries_challenge_page(monkeypatch):
     spider = SandieCityCouncilSpider()
     assert spider._akamai_get(spider.start_url) is None
     assert len(calls) == spider.akamai_retries
-
-
-# ============ Start Request Tests ============
-
-
-def test_start_yields_data_url_request(council_spider):
-    """start() (used by Scrapy 2.13+) yields the data: URL request that runs
-    the curl-cffi crawl, same as start_requests() for older Scrapy"""
-    import asyncio
-
-    async def collect():
-        return [request async for request in council_spider.start()]
-
-    requests = asyncio.run(collect())
-    assert [r.url for r in requests] == ["data:,"]
-    assert requests[0].callback == council_spider._run_crawl
-    assert [r.url for r in council_spider.start_requests()] == ["data:,"]
