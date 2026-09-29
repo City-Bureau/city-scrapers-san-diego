@@ -13,7 +13,6 @@ import random
 import re
 import time
 from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
 
 import pytz
 import scrapy
@@ -28,6 +27,7 @@ from city_scrapers_core.constants import (
 from city_scrapers_core.items import Meeting
 from city_scrapers_core.spiders import CityScrapersSpider
 from curl_cffi import requests as cffi_requests
+from dateutil.relativedelta import relativedelta
 from scrapy.http import HtmlResponse
 
 REAL_UA = (
