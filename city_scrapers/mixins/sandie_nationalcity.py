@@ -27,7 +27,6 @@ from city_scrapers_core.constants import (
 from city_scrapers_core.items import Meeting
 from city_scrapers_core.spiders import CityScrapersSpider
 from curl_cffi import requests as cffi_requests
-from dateutil.relativedelta import relativedelta
 from scrapy.http import HtmlResponse
 
 REAL_UA = (
@@ -117,7 +116,10 @@ class SandieNationalCityMixin(
     def _start_cutoff(self):
         """Earliest meeting start to scrape: today minus lookback_years."""
         now = datetime.now(pytz.timezone(self.timezone)).replace(tzinfo=None)
-        cutoff = now - relativedelta(years=self.lookback_years)
+        try:
+            cutoff = now.replace(year=now.year - self.lookback_years)
+        except ValueError:  # today is Feb 29 and the cutoff year has none
+            cutoff = now.replace(year=now.year - self.lookback_years, day=28)
         return cutoff.replace(hour=0, minute=0, second=0, microsecond=0)
 
     def start_requests(self):
