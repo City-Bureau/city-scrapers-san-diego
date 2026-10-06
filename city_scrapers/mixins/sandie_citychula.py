@@ -12,12 +12,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 import scrapy
-from city_scrapers_core.constants import (
-    BOARD,
-    COMMISSION,
-    COMMITTEE,
-    NOT_CLASSIFIED,
-)
+from city_scrapers_core.constants import BOARD, COMMISSION, COMMITTEE, NOT_CLASSIFIED
 from city_scrapers_core.items import Meeting
 from city_scrapers_core.spiders import CityScrapersSpider
 from curl_cffi import requests as curl_requests
@@ -175,7 +170,7 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
             "Charter Review Commission - Special Meeting"
         ),
         # Parks and Recreation Commission
-        "Parks and Rec Commission Regular Meeting": "Parks and Recreation Commission Regular Meeting",
+        "Parks and Rec Commission Regular Meeting": "Parks and Recreation Commission Regular Meeting",  # noqa
         # Police Department Community Advisory Committee
         "SPECIAL MEETING - Police Department Community Advisory Committee": (
             "Police Department Community Advisory Committee Special Meeting"
