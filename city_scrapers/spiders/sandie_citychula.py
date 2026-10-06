@@ -50,6 +50,11 @@ spider_configs = [
         "agency": "City of Chula Vista - Charter Review Commission",
         "meeting_view_id": 17,
         "time_notes": "The regular meetings are held on the second Wednesday in February, May, August, and November. Please refer to the meeting attachments for more accurate start and end times.",  # noqa
+        "calendar_keywords": ["Charter Review Commission"],
+        "location": {
+            "name": "City Hall, Bldg. A, Executive Conference Room #103",
+            "address": "276 Fourth Avenue, Chula Vista, CA 91910",
+        },
     },
     {
         "class_name": "ChulaVistaCivilServiceCommissionSpider",
@@ -81,7 +86,7 @@ spider_configs = [
         "agency": "City of Chula Vista - Health Wellness and Aging Commission",
         "meeting_view_id": 22,
         "time_notes": "The regular meetings are held on the second Thursday in February, April, June, August, October, and December. Please refer to the meeting attachments for more accurate start and end times.",  # noqa
-        "calendar_keywords": ["Health Wellness and Aging Commission"],
+        "calendar_keywords": ["Health Wellness and Aging"],
         "location": {
             "name": "Chula Vista City Hall, Executive Conf. Room 103",
             "address": "276 Fourth Avenue Building A, Chula Vista, CA 91910",
@@ -93,6 +98,15 @@ spider_configs = [
         "agency": "City of Chula Vista - Housing and Homelessness Advisory Commission",
         "meeting_view_id": 23,
         "time_notes": "The regular meetings are held on the fourth Wednesday in January, April, July and October. Please refer to the meeting attachments for more accurate start and end times.",  # noqa
+        # older calendar events use "Housing and Homeless Advisory Commission"
+        "calendar_keywords": [
+            "Homelessness Advisory Commission",
+            "Homeless Advisory Commission",
+        ],
+        "location": {
+            "name": "City Hall, Bldg. A, Executive Conference Room #103",
+            "address": "276 Fourth Avenue, Chula Vista, CA 91910",
+        },
     },
     {
         "class_name": "ChulaVistaHumanRelationsCommissionSpider",
@@ -112,7 +126,10 @@ spider_configs = [
         "agency": "City of Chula Vista - Parks and Recreation Commission",
         "meeting_view_id": 27,
         "time_notes": "The regular meetings are held on the third Thursday of every other month. Please refer to the meeting attachments for more accurate start and end times.",  # noqa
-        "calendar_keywords": ["Parks and Recreation Commission"],
+        "calendar_keywords": [
+            "Parks and Recreation Commission",
+            "Parks and Rec Commission",
+        ],
         "location": {
             "name": "Norman Park Senior Center",
             "address": "270 F Street, Chula Vista, CA 91910",
@@ -172,6 +189,11 @@ spider_configs = [
         "agency": "City of Chula Vista - Veterans Advisory Commission",
         "meeting_view_id": 31,
         "time_notes": "The regular meetings are held on the third Wednesday of each month. Please refer to the meeting attachments for more accurate start and end times.",  # noqa
+        "calendar_keywords": ["Veterans Advisory Commission"],
+        "location": {
+            "name": "City Hall, Bldg. C, Conference Room B-111",
+            "address": "276 Fourth Avenue, Chula Vista, CA 91910",
+        },
     },
     {
         "class_name": "ChulaVistaMeasureACitizensOversightCommitteeSpider",
@@ -179,7 +201,7 @@ spider_configs = [
         "agency": "City of Chula Vista - Measure A Citizens' Oversight Committee",
         "meeting_view_id": 33,
         "time_notes": "The regular meetings are held on the second Thursday quarterly (January, April, July & October). Please refer to the meeting attachments for more accurate start and end times.",  # noqa
-        "calendar_keywords": ["Measure A Citizens Oversight Committee"],
+        "calendar_keywords": ["Measure A Citizens"],
         "location": {
             "name": "Chula Vista Police Department",
             "address": "315 Fourth Avenue, Chula Vista, CA 91910",
@@ -192,7 +214,7 @@ spider_configs = [
         "meeting_view_id": 85,
         "meeting_id_param": "MeetingtypeId",
         "time_notes": "The regular meetings are held on the fourth Thursday Quarterly in January, April, July, and October. Please refer to the meeting attachments for more accurate start and end times.",  # noqa
-        "calendar_keywords": ["Measure P Citizens"],
+        "calendar_keywords": ["Measure P Citizens", "Measure P - Citizens"],
         "location": {
             "name": "John Lippitt Public Works Center Lunchroom",
             "address": "1800 Maxwell Road, Chula Vista, CA 91911",
@@ -211,6 +233,11 @@ spider_configs = [
             "Police Department Community Advisory Committee- Regular Meeting",
             "Police Department Community Advisory Committee Special Meeting",
         ],
+        "calendar_keywords": ["Community Advisory Committee"],
+        "location": {
+            "name": "Chula Vista Police Department, Community Room",
+            "address": "315 Fourth Avenue, Chula Vista, CA 91910",
+        },
     },
 ]
 

@@ -28,7 +28,11 @@ spider = ChulaVistaBoardOfEthicsSpider()
 @pytest.fixture
 def parsed_items():
     with freeze_time("2026-01-09"):
-        return list(spider.parse_calendar(test_response))
+        with patch.object(spider, "_fetch_city_calendar", return_value=None):
+            spider._calendar_meetings = []
+            spider._calendar_event_urls = {}
+            spider._fetched_calendar_months = set()
+            return list(spider.parse_calendar(test_response))
 
 
 @pytest.fixture
@@ -85,8 +89,9 @@ def test_links(parsed_items):
 
 
 def test_source(parsed_items):
-    assert parsed_items[0]["source"].startswith(
-        "https://pub-chulavista.escribemeetings.com/MeetingsCalendarView.aspx/GetCalendarMeetings"  # noqa
+    assert parsed_items[0]["source"] == (
+        "https://pub-chulavista.escribemeetings.com/"
+        f"?MeetingviewId={spider.meeting_view_id}"
     )
 
 
@@ -117,3 +122,49 @@ def test_upcoming_links_empty(parsed_items_with_upcoming):
     upcoming = [i for i in parsed_items_with_upcoming if i["status"] == "tentative"]
     for item in upcoming:
         assert item["links"] == []
+
+
+def test_upcoming_source(parsed_items_with_upcoming):
+    upcoming = [i for i in parsed_items_with_upcoming if i["status"] == "tentative"]
+    assert upcoming
+    for item in upcoming:
+        assert item["source"].startswith(
+            "https://www.chulavistaca.gov/Home/Components/Calendar/Event/"
+        )
+
+
+# --- source matching between eScribe meetings and city calendar events ---
+
+ESCRIBE_URL = "https://pub-chulavista.escribemeetings.com/?MeetingviewId=15"
+EVENT_URL = "https://www.chulavistaca.gov/Home/Components/Calendar/Event/1/2854"
+
+
+def _source_for(titles, events):
+    day = datetime(2026, 2, 25).date()
+    spider._calendar_event_urls = {day: events}
+    meetings = [{"title": t} for t in titles]
+    spider._parse_sources(day, meetings)
+    return [m["source"] for m in meetings]
+
+
+def test_source_only_matching_meeting_gets_calendar_event():
+    sources = _source_for(
+        [
+            "Board of Ethics Interview Panel",
+            "Board of Ethics Subcommittee Interview Panel",
+        ],
+        [("Board of Ethics Subcommittee Interview Panel", EVENT_URL)],
+    )
+    assert sources == [ESCRIBE_URL, EVENT_URL]
+
+
+def test_source_single_meeting_and_event_paired_despite_title():
+    sources = _source_for(
+        ["Board of Ethics Regular Meeting"],
+        [("CANCELLED Board of Ethics Regular Meeting", EVENT_URL)],
+    )
+    assert sources == [EVENT_URL]
+
+
+def test_source_no_calendar_event_uses_escribe():
+    assert _source_for(["Board of Ethics Regular Meeting"], []) == [ESCRIBE_URL]
