@@ -8,7 +8,9 @@ import calendar as cal
 import html
 import json
 import re
-from datetime import datetime
+from collections import defaultdict
+from datetime import date, datetime
+from urllib.parse import urljoin
 from zoneinfo import ZoneInfo
 
 import scrapy
@@ -44,6 +46,11 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
     - meeting_id_param: URL parameter name ("MeetingviewId" or "MeetingtypeId")
                         Defaults to "MeetingviewId" if not specified
     - allowed_meeting_types: List/set of meeting type names to filter for
+    - calendar_keywords: List of keywords used to find this agency's events on
+                         the city calendar (city calendar is skipped if unset)
+    - calendar_exclude_keywords: List of keywords for city calendar events that
+                                 match calendar_keywords but aren't meetings
+    - location: Default location dict used when eScribe has no address
     """
 
     name = None
@@ -52,152 +59,68 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
     meeting_id_param = "MeetingviewId"  # DEFAULT VALUE
     time_notes = None
     allowed_meeting_types = None
+    calendar_keywords = None
+    calendar_exclude_keywords = None
+    location = {"name": "", "address": ""}
 
     timezone = "America/Los_Angeles"
 
+    city_base = "https://www.chulavistaca.gov"
     base_url = "https://pub-chulavista.escribemeetings.com/"
-    api_url_calendar = (
-        "https://pub-chulavista.escribemeetings.com/"
-        "MeetingsCalendarView.aspx/GetCalendarMeetings"
+    api_url_calendar = base_url + "MeetingsCalendarView.aspx/GetCalendarMeetings"
+    city_calendar_base = (
+        city_base + "/residents/advanced-components/site-content/city-calendar"
     )
-    city_calendar_base = "https://www.chulavistaca.gov/residents/advanced-components/site-content/city-calendar"  # noqa
 
     custom_settings = {
         "ROBOTSTXT_OBEY": False,
         "FEED_EXPORT_ENCODING": "utf-8",
     }
 
-    # Maps city calendar titles to their eScribe equivalents
-    calendar_title_map = {
-        # Board of Ethics
-        "Board of Ethics - Regular Meeting": "Board of Ethics Regular Meeting",
-        "Board of Ethics - Special Meeting": "Board of Ethics Special Meeting",
-        "Board of Ethics": "Board of Ethics Regular Meeting",
-        "Board of Ethics - Subcommittee Interview Panel": (
-            "Board of Ethics Subcommittee Interview Panel"
+    # City calendar and eScribe titles are compared through _meeting_key, which
+    # drops these words from the title and records "special" vs "regular" instead
+    _NOISE_RE = re.compile(r"\b(special|regular|quarterly|meeting)\b")
+    _SPECIAL_RE = re.compile(r"\bspecial\b")
+
+    # Genuine naming differences between the city calendar and eScribe,
+    # applied to the normalized title body
+    _BODY_ALIASES = (
+        (re.compile(r"\bparks and rec\b"), "parks and recreation"),
+        (re.compile(r"^safety commission\b"), "traffic safety commission"),
+        (re.compile(r"\bhomeless\b"), "homelessness"),
+        (
+            re.compile(r"^community advisory committee\b"),
+            "police department community advisory committee",
         ),
-        # Board of Appeals and Advisors
-        "Board of Appeals and Advisors Meeting": (
-            "Board of Appeals and Advisors Regular Meeting"
-        ),
-        # Cultural Arts Commission
-        "Cultural Arts Commission Meeting": "Cultural Arts Commission- Regular Meeting",
-        "Cultural Arts Commission Special Meeting": (
-            "Cultural Arts Commission - Special Meeting"
-        ),
-        # Health, Wellness, and Aging Commission
-        "Health Wellness and Aging Commission Meeting": (
-            "Health, Wellness, and Aging Commission Regular Meeting"
-        ),
-        "Health, Wellness, and Aging Commission Meeting": (
-            "Health, Wellness, and Aging Commission Regular Meeting"
-        ),
-        "Health Wellness and Aging Commission Special Meeting": (
-            "Health, Wellness, and Aging Commission Special Meeting"
-        ),
-        # Housing and Homelessness Advisory Commission
-        "Housing and Homelessness Advisory Commission": (
-            "Housing and Homelessness Advisory Commission Regular"
-        ),
-        "Housing & Homelessness Advisory Commission Regular Meeting": (
-            "Housing and Homelessness Advisory Commission Regular"
-        ),
-        "Housing & Homelessness Advisory Commission Meeting": (
-            "Housing and Homelessness Advisory Commission Regular"
-        ),
-        "Housing & Homelessness Advisory Commission - Special Meeting": (
-            "Housing and Homelessness Advisory Commission Special Meeting"
-        ),
-        "Housing & Homelessness Advisory Commission Special Meeting": (
-            "Housing and Homelessness Advisory Commission Special Meeting"
-        ),
-        "Housing and Homeless Advisory Commission Special Meeting": (
-            "Housing and Homelessness Advisory Commission Special Meeting"
-        ),
-        # Human Relations Commission
-        "Human Relations Commission": "Human Relations Commission Regular Meeting",
-        # Measure A Citizens' Oversight Committee
-        "Measure A Citizens' Oversight Committee Meeting": (
-            "Measure A Citizens' Oversight Committee Regular Meeting"
-        ),
-        # Measure P Citizens' Oversight Committee
-        "Measure P Citizens' Oversight Committee": (
-            "Measure P Citizens' Oversight Committee- Regular Meeting"
-        ),
-        "Measure P - Citizens' Oversight Committee": (
-            "Measure P Citizens' Oversight Committee- Regular Meeting"
-        ),
-        "Measure P - Citizens' Oversight Committee Special Meeting": (
-            "Measure P Citizens' Oversight Committee Special Meeting"
-        ),
-        # Planning Commission
-        "Planning Commission Meeting": "Planning Commission - Regular Meeting",
-        # Privacy Protection and Technology Advisory Commission
-        "Privacy Protection and Technology Advisory Commission": (
-            "Privacy Protection and Technology Advisory Commission Meeting"
-        ),
-        "Privacy Protection and Technology Advisory Commission Special Meeting": (
-            "Privacy Protection and Technology Advisory Commission Meeting - Special"
-        ),
-        # Sustainability Commission
-        "Sustainability Commission Meeting": (
-            "Sustainability Commission- Regular Meeting"
-        ),
-        "Sustainability Commission Special Meeting": (
-            "Sustainability Commission - Special Meeting"
-        ),
-        # Traffic Safety Commission
-        "Traffic Safety Commission": "Traffic Safety Commission Regular Meeting",
-        "Traffic Safety Commission Meeting": (
-            "Traffic Safety Commission Regular Meeting"
-        ),
-        # Veterans Advisory Commission
-        "Veterans Advisory Commission - Regular Meeting": (
-            "Veterans Advisory Commission Regular Meeting"
-        ),
-        "Veterans Advisory Commission Meeting": (
-            "Veterans Advisory Commission Regular Meeting"
-        ),
-        "Veterans Advisory Commission - Special Meeting": (
-            "Veterans Advisory Commission Special Meeting"
-        ),
-        # Charter Review Commission
-        "Charter Review Commission": "Charter Review Commission - Regular Meeting",
-        "Charter Review Commission Regular Meeting": (
-            "Charter Review Commission - Regular Meeting"
-        ),
-        "Charter Review Commission Special Meeting": (
-            "Charter Review Commission - Special Meeting"
-        ),
-        # Parks and Recreation Commission
-        "Parks and Rec Commission Regular Meeting": "Parks and Recreation Commission Regular Meeting",  # noqa
-        # Police Department Community Advisory Committee
-        "SPECIAL MEETING - Police Department Community Advisory Committee": (
-            "Police Department Community Advisory Committee Special Meeting"
-        ),
-        "Police Department Community Advisory Committee - Special Meeting": (
-            "Police Department Community Advisory Committee Special Meeting"
-        ),
-        "Police Department Community Advisory Committee (Regular, Quarterly Meeting)": (
-            "Police Department Community Advisory Committee- Regular Meeting"
-        ),
-        "Police Department Community Advisory Committee": (
-            "Police Department Community Advisory Committee- Regular Meeting"
-        ),
-        "Community Advisory Committee - SPECIAL MEETING Regular, Quarterly Meeting": (
-            "Police Department Community Advisory Committee Special Meeting"
-        ),
-        # Traffic Safety Commission
-        "Safety Commission - Regular": ("Traffic Safety Commission Regular Meeting"),
-        "Traffic Safety Commission Special Meeting": (
-            "Traffic Safety Commission Special Meeting"
-        ),
-        "Traffic Safety Commission Meeting": (
-            "Traffic Safety Commission Regular Meeting"
-        ),
-    }
+    )
+
+    # Checked in order against the lowercased meeting type
+    _CLASSIFICATIONS = (
+        ("commission", COMMISSION),
+        ("committee", COMMITTEE),
+        ("board", BOARD),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._init_state()
+
+    def _init_state(self):
+        """Reset per-run state (also called from start_requests)."""
+        # Calendar meetings to yield later
+        self._calendar_meetings = []
+        # City calendar (title, event URL) pairs keyed by date,
+        # used as eScribe meeting sources
+        self._calendar_event_urls = {}
+        self._fetched_calendar_months = set()
 
     # HELPERS
+
+    @property
+    def _escribe_query(self):
+        """Query string identifying this agency's eScribe meeting view."""
+        return f"?{self.meeting_id_param}={self.meeting_view_id}"
+
     def _now_local(self):
         return datetime.now(ZoneInfo(self.timezone)).replace(tzinfo=None)
 
@@ -205,9 +128,7 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         """Convert relative URL to absolute."""
         if not url or url.startswith("<"):
             return None
-        if url.startswith("http"):
-            return url
-        return self.base_url + url.lstrip("/")
+        return urljoin(self.base_url, url)
 
     def _clean_html(self, text):
         """Remove HTML tags from text."""
@@ -248,25 +169,38 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         text = re.sub(r"\bcancel+ed\b", " ", text)
         return re.sub(r"\s+", " ", text).strip()
 
-    def _map_calendar_title(self, title):
-        """Map a city calendar title to its eScribe equivalent, if known."""
-        key = self._title_key(title)
-        for calendar_title, escribe_title in self.calendar_title_map.items():
-            if self._title_key(calendar_title) == key:
-                return escribe_title
-        return title
+    def _meeting_key(self, title):
+        """
+        Key identifying a meeting, e.g. ("board of ethics", "regular"), that is
+        the same for a city calendar title and its eScribe title.
+        """
+        text = self._title_key(title)
+        kind = "special" if self._SPECIAL_RE.search(text) else "regular"
+        body = " ".join(self._NOISE_RE.sub(" ", text).split())
+        for pattern, replacement in self._BODY_ALIASES:
+            body = pattern.sub(replacement, body)
+        return " ".join(body.split()), kind
+
+    def _matches_keywords(self, title):
+        """
+        Whether a city calendar title matches any of calendar_keywords
+        and none of calendar_exclude_keywords.
+        """
+        normalized = self._normalize_calendar_text(title)
+        return any(
+            self._normalize_calendar_text(kw) in normalized
+            for kw in self.calendar_keywords or []
+        ) and not any(
+            self._normalize_calendar_text(kw) in normalized
+            for kw in self.calendar_exclude_keywords or []
+        )
 
     # REQUESTS
 
     def start_requests(self):
-        # Store calendar meetings to yield later
-        self._calendar_meetings = []
-        # City calendar (title, event URL) pairs keyed by date,
-        # used as eScribe meeting sources
-        self._calendar_event_urls = {}
-        self._fetched_calendar_months = set()
+        self._init_state()
 
-        if getattr(self, "calendar_keywords", None):
+        if self.calendar_keywords:
             this_month = self._now_local().replace(day=1)
             for i in range(13):
                 target = this_month + relativedelta(months=i)
@@ -276,12 +210,6 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
 
     def _load_city_calendar_month(self, year, month):
         """Fetch and parse one month of the city calendar, once per month."""
-        if not hasattr(self, "_fetched_calendar_months"):
-            self._fetched_calendar_months = set()
-        if not hasattr(self, "_calendar_event_urls"):
-            self._calendar_event_urls = {}
-        if not hasattr(self, "_calendar_meetings"):
-            self._calendar_meetings = []
         if (year, month) in self._fetched_calendar_months:
             return
         self._fetched_calendar_months.add((year, month))
@@ -312,29 +240,21 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         return response.text if response.status_code == 200 else None
 
     def _request_calendar_meetings(self):
-        # Use the meeting_id_param (defaults to "MeetingviewId")
-        url = f"{self.api_url_calendar}?{self.meeting_id_param}={self.meeting_view_id}"
-
         headers = {
             "Content-Type": "application/json",
             "Accept": "application/json, text/javascript, */*; q=0.01",
             "X-Requested-With": "XMLHttpRequest",
             "Origin": self.base_url.rstrip("/"),
-            "Referer": f"{self.base_url}?{self.meeting_id_param}={self.meeting_view_id}",  # noqa
+            "Referer": self.base_url + self._escribe_query,
             "Cookie": "CurrentTab=calendar",
         }
 
-        # Timezone-aware date range (zoneinfo handles the correct DST offset)
+        # Timezone-aware date range: 3 years back, 1 year ahead
         tz = ZoneInfo(self.timezone)
-
         now = self._now_local()
-
-        # Start 3 years before today
         start = (now - relativedelta(years=3)).replace(
             hour=0, minute=0, second=0, microsecond=0, tzinfo=tz
         )
-
-        # End 1 year after today
         end = (now + relativedelta(years=1)).replace(
             hour=23, minute=59, second=59, microsecond=0, tzinfo=tz
         )
@@ -345,7 +265,7 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         }
 
         yield scrapy.Request(
-            url=url,
+            url=self.api_url_calendar + self._escribe_query,
             method="POST",
             headers=headers,
             body=json.dumps(body),
@@ -356,33 +276,30 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
     # PARSING
 
     def parse_calendar(self, response):
-        data = response.json()
-        meetings = data.get("d", [])
-
+        meetings = response.json().get("d", [])
         escribe_meetings = [m for m in map(self._create_meeting, meetings) if m]
 
-        # fetch city calendar months covering the eScribe meetings (2020 onward)
+        # fetch city calendar months covering the eScribe meetings
         # to find event page URLs for their sources
-        if getattr(self, "calendar_keywords", None):
+        if self.calendar_keywords:
             for year, month in sorted(
                 {(m["start"].year, m["start"].month) for m in escribe_meetings}
             ):
                 self._load_city_calendar_month(year, month)
 
         # group escribe meetings by date to match them with city calendar events
-        meetings_by_date = {}
+        meetings_by_date = defaultdict(list)
         for meeting in escribe_meetings:
-            meetings_by_date.setdefault(meeting["start"].date(), []).append(meeting)
+            meetings_by_date[meeting["start"].date()].append(meeting)
         for day, day_meetings in meetings_by_date.items():
             self._parse_sources(day, day_meetings)
 
-        escribe_dates = set(meetings_by_date)
         yield from escribe_meetings
 
         # yield city calendar meetings only if date not already in eScribe
         seen_ids = set()
-        for meeting in getattr(self, "_calendar_meetings", []):
-            if meeting["start"].date() in escribe_dates or meeting["id"] in seen_ids:
+        for meeting in self._calendar_meetings:
+            if meeting["start"].date() in meetings_by_date or meeting["id"] in seen_ids:
                 continue
             seen_ids.add(meeting["id"])
             yield meeting
@@ -390,8 +307,9 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
     def _create_meeting(self, item):
         # Filter by meeting type if allowed_meeting_types is set
         if self.allowed_meeting_types:
-            meeting_type = (item.get("MeetingType") or "").strip()
-            meeting_name = (item.get("MeetingName") or "").strip()
+            # API returns HTML-escaped names, e.g. "Citizens&#39;"
+            meeting_type = html.unescape(item.get("MeetingType") or "").strip()
+            meeting_name = html.unescape(item.get("MeetingName") or "").strip()
 
             if (
                 meeting_type not in self.allowed_meeting_types
@@ -400,8 +318,6 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
                 return None
 
         meeting_start = self._parse_datetime(item.get("StartDate"))
-        meeting_end = self._parse_datetime(item.get("EndDate"))
-
         if meeting_start is None:
             return None
 
@@ -410,7 +326,7 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
             description="",
             classification=self._parse_classification(item),
             start=meeting_start,
-            end=meeting_end,
+            end=self._parse_datetime(item.get("EndDate")),
             all_day=False,
             time_notes=self.time_notes,
             location=self._parse_location(item),
@@ -418,122 +334,92 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
             # source is set in parse_calendar, once city calendar URLs are loaded
         )
 
-        link_text = " ".join(link["title"] for link in meeting.get("links", []))
+        link_text = " ".join(link["title"] for link in meeting["links"])
         meeting["status"] = self._get_status(meeting, text=link_text)
         meeting["id"] = self._get_id(meeting)
 
         return meeting
 
+    # City calendar parsing
+
     def _parse_city_calendar_html(self, calendar_html, source_url, month, year):
-        """Parse city calendar HTML and yield meetings."""
-
+        """
+        Parse city calendar HTML and yield meetings, past and upcoming.
+        parse_calendar only keeps those on dates eScribe has no meeting for.
+        """
         selector = Selector(text=calendar_html)
-        keywords = getattr(self, "calendar_keywords", [])
-
-        # Naive Pacific "now", comparable with the naive start datetimes below
-        now = self._now_local()
-        # Get number of days in the month to filter out invalid dates
-        _, days_in_month = cal.monthrange(year, month)
 
         for td in selector.css("td"):
-            day_text = td.css("span.calendar_day_value::text").get()
-            if day_text is None:
-                # fall back to the first non-empty text in the cell
-                all_text = [t.strip() for t in td.css("::text").getall() if t.strip()]
-                if not all_text:
-                    continue
-                day_text = all_text[0]
-            day_match = re.match(r"^(\d{1,2})$", day_text.strip())
-            if not day_match:
+            cell_date = self._parse_cell_date(td, year, month)
+            if cell_date is None:
                 continue
 
-            # The site sometimes returns a different month than requested,
-            # so prefer the real date from the cell's aria-label
-            day_date = self._parse_aria_date(td.attrib.get("aria-label", ""))
-            if day_date:
-                cell_year, cell_month, day = (
-                    day_date.year,
-                    day_date.month,
-                    day_date.day,
-                )
-            else:
-                cell_year, cell_month = year, month
-                day = int(day_match.group(1))
-                if day > days_in_month:
-                    continue
-
             for event_link in td.css("a"):
-                title = event_link.attrib.get("title", "").strip()
-                normalized_title = self._normalize_calendar_text(title)
-                if not any(
-                    self._normalize_calendar_text(kw) in normalized_title
-                    for kw in keywords
-                ):
+                calendar_title = event_link.attrib.get("title", "").strip()
+                if not self._matches_keywords(calendar_title):
                     continue
 
-                div = event_link.xpath("./parent::div")
-                time_text = div.css("span.calendar_eventtime::text").get("").strip()
-                time_match = re.match(
-                    r"(\d{1,2}:\d{2}\s*[AP]M)", time_text, re.IGNORECASE
+                time_text = (
+                    event_link.xpath("./parent::div")
+                    .css("span.calendar_eventtime::text")
+                    .get("")
+                    .strip()
                 )
-
-                has_time = False
-                try:
-                    if time_match:
-                        start = datetime.strptime(
-                            f"{cell_year}-{cell_month:02d}-{day:02d} {time_match.group(1).strip()}",  # noqa
-                            "%Y-%m-%d %I:%M %p",
-                        )
-                        has_time = True
-                    else:
-                        start = datetime(cell_year, cell_month, day)
-                except ValueError:
-                    start = datetime(cell_year, cell_month, day)
+                start = self._parse_event_start(cell_date, time_text)
 
                 href = event_link.attrib.get("href", "").strip()
-                event_url = (
-                    "https://www.chulavistaca.gov" + href
-                    if href.startswith("/")
-                    else href or source_url
-                )
-                calendar_title = title
-                title = self._map_calendar_title(title)
+                event_url = urljoin(self.city_base, href) if href else source_url
 
-                if hasattr(self, "_calendar_event_urls"):
-                    # the same event can be listed on several fetched pages with
-                    # a different ?curm/cury query, so compare without the query
-                    day_events = self._calendar_event_urls.setdefault(start.date(), [])
-                    event_path = event_url.split("?")[0]
-                    if all(url.split("?")[0] != event_path for _, url in day_events):
-                        day_events.append((title, event_url))
-
-                # Timed events: skip if already started.
-                # Untimed events (midnight placeholder): keep through today.
-                if has_time:
-                    if start < now:
-                        continue
-                elif start.date() < now.date():
-                    continue
+                self._record_event_url(start.date(), calendar_title, event_url)
 
                 meeting = Meeting(
-                    title=title,
+                    title=calendar_title,
                     description="",
-                    classification=self._parse_classification({"MeetingType": title}),
+                    classification=self._parse_classification(
+                        {"MeetingType": calendar_title}
+                    ),
                     start=start,
                     end=None,
                     all_day=False,
                     time_notes=self.time_notes,
-                    location=getattr(self, "location", {"name": "", "address": ""}),
+                    location=self.location,
                     links=[],
                     source=event_url,
                 )
-                # check the original calendar title, since mapping drops "CANCELLED"
-                meeting["status"] = self._get_status(meeting, text=calendar_title)
+                meeting["status"] = self._get_status(meeting)
                 meeting["id"] = self._get_id(meeting)
                 yield meeting
 
+    def _parse_cell_date(self, td, year, month):
+        """
+        Return the date of a calendar cell, or None if the cell isn't a day.
+        The site sometimes returns a different month than requested, so the
+        real date from the cell's aria-label is preferred.
+        """
+        day_text = td.css("span.calendar_day_value::text").get()
+        if day_text is None:
+            # fall back to the first non-empty text in the cell
+            texts = [t.strip() for t in td.css("::text").getall() if t.strip()]
+            if not texts:
+                return None
+            day_text = texts[0]
+
+        day_match = re.match(r"^(\d{1,2})$", day_text.strip())
+        if not day_match:
+            return None
+
+        aria_date = self._parse_aria_date(td.attrib.get("aria-label", ""))
+        if aria_date:
+            return aria_date
+
+        day = int(day_match.group(1))
+        _, days_in_month = cal.monthrange(year, month)
+        if not 1 <= day <= days_in_month:
+            return None
+        return date(year, month, day)
+
     def _parse_aria_date(self, label):
-        """Parse date from aria-label like 'Scheduled events, Wednesday, October 14, 2026'."""  # noqa
+        """Parse date from aria-label like '..., Wednesday, October 14, 2026'."""
         match = re.search(r"([A-Za-z]+ \d{1,2}, \d{4})\s*$", label)
         if not match:
             return None
@@ -542,22 +428,46 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         except ValueError:
             return None
 
+    def _parse_event_start(self, day, time_text):
+        """Return the start datetime of an event on a given date."""
+        time_match = re.match(r"(\d{1,2}:\d{2}\s*[AP]M)", time_text, re.IGNORECASE)
+        if time_match:
+            try:
+                return datetime.strptime(
+                    f"{day.isoformat()} {time_match.group(1).strip()}",
+                    "%Y-%m-%d %I:%M %p",
+                )
+            except ValueError:
+                pass
+        return datetime(day.year, day.month, day.day)
+
+    def _record_event_url(self, day, title, event_url):
+        """
+        Remember a city calendar event for a date. The same event can be listed
+        on several fetched pages with a different ?curm/cury query, so events
+        are compared without the query.
+        """
+        day_events = self._calendar_event_urls.setdefault(day, [])
+        event_path = event_url.split("?")[0]
+        if all(url.split("?")[0] != event_path for _, url in day_events):
+            day_events.append((title, event_url))
+
     def _parse_sources(self, day, meetings):
         """
         Set the source of each eScribe meeting on one date. Each city calendar
         event is used by at most one meeting:
-        1. a meeting gets the event with the same (mapped) title
+        1. a meeting gets the event with the same meeting key
         2. if exactly one meeting and one event are left unmatched (e.g. a
            "CANCELLED ..." calendar title), they are paired
         3. any other meeting uses the agency's eScribe calendar
         """
-        escribe_url = f"{self.base_url}?MeetingviewId={self.meeting_view_id}"
-        events = list(getattr(self, "_calendar_event_urls", {}).get(day, []))
+        escribe_url = self.base_url + self._escribe_query
+        events = list(self._calendar_event_urls.get(day, []))
 
         unmatched = []
         for meeting in meetings:
-            key = self._title_key(meeting["title"])
-            match = next((e for e in events if self._title_key(e[0]) == key), None)
+            key = self._meeting_key(meeting["title"])
+            match = next((e for e in events if self._meeting_key(e[0]) == key), None)
             if match:
                 events.remove(match)
                 meeting["source"] = match[1]
@@ -571,19 +481,17 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         for meeting in unmatched:
             meeting["source"] = escribe_url
 
+    # eScribe item parsing
+
     def _parse_title(self, item):
         title = (item.get("MeetingName") or item.get("MeetingType", "")).strip()
         return html.unescape(title)
 
     def _parse_classification(self, item):
-        title = item.get("MeetingType", "").lower()
-        if "commission" in title:
-            return COMMISSION
-        if "committee" in title:
-            return COMMITTEE
-        if "board" in title:
-            return BOARD
-        return NOT_CLASSIFIED
+        title = (item.get("MeetingType") or "").lower()
+        return next(
+            (c for kw, c in self._CLASSIFICATIONS if kw in title), NOT_CLASSIFIED
+        )
 
     def _parse_datetime(self, date_str):
         """
@@ -597,6 +505,7 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         try:
             return datetime.strptime(date_str, "%Y/%m/%d %H:%M:%S")
         except ValueError:
+            self.logger.warning(f"Failed to parse datetime: {date_str}")
             return None
 
     def _parse_location(self, item):
@@ -607,12 +516,9 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
             address = address[len(name) :].lstrip(", ").strip()
 
         if not address:
-            return getattr(self, "location", {"name": "", "address": ""})
+            return self.location
 
-        return {
-            "name": name,
-            "address": address,
-        }
+        return {"name": name, "address": address}
 
     def _parse_links(self, item):
         """
@@ -620,31 +526,19 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         :param item: Raw meeting data
         :return: List of link dicts with 'href' and 'title' keys
         """
-        links = []
-        seen_urls = set()
-
-        docs = item.get("MeetingDocumentLink", [])
-        for doc in docs:
-            url = self._make_absolute_url(doc.get("Url"))
-            if not url or url in seen_urls:
-                continue
-
-            title = self._normalize_link_title(doc.get("Title"))
-            if not title:
-                continue
-
-            links.append(
-                {
-                    "href": url,
-                    "title": title,
-                }
+        candidates = [
+            (
+                self._make_absolute_url(doc.get("Url")),
+                self._normalize_link_title(doc.get("Title")),
             )
-            seen_urls.add(url)
-
+            for doc in item.get("MeetingDocumentLink") or []
+        ]
         if item.get("HasVideo") and item.get("VideoUrl"):
-            video_url = self._make_absolute_url(item.get("VideoUrl"))
-            if video_url and video_url not in seen_urls:
-                links.append({"href": video_url, "title": "Video"})
-                seen_urls.add(video_url)
+            candidates.append((self._make_absolute_url(item["VideoUrl"]), "Video"))
 
+        links, seen_urls = [], set()
+        for url, title in candidates:
+            if url and title and url not in seen_urls:
+                seen_urls.add(url)
+                links.append({"href": url, "title": title})
         return links

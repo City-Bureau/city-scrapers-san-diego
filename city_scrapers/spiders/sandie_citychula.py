@@ -115,6 +115,8 @@ spider_configs = [
         "meeting_view_id": 24,
         "time_notes": "The regular meetings are held on the fourth Thursday of each month. Please refer to the meeting attachments for more accurate start and end times.",  # noqa
         "calendar_keywords": ["Human Relations Commission"],
+        # e.g. "Human Relations Commission Awards Reception" is not a meeting
+        "calendar_exclude_keywords": ["Awards", "Reception"],
         "location": {
             "name": "Council Chambers",
             "address": "276 Fourth Avenue, Chula Vista, CA 91910",
@@ -208,12 +210,17 @@ spider_configs = [
         },
     },
     {
+        # Uses shared calendar meeting_view_id, filtered client-side, because
+        # special meetings are a separate eScribe meeting type
         "class_name": "ChulaVistaMeasurePCitizensOversightCommitteeSpider",
         "name": "chula_vista_measure_p_citizens_oversight_committee",
         "agency": "City of Chula Vista - Measure P Citizens' Oversight Committee",
-        "meeting_view_id": 85,
-        "meeting_id_param": "MeetingtypeId",
+        "meeting_view_id": 2,
         "time_notes": "The regular meetings are held on the fourth Thursday Quarterly in January, April, July, and October. Please refer to the meeting attachments for more accurate start and end times.",  # noqa
+        "allowed_meeting_types": [
+            "Measure P Citizens' Oversight Committee- Regular Meeting",
+            "Measure P Citizens' Oversight Committee Special Meeting",
+        ],
         "calendar_keywords": ["Measure P Citizens", "Measure P - Citizens"],
         "location": {
             "name": "John Lippitt Public Works Center Lunchroom",
