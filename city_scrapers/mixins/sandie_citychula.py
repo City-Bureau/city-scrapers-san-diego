@@ -18,7 +18,6 @@ from city_scrapers_core.constants import BOARD, COMMISSION, COMMITTEE, NOT_CLASS
 from city_scrapers_core.items import Meeting
 from city_scrapers_core.spiders import CityScrapersSpider
 from curl_cffi import requests as curl_requests
-from dateutil.relativedelta import relativedelta
 from parsel import Selector
 
 
@@ -124,6 +123,18 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
     def _now_local(self):
         return datetime.now(ZoneInfo(self.timezone)).replace(tzinfo=None)
 
+    def _shift_month(self, year, month, offset):
+        """Return (year, month) shifted by offset months."""
+        years, month_index = divmod(month - 1 + offset, 12)
+        return year + years, month_index + 1
+
+    def _shift_years(self, dt, years):
+        """Shift a datetime by whole years, clamping Feb 29 to Feb 28."""
+        try:
+            return dt.replace(year=dt.year + years)
+        except ValueError:
+            return dt.replace(year=dt.year + years, day=28)
+
     def _make_absolute_url(self, url):
         """Convert relative URL to absolute."""
         if not url or url.startswith("<"):
@@ -201,10 +212,10 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         self._init_state()
 
         if self.calendar_keywords:
-            this_month = self._now_local().replace(day=1)
+            now = self._now_local()
             for i in range(13):
-                target = this_month + relativedelta(months=i)
-                self._load_city_calendar_month(target.year, target.month)
+                year, month = self._shift_month(now.year, now.month, i)
+                self._load_city_calendar_month(year, month)
 
         yield from self._request_calendar_meetings()
 
@@ -214,9 +225,9 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
             return
         self._fetched_calendar_months.add((year, month))
 
-        prev = datetime(year, month, 1) - relativedelta(months=1)
+        prev_year, prev_month = self._shift_month(year, month, -1)
         url = f"{self.city_calendar_base}/-curm-{month}/-cury-{year}"
-        referer = f"{self.city_calendar_base}/-curm-{prev.month}/-cury-{prev.year}"
+        referer = f"{self.city_calendar_base}/-curm-{prev_month}/-cury-{prev_year}"
         calendar_html = self._fetch_city_calendar(url, referer)
         if calendar_html:
             self._calendar_meetings.extend(
@@ -252,10 +263,10 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         # Timezone-aware date range: 3 years back, 1 year ahead
         tz = ZoneInfo(self.timezone)
         now = self._now_local()
-        start = (now - relativedelta(years=3)).replace(
+        start = self._shift_years(now, -3).replace(
             hour=0, minute=0, second=0, microsecond=0, tzinfo=tz
         )
-        end = (now + relativedelta(years=1)).replace(
+        end = self._shift_years(now, 1).replace(
             hour=23, minute=59, second=59, microsecond=0, tzinfo=tz
         )
 
