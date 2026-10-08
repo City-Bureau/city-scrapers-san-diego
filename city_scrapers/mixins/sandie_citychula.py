@@ -60,7 +60,7 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
     allowed_meeting_types = None
     calendar_keywords = None
     calendar_exclude_keywords = None
-    location = {"name": "", "address": ""}
+    location = {"name": "TBD", "address": ""}
 
     timezone = "America/Los_Angeles"
 
@@ -134,6 +134,18 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
             return dt.replace(year=dt.year + years)
         except ValueError:
             return dt.replace(year=dt.year + years, day=28)
+
+    def _date_range(self):
+        """Scraped period, shared by eScribe and the city calendar:
+        3 years back, 1 year ahead."""
+        now = self._now_local()
+        start = self._shift_years(now, -3).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        end = self._shift_years(now, 1).replace(
+            hour=23, minute=59, second=59, microsecond=0
+        )
+        return start, end
 
     def _make_absolute_url(self, url):
         """Convert relative URL to absolute."""
@@ -211,11 +223,13 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
     def start_requests(self):
         self._init_state()
 
+        # fetch every city calendar month in the eScribe period
         if self.calendar_keywords:
-            now = self._now_local()
-            for i in range(13):
-                year, month = self._shift_month(now.year, now.month, i)
+            start, end = self._date_range()
+            year, month = start.year, start.month
+            while (year, month) <= (end.year, end.month):
                 self._load_city_calendar_month(year, month)
+                year, month = self._shift_month(year, month, 1)
 
         yield from self._request_calendar_meetings()
 
@@ -260,15 +274,9 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
             "Cookie": "CurrentTab=calendar",
         }
 
-        # Timezone-aware date range: 3 years back, 1 year ahead
+        # Timezone-aware date range
         tz = ZoneInfo(self.timezone)
-        now = self._now_local()
-        start = self._shift_years(now, -3).replace(
-            hour=0, minute=0, second=0, microsecond=0, tzinfo=tz
-        )
-        end = self._shift_years(now, 1).replace(
-            hour=23, minute=59, second=59, microsecond=0, tzinfo=tz
-        )
+        start, end = (dt.replace(tzinfo=tz) for dt in self._date_range())
 
         body = {
             "calendarStartDate": start.isoformat(),
@@ -290,27 +298,24 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         meetings = response.json().get("d", [])
         escribe_meetings = [m for m in map(self._create_meeting, meetings) if m]
 
-        # fetch city calendar months covering the eScribe meetings
-        # to find event page URLs for their sources
-        if self.calendar_keywords:
-            for year, month in sorted(
-                {(m["start"].year, m["start"].month) for m in escribe_meetings}
-            ):
-                self._load_city_calendar_month(year, month)
-
         # group escribe meetings by date to match them with city calendar events
         meetings_by_date = defaultdict(list)
         for meeting in escribe_meetings:
             meetings_by_date[meeting["start"].date()].append(meeting)
+        matched_paths = set()
         for day, day_meetings in meetings_by_date.items():
-            self._parse_sources(day, day_meetings)
+            matched_paths |= self._parse_sources(day, day_meetings)
 
         yield from escribe_meetings
 
-        # yield city calendar meetings only if date not already in eScribe
+        # yield city calendar meetings not matched to any eScribe meeting;
+        # they have no eScribe attachments, so their links stay empty
         seen_ids = set()
         for meeting in self._calendar_meetings:
-            if meeting["start"].date() in meetings_by_date or meeting["id"] in seen_ids:
+            if (
+                meeting["source"].split("?")[0] in matched_paths
+                or meeting["id"] in seen_ids
+            ):
                 continue
             seen_ids.add(meeting["id"])
             yield meeting
@@ -356,7 +361,7 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
     def _parse_city_calendar_html(self, calendar_html, source_url, month, year):
         """
         Parse city calendar HTML and yield meetings, past and upcoming.
-        parse_calendar only keeps those on dates eScribe has no meeting for.
+        parse_calendar only keeps those not matched to an eScribe meeting.
         """
         selector = Selector(text=calendar_html)
 
@@ -437,6 +442,7 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         try:
             return datetime.strptime(match.group(1), "%B %d, %Y").date()
         except ValueError:
+            self.logger.warning(f"Failed to parse aria-label date: {label}")
             return None
 
     def _parse_event_start(self, day, time_text):
@@ -449,7 +455,10 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
                     "%Y-%m-%d %I:%M %p",
                 )
             except ValueError:
-                pass
+                self.logger.warning(
+                    f"Failed to parse event time '{time_text}' on {day}; "
+                    "falling back to midnight"
+                )
         return datetime(day.year, day.month, day.day)
 
     def _record_event_url(self, day, title, event_url):
@@ -470,27 +479,42 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         1. a meeting gets the event with the same meeting key
         2. if exactly one meeting and one event are left unmatched (e.g. a
            "CANCELLED ..." calendar title), they are paired
-        3. any other meeting uses the agency's eScribe calendar
+        3. any other meeting uses the agency's eScribe calendar for that year
+        Returns the matched event URLs, without their query.
         """
-        escribe_url = self.base_url + self._escribe_query
+        escribe_url = f"{self.base_url}{self._escribe_query}&Year={day.year}"
         events = list(self._calendar_event_urls.get(day, []))
 
+        matched_urls = []
         unmatched = []
         for meeting in meetings:
             key = self._meeting_key(meeting["title"])
             match = next((e for e in events if self._meeting_key(e[0]) == key), None)
             if match:
                 events.remove(match)
-                meeting["source"] = match[1]
+                matched_urls.append(self._apply_event(meeting, *match))
             else:
                 unmatched.append(meeting)
 
         if len(unmatched) == 1 and len(events) == 1:
-            unmatched[0]["source"] = events[0][1]
-            return
+            matched_urls.append(self._apply_event(unmatched[0], *events[0]))
+        else:
+            for meeting in unmatched:
+                meeting["source"] = escribe_url
 
-        for meeting in unmatched:
-            meeting["source"] = escribe_url
+        return {url.split("?")[0] for url in matched_urls}
+
+    def _apply_event(self, meeting, event_title, event_url):
+        """
+        Use a matched city calendar event as the eScribe meeting's source, and
+        recheck its status with the event title, since a meeting cancelled on
+        the city calendar (e.g. "... Meeting - Cancelled") can still look
+        scheduled in eScribe.
+        """
+        meeting["source"] = event_url
+        link_text = " ".join(link["title"] for link in meeting.get("links", []))
+        meeting["status"] = self._get_status(meeting, text=f"{link_text} {event_title}")
+        return event_url
 
     # eScribe item parsing
 
