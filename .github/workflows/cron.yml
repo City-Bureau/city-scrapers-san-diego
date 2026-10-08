@@ -1,9 +1,9 @@
 name: Cron
 
-# GitHub runs this schedule as this file's last committer — keep that an active account.
+# GitHub runs this schedule as whoever last changed the cron value; a comment-only edit doesn't re-register it.
 on:
   schedule:
-    - cron: "27 6 * * *"
+    - cron: "29 6 * * *"
   workflow_dispatch:
 
 env:
