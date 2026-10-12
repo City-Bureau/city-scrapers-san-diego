@@ -216,7 +216,7 @@ def test_calendar_meeting_not_in_escribe_is_kept():
     assert calendar_item["links"] == []
 
 
-def test_calendar_cancelled_event_cancels_escribe_meeting():
+def test_calendar_cancelled_event_cancels_escribe_meeting_if_no_cancellation_notice():
     day = datetime(2026, 9, 10).date()
     spider._calendar_event_urls = {
         day: [("Traffic Safety Commission Meeting - Cancelled", EVENT_URL)]
