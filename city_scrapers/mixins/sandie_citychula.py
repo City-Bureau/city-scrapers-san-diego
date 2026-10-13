@@ -365,7 +365,7 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         titles = [link["title"] for link in meeting.get("links", [])]
         other_titles = [t for t in titles if not re.search(r"cancel", t, re.I)]
         if other_titles and len(other_titles) < len(titles):
-            return " ".join(other_titles)
+            return " ".join(other_titles + [event_title])
         return " ".join(titles + [event_title])
 
     # City calendar parsing
