@@ -350,11 +350,23 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
             # source is set in parse_calendar, once city calendar URLs are loaded
         )
 
-        link_text = " ".join(link["title"] for link in meeting["links"])
-        meeting["status"] = self._get_status(meeting, text=link_text)
+        meeting["status"] = self._get_status(meeting, text=self._status_text(meeting))
         meeting["id"] = self._get_id(meeting)
 
         return meeting
+
+    def _status_text(self, meeting, event_title=""):
+        """
+        Text passed to _get_status for an eScribe meeting: its link titles and,
+        if matched, the city calendar event title. When eScribe has a
+        cancellation notice next to other documents (e.g. an agenda), the
+        meeting still took place, so cancellation wording is ignored.
+        """
+        titles = [link["title"] for link in meeting.get("links", [])]
+        other_titles = [t for t in titles if not re.search(r"cancel", t, re.I)]
+        if other_titles and len(other_titles) < len(titles):
+            return " ".join(other_titles + [event_title])
+        return " ".join(titles + [event_title])
 
     # City calendar parsing
 
@@ -512,8 +524,9 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         scheduled in eScribe.
         """
         meeting["source"] = event_url
-        link_text = " ".join(link["title"] for link in meeting.get("links", []))
-        meeting["status"] = self._get_status(meeting, text=f"{link_text} {event_title}")
+        meeting["status"] = self._get_status(
+            meeting, text=self._status_text(meeting, event_title)
+        )
         return event_url
 
     # eScribe item parsing

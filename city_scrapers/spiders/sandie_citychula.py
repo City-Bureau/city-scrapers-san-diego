@@ -184,6 +184,11 @@ spider_configs = [
             "name": "Council Chambers",
             "address": "276 Fourth Avenue Building A, Chula Vista, CA 91910",
         },
+        # Marks this spider as the one whose agency matches the original Backlog
+        # request. Used by the Airtable sync workflow to link every slug in this
+        # factory to the correct Backlog record. Safe to remove or move to a
+        # different spider when the Backlog request changes.
+        "is_main": True,
     },
     {
         "class_name": "ChulaVistaVeteransAdvisoryCommissionSpider",

@@ -136,7 +136,9 @@ def test_upcoming_source(parsed_items_with_upcoming):
 # --- source matching between eScribe meetings and city calendar events ---
 
 ESCRIBE_URL = "https://pub-chulavista.escribemeetings.com/?MeetingviewId=15&Year=2026"
-EVENT_URL = "https://www.chulavistaca.gov/Home/Components/Calendar/Event/1/2854"
+EVENT_URL = (
+    "https://www.chulavistaca.gov/Home/Components/Calendar/Event/{event_id}/2854"
+)
 
 
 def _source_for(titles, events):
@@ -216,7 +218,7 @@ def test_calendar_meeting_not_in_escribe_is_kept():
     assert calendar_item["links"] == []
 
 
-def test_calendar_cancelled_event_cancels_escribe_meeting():
+def test_calendar_cancelled_event_cancels_escribe_meeting_if_no_cancellation_notice():
     day = datetime(2026, 9, 10).date()
     spider._calendar_event_urls = {
         day: [("Traffic Safety Commission Meeting - Cancelled", EVENT_URL)]
@@ -229,4 +231,48 @@ def test_calendar_cancelled_event_cancels_escribe_meeting():
     with freeze_time("2026-01-09"):
         spider._parse_sources(day, [meeting])
     assert meeting["source"] == EVENT_URL
+    assert meeting["status"] == CANCELLED
+
+
+def test_calendar_cancelled_event_cancels_escribe_meeting_with_agenda_and_notice():
+    """
+    Real case: Veterans Advisory Commission, Nov 20, 2024. eScribe lists both a
+    cancellation notice and an agenda, so on its own the meeting looks held;
+    the city calendar title marks it cancelled.
+    """
+    event_source = EVENT_URL.format(event_id=33142)
+    day = datetime(2024, 11, 20).date()
+    meeting = {
+        "title": "Veterans Advisory Commission Regular Meeting",
+        "start": datetime(2024, 11, 20, 18),
+        "links": [
+            {
+                "href": "https://pub-chulavista.escribemeetings.com/FileStream.ashx?DocumentId=46503",  # noqa
+                "title": "Cancellation Notice (PDF)",
+            },
+            {
+                "href": "https://pub-chulavista.escribemeetings.com/Meeting.aspx?Id=e79c6d4a-27de-45f0-8b65-cee348359cc1&Agenda=Agenda&lang=English",  # noqa
+                "title": "Agenda (HTML)",
+            },
+        ],
+    }
+
+    with freeze_time("2026-01-09"):
+        # status as set in _create_meeting: the agenda outweighs the notice
+        meeting["status"] = spider._get_status(
+            meeting, text=spider._status_text(meeting)
+        )
+        assert meeting["status"] == "passed"
+
+        spider._calendar_event_urls = {
+            day: [
+                (
+                    "Veterans Advisory Commission Regular Meeting - Cancelled",
+                    event_source,
+                )
+            ]
+        }
+        spider._parse_sources(day, [meeting])
+
+    assert meeting["source"] == event_source
     assert meeting["status"] == CANCELLED
