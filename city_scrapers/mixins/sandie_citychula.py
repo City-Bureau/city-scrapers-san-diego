@@ -87,6 +87,7 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         (re.compile(r"\bparks and rec\b"), "parks and recreation"),
         (re.compile(r"^safety commission\b"), "traffic safety commission"),
         (re.compile(r"\bhomeless\b"), "homelessness"),
+        (re.compile(r"^pd\b"), "police department"),
         (
             re.compile(r"^community advisory committee\b"),
             "police department community advisory committee",
@@ -489,16 +490,13 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         Set the source of each eScribe meeting on one date. Each city calendar
         event is used by at most one meeting:
         1. a meeting gets the event with the same meeting key
-        2. if exactly one meeting and one event are left unmatched (e.g. a
-           "CANCELLED ..." calendar title), they are paired
-        3. any other meeting uses the agency's eScribe calendar for that year
+        2. any other meeting uses the agency's eScribe calendar for that year
         Returns the matched event URLs, without their query.
         """
         escribe_url = f"{self.base_url}{self._escribe_query}&Year={day.year}"
         events = list(self._calendar_event_urls.get(day, []))
 
         matched_urls = []
-        unmatched = []
         for meeting in meetings:
             key = self._meeting_key(meeting["title"])
             match = next((e for e in events if self._meeting_key(e[0]) == key), None)
@@ -506,12 +504,6 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
                 events.remove(match)
                 matched_urls.append(self._apply_event(meeting, *match))
             else:
-                unmatched.append(meeting)
-
-        if len(unmatched) == 1 and len(events) == 1:
-            matched_urls.append(self._apply_event(unmatched[0], *events[0]))
-        else:
-            for meeting in unmatched:
                 meeting["source"] = escribe_url
 
         return {url.split("?")[0] for url in matched_urls}

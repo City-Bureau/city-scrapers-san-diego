@@ -244,6 +244,8 @@ spider_configs = [
             "Police Department Community Advisory Committee - Special Virtual",
             "Police Department Community Advisory Committee- Regular Meeting",
             "Police Department Community Advisory Committee Special Meeting",
+            "PD Community Advisory Committee - Regular Meeting",
+            "PD Community Advisory Committee - Special Meeting",
         ],
         "calendar_keywords": ["Community Advisory Committee"],
         "location": {
