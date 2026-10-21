@@ -21,6 +21,7 @@ spider_configs = [
             6: "https://www.sandag.org/meetings-and-events/policy-advisory-committees/regional-planning",  # noqa
             7: "https://www.sandag.org/meetings-and-events/policy-advisory-committees/transportation",  # noqa
         },
+        "is_main": True,
     },
     {
         "class_name": "SandagTransNetIndependentTaxpayerOversightCommitteeSpider",

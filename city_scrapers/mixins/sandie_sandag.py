@@ -7,7 +7,7 @@ import html
 import json
 import re
 from datetime import datetime
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urljoin, urlparse
 from zoneinfo import ZoneInfo
 
 import scrapy
@@ -69,11 +69,10 @@ class SandieSandagMixin(CityScrapersSpider, metaclass=SandieSandagMixinMeta):
 
     def _make_absolute_url(self, url):
         """Convert relative URL to absolute."""
+        url = (url or "").strip()
         if not url or url.startswith("<"):
             return None
-        if url.startswith("http"):
-            return url
-        return self.base_url + url.lstrip("/")
+        return urljoin(self.base_url, url)
 
     def _clean_text(self, text):
         """Unescape HTML entities and collapse whitespace."""
@@ -184,6 +183,7 @@ class SandieSandagMixin(CityScrapersSpider, metaclass=SandieSandagMixinMeta):
         try:
             return datetime.strptime(date_str, "%Y/%m/%d %H:%M:%S")
         except ValueError:
+            self.logger.warning("Could not parse datetime: %r", date_str)
             return None
 
     def _parse_location(self, item):
