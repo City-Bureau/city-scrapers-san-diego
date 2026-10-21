@@ -169,7 +169,8 @@ class SandieEncinitasMixin(CityScrapersSpider, metaclass=SandieEncinitasMixinMet
             if meeting and self._get_listing_key(meeting) not in archived_keys:
                 self._add_meeting(meetings, meeting)
 
-        # For meetings whose start time is only a date, fetch the agenda to recover the time
+        # For meetings whose start time is only a date, fetch
+        # the agenda to recover the time
         for meeting_id, meeting in meetings.items():
             clip_id = self._parse_clip_id(meeting)
             if meeting_id in missing_time_ids and clip_id:
