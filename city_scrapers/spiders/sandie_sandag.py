@@ -11,7 +11,7 @@ spider_configs = [
     {
         "class_name": "SandagBoardOfDirectorsCommitteesSpider",
         "name": "sandag_board_of_directors_committees",
-        "agency": "SANDAG-Board of Directors Committees",
+        "agency": "SANDAG- Board of Directors Committees",
         "meeting_view_id": {
             1: "https://www.sandag.org/meetings-and-events/policy-advisory-committees/audit",  # noqa
             2: "https://www.sandag.org/meetings-and-events/board-of-directors",
@@ -26,7 +26,7 @@ spider_configs = [
     {
         "class_name": "SandagTransNetIndependentTaxpayerOversightCommitteeSpider",
         "name": "sandag_transnet_independent_taxpayer_oversight_committee",
-        "agency": "SANDAG-TransNet Independent Taxpayer Oversight Committee",
+        "agency": "SANDAG- TransNet Independent Taxpayer Oversight",
         "meeting_view_id": {
             15: "https://www.sandag.org/meetings-and-events/transnet-independent-taxpayer-oversight",  # noqa
         },
@@ -34,7 +34,7 @@ spider_configs = [
     {
         "class_name": "SandagWorkingGroupsSpider",
         "name": "sandag_working_groups",
-        "agency": "SANDAG-Working Groups",
+        "agency": "SANDAG- Working Groups",
         "meeting_view_id": {
             8: "https://www.sandag.org/meetings-and-events/working-groups/chiefs-sheriffs",  # noqa
             13: "https://www.sandag.org/meetings-and-events/working-groups/social-services-transportation",  # noqa
