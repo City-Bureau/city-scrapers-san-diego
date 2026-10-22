@@ -55,7 +55,7 @@ def test_time_notes():
 def test_id():
     assert (
         parsed_items[0]["id"]
-        == "sandag_board_of_directors_committees/202609110900/x/board_of_directors"
+        == "sandie_sandag_board_of_directors_committees/202609110900/x/board_of_directors"  # noqa
     )
 
 
