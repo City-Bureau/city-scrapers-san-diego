@@ -368,6 +368,129 @@ def test_same_title_same_day_different_times():
     ]
 
 
+def listing_response(archived=(), upcoming=()):
+    """
+    A listing with archived rows (title, date) in the City Council panel and
+    upcoming rows (title, date and time)
+    """
+    upcoming_rows = "".join(
+        f'<li class="table-row"><div class="upcoming-name">{title}</div>'
+        f'<div class="upcoming-date" data-eventDate="{date}">{date}</div></li>'
+        for title, date in upcoming
+    )
+    archived_rows = "".join(
+        f'<li class="table-row"><div class="archive-name">{title}</div>'
+        f'<div class="archive-date">{date}</div></li>'
+        for title, date in archived
+    )
+    body = f"""
+    <div class="upcoming-list"><ol>{upcoming_rows}</ol></div>
+    <div class="CollapsiblePanel">
+      <div class="CollapsiblePanelTab"><h2>City Council</h2></div>
+      <div class="CollapsiblePanelContent"><ol>{archived_rows}</ol></div>
+    </div>
+    """
+    return HtmlResponse(url=test_response.url, body=body, encoding="utf-8")
+
+
+CLOSED_SESSION_IDS = {
+    datetime(2026, 10, 21, 15, 30): (
+        "sandie_encinitas_council_committees/202610210000/x/"
+        "special_city_council_meeting_closed_session"
+    ),
+    datetime(2026, 10, 21, 17, 0): (
+        "sandie_encinitas_council_committees/202610211700/x/"
+        "special_city_council_meeting_closed_session"
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "archived,upcoming",
+    [
+        # Both archived, in either order
+        (
+            [
+                (
+                    "Special City Council Meeting - Closed Session 3:30 p.m.",
+                    "October 21, 2026",
+                ),  # noqa
+                (
+                    "Special City Council Meeting - Closed Session 5:00 p.m.",
+                    "October 21, 2026",
+                ),  # noqa
+            ],
+            [],
+        ),
+        (
+            [
+                (
+                    "Special City Council Meeting - Closed Session 5:00 p.m.",
+                    "October 21, 2026",
+                ),  # noqa
+                (
+                    "Special City Council Meeting - Closed Session 3:30 p.m.",
+                    "October 21, 2026",
+                ),  # noqa
+            ],
+            [],
+        ),
+        # Both upcoming, in either order
+        (
+            [],
+            [
+                (
+                    "Special City Council Meeting - Closed Session",
+                    "October 21, 2026 - 03:30 PM",
+                ),  # noqa
+                (
+                    "Special City Council Meeting - Closed Session",
+                    "October 21, 2026 - 05:00 PM",
+                ),  # noqa
+            ],
+        ),
+        (
+            [],
+            [
+                (
+                    "Special City Council Meeting - Closed Session",
+                    "October 21, 2026 - 05:00 PM",
+                ),  # noqa
+                (
+                    "Special City Council Meeting - Closed Session",
+                    "October 21, 2026 - 03:30 PM",
+                ),  # noqa
+            ],
+        ),
+        # The first one is archived while the second one is still upcoming
+        (
+            [
+                (
+                    "Special City Council Meeting - Closed Session 3:30 p.m.",
+                    "October 21, 2026",
+                )
+            ],  # noqa
+            [
+                (
+                    "Special City Council Meeting - Closed Session",
+                    "October 21, 2026 - 03:30 PM",
+                ),  # noqa
+                (
+                    "Special City Council Meeting - Closed Session",
+                    "October 21, 2026 - 05:00 PM",
+                ),  # noqa
+            ],
+        ),
+    ],
+)
+def test_same_title_same_day_ids_independent_of_order(archived, upcoming):
+    with freeze_time("2026-10-21"):
+        items = list(
+            council_spider.parse(listing_response(archived=archived, upcoming=upcoming))
+        )
+    assert {item["start"]: item["id"] for item in items} == CLOSED_SESSION_IDS
+
+
 def test_council_excludes_public_financing_authority():
     assert (
         council_spider._match_body(
