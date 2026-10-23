@@ -1,4 +1,5 @@
 import re
+from collections import defaultdict
 from datetime import datetime, timedelta
 
 import pytz
@@ -114,18 +115,25 @@ class SandieEncinitasMixin(CityScrapersSpider, metaclass=SandieEncinitasMixinMet
                 raw_title = self._clean_text(row.css(".archive-name::text").get())
                 # Placeholder rows linking to older archives don't have a title
                 body = self._match_body(raw_title) if raw_title else None
-                if body is not None:
+                if body is None:
+                    continue
+                title_time = self._parse_title_time(raw_title)
+                start = self._parse_start(
+                    row.css(".archive-date::text").get(), title_time
+                )
+                if start:
                     is_own_panel = body.get("panel") == panel_name
-                    archive_rows.append((is_own_panel, body, row, raw_title))
+                    archive_rows.append(
+                        (is_own_panel, start, body, row, raw_title, title_time)
+                    )
 
         # Rows from the body's own panel go first, other panels' listings of
-        # the same meeting are ignored
+        # the same meeting are ignored. Rows are sorted by start time so that
+        # meetings with the same title on the same day always get the same IDs.
         own_panel_keys = set()
-        for is_own_panel, body, row, raw_title in sorted(
-            archive_rows, key=lambda archive_row: not archive_row[0]
+        for is_own_panel, start, body, row, raw_title, title_time in sorted(
+            archive_rows, key=lambda archive_row: (not archive_row[0], archive_row[1])
         ):
-            title_time = self._parse_title_time(raw_title)
-            start = self._parse_start(row.css(".archive-date::text").get(), title_time)
             key = (self.bodies.index(body), start)
             if is_own_panel:
                 own_panel_keys.add(key)
@@ -138,8 +146,11 @@ class SandieEncinitasMixin(CityScrapersSpider, metaclass=SandieEncinitasMixinMet
                 missing_time_ids.add(meeting["id"])
 
         # Archived listings take priority over upcoming listings of the same meeting
-        archived_keys = {self._get_listing_key(m) for m in meetings.values()}
+        archived = defaultdict(list)
+        for meeting in meetings.values():
+            archived[self._get_listing_key(meeting)].append(meeting)
 
+        upcoming = []
         for row in response.css(".upcoming-list li.table-row:not(.table-row--head)"):
             raw_title = self._clean_text(row.css(".upcoming-name::text").get())
             if not raw_title or self._match_body(raw_title) is None:
@@ -160,14 +171,16 @@ class SandieEncinitasMixin(CityScrapersSpider, metaclass=SandieEncinitasMixinMet
                     cb_kwargs={
                         "row": row,
                         "raw_title": raw_title,
-                        "archived_keys": archived_keys,
+                        "archived": archived,
                     },
                     dont_filter=True,
                 )
                 continue
             meeting = self._create_meeting(row, raw_title, start, cutoff)
-            if meeting and self._get_listing_key(meeting) not in archived_keys:
-                self._add_meeting(meetings, meeting)
+            if meeting and not self._is_archived(meeting, archived):
+                upcoming.append(meeting)
+        for meeting in sorted(upcoming, key=lambda meeting: meeting["start"]):
+            self._add_meeting(meetings, meeting)
 
         # For meetings whose start time is only a date, fetch
         # the agenda to recover the time
@@ -209,22 +222,56 @@ class SandieEncinitasMixin(CityScrapersSpider, metaclass=SandieEncinitasMixinMet
         meeting["status"] = self._get_status(
             meeting, text=self.amendment_note_re.sub("", raw_title)
         )
-        meeting["id"] = self._get_id(meeting)
+        meeting["id"] = self._get_stable_id(meeting)
         return meeting
+
+    def _get_stable_id(self, meeting):
+        """Create an ID from the meeting's date, which doesn't change once archived"""
+        return self._get_id(
+            {
+                "title": meeting["title"],
+                "start": meeting["start"].replace(hour=0, minute=0),
+            }
+        )
 
     def _add_meeting(self, meetings, meeting):
         """
         Add a meeting unless it's already listed (e.g. a row repeated in the same
         panel), returning the meeting if it was added
         """
-        if meeting is None or meeting["id"] in meetings:
+        if meeting is None:
             return None
+        existing = meetings.get(meeting["id"])
+        if existing is not None:
+            if not self._is_separate_meeting(existing, meeting):
+                return None
+            # Meetings with the same title on the same day at different times
+            # keep IDs based on their start times so they don't collide
+            meeting["id"] = self._get_id(meeting)
+            if meeting["id"] in meetings:
+                return None
         meetings[meeting["id"]] = meeting
         return meeting
+
+    def _is_separate_meeting(self, meeting, other):
+        """Whether meetings with the same ID have different known start times"""
+        return all(m["start"].hour or m["start"].minute for m in (meeting, other)) and (
+            meeting["start"] != other["start"]
+        )
 
     def _get_listing_key(self, meeting):
         """Identify a meeting across the upcoming and archived listings"""
         return meeting["start"].date(), meeting["title"].lower()
+
+    def _is_archived(self, meeting, archived):
+        """
+        Whether an upcoming meeting is also listed in the archive, as opposed to
+        a separate meeting with the same title later on the same day
+        """
+        return any(
+            not self._is_separate_meeting(meeting, archived_meeting)
+            for archived_meeting in archived.get(self._get_listing_key(meeting), [])
+        )
 
     def _parse_agenda(self, response, meeting):
         """Recover a meeting's start time from the header of its agenda"""
@@ -234,10 +281,9 @@ class SandieEncinitasMixin(CityScrapersSpider, metaclass=SandieEncinitasMixinMet
             # Cancellation notes were removed from the title, so keep that status
             if meeting["status"] != CANCELLED:
                 meeting["status"] = self._get_status(meeting)
-            meeting["id"] = self._get_id(meeting)
         yield meeting
 
-    def _parse_upcoming_agenda(self, response, row, raw_title, archived_keys):
+    def _parse_upcoming_agenda(self, response, row, raw_title, archived):
         """Take the date and time of an upcoming meeting without one from its agenda"""
         start = self._parse_agenda_start(response)
         title_time = self._parse_title_time(raw_title)
@@ -250,7 +296,7 @@ class SandieEncinitasMixin(CityScrapersSpider, metaclass=SandieEncinitasMixinMet
             )
             return
         meeting = self._create_meeting(row, raw_title, start)
-        if meeting and self._get_listing_key(meeting) not in archived_keys:
+        if meeting and not self._is_archived(meeting, archived):
             yield meeting
 
     def _handle_agenda_error(self, failure):

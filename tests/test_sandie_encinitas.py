@@ -3,6 +3,7 @@ import re
 from datetime import datetime
 from os.path import dirname, exists, join
 
+import lxml.html
 import pytest
 import scrapy
 from city_scrapers_core.constants import (
@@ -302,6 +303,229 @@ def test_archived_listing_prioritized(boards_items):
     assert "clip_id=3963" in items[0]["links"][0]["href"]
 
 
+def without_archived_row_response(clip_id):
+    """The listing without the archived row of a meeting"""
+    doc = lxml.html.fromstring(test_response.body)
+    rows = [
+        row
+        for row in doc.cssselect(".CollapsiblePanel li.table-row")
+        if f"clip_id={clip_id}" in lxml.html.tostring(row, encoding="unicode")
+    ]
+    assert len(rows) == 1
+    rows[0].getparent().remove(rows[0])
+    return HtmlResponse(
+        url=test_response.url, body=lxml.html.tostring(doc), encoding="utf-8"
+    )
+
+
+def test_upcoming_and_archived_same_id(boards_items):
+    # Before it was archived, the meeting was only listed as upcoming at 2:00 PM
+    with freeze_time("2026-10-21"):
+        results = boards_spider.parse(without_archived_row_response(3963))
+        upcoming = [
+            r
+            for r in results
+            if isinstance(r, Meeting)
+            and r["title"] == "Senior Citizen Commission Regular Meeting"
+            and r["start"].date() == datetime(2026, 10, 20).date()
+        ]
+    archived = get_item(
+        boards_items,
+        datetime(2026, 10, 20),
+        "Senior Citizen Commission Regular Meeting",
+    )
+    assert len(upcoming) == 1
+    assert upcoming[0]["start"] == datetime(2026, 10, 20, 14, 0)
+    assert "event_id=5695" in upcoming[0]["links"][0]["href"]
+    assert "clip_id=3963" in archived["links"][0]["href"]
+    assert (
+        upcoming[0]["id"]
+        == archived["id"]
+        == (
+            "sandie_encinitas_boards_commissions/202610200000/x/"
+            "senior_citizen_commission_regular_meeting"
+        )
+    )
+
+
+def test_same_title_same_day_different_times():
+    morning = agenda_meeting(datetime(2026, 10, 1, 10, 0))
+    evening = agenda_meeting(datetime(2026, 10, 1, 18, 0))
+    repeated = agenda_meeting(datetime(2026, 10, 1, 18, 0))
+    without_time = agenda_meeting(datetime(2026, 10, 1))
+    for meeting in (morning, evening, repeated, without_time):
+        meeting["id"] = boards_spider._get_stable_id(meeting)
+    meetings = {}
+    assert boards_spider._add_meeting(meetings, morning) is morning
+    # A separate meeting at a different time gets an ID based on its start time
+    assert boards_spider._add_meeting(meetings, evening) is evening
+    # Repeated listings of either meeting are ignored
+    assert boards_spider._add_meeting(meetings, repeated) is None
+    assert boards_spider._add_meeting(meetings, without_time) is None
+    assert sorted(meetings) == [
+        "sandie_encinitas_boards_commissions/202610010000/x/planning_commission",
+        "sandie_encinitas_boards_commissions/202610011800/x/planning_commission",
+    ]
+
+
+def listing_response(archived=(), upcoming=()):
+    """
+    A listing with archived rows (title, date) in the City Council panel and
+    upcoming rows (title, date and time)
+    """
+    upcoming_rows = "".join(
+        f'<li class="table-row"><div class="upcoming-name">{title}</div>'
+        f'<div class="upcoming-date" data-eventDate="{date}">{date}</div></li>'
+        for title, date in upcoming
+    )
+    archived_rows = "".join(
+        f'<li class="table-row"><div class="archive-name">{title}</div>'
+        f'<div class="archive-date">{date}</div></li>'
+        for title, date in archived
+    )
+    body = f"""
+    <div class="upcoming-list"><ol>{upcoming_rows}</ol></div>
+    <div class="CollapsiblePanel">
+      <div class="CollapsiblePanelTab"><h2>City Council</h2></div>
+      <div class="CollapsiblePanelContent"><ol>{archived_rows}</ol></div>
+    </div>
+    """
+    return HtmlResponse(url=test_response.url, body=body, encoding="utf-8")
+
+
+CLOSED_SESSION_IDS = {
+    datetime(2026, 10, 21, 15, 30): (
+        "sandie_encinitas_council_committees/202610210000/x/"
+        "special_city_council_meeting_closed_session"
+    ),
+    datetime(2026, 10, 21, 17, 0): (
+        "sandie_encinitas_council_committees/202610211700/x/"
+        "special_city_council_meeting_closed_session"
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "archived,upcoming",
+    [
+        # Both archived, in either order
+        (
+            [
+                (
+                    "Special City Council Meeting - Closed Session 3:30 p.m.",
+                    "October 21, 2026",
+                ),  # noqa
+                (
+                    "Special City Council Meeting - Closed Session 5:00 p.m.",
+                    "October 21, 2026",
+                ),  # noqa
+            ],
+            [],
+        ),
+        (
+            [
+                (
+                    "Special City Council Meeting - Closed Session 5:00 p.m.",
+                    "October 21, 2026",
+                ),  # noqa
+                (
+                    "Special City Council Meeting - Closed Session 3:30 p.m.",
+                    "October 21, 2026",
+                ),  # noqa
+            ],
+            [],
+        ),
+        # Both upcoming, in either order
+        (
+            [],
+            [
+                (
+                    "Special City Council Meeting - Closed Session",
+                    "October 21, 2026 - 03:30 PM",
+                ),  # noqa
+                (
+                    "Special City Council Meeting - Closed Session",
+                    "October 21, 2026 - 05:00 PM",
+                ),  # noqa
+            ],
+        ),
+        (
+            [],
+            [
+                (
+                    "Special City Council Meeting - Closed Session",
+                    "October 21, 2026 - 05:00 PM",
+                ),  # noqa
+                (
+                    "Special City Council Meeting - Closed Session",
+                    "October 21, 2026 - 03:30 PM",
+                ),  # noqa
+            ],
+        ),
+        # The first one is archived while the second one is still upcoming
+        (
+            [
+                (
+                    "Special City Council Meeting - Closed Session 3:30 p.m.",
+                    "October 21, 2026",
+                )
+            ],  # noqa
+            [
+                (
+                    "Special City Council Meeting - Closed Session",
+                    "October 21, 2026 - 03:30 PM",
+                ),  # noqa
+                (
+                    "Special City Council Meeting - Closed Session",
+                    "October 21, 2026 - 05:00 PM",
+                ),  # noqa
+            ],
+        ),
+    ],
+)
+def test_same_title_same_day_ids_independent_of_order(archived, upcoming):
+    with freeze_time("2026-10-21"):
+        items = list(
+            council_spider.parse(listing_response(archived=archived, upcoming=upcoming))
+        )
+    assert {item["start"]: item["id"] for item in items} == CLOSED_SESSION_IDS
+
+
+def test_council_excludes_public_financing_authority():
+    assert (
+        council_spider._match_body(
+            "Regular Encinitas Public Financing Authority - 6:00 p.m. "
+            "(immediately following the City Council meeting)"
+        )
+        is None
+    )
+    # Combined City Council and Public Financing Authority meetings are kept
+    assert council_spider._match_body(
+        "Regular City Council Meeting / Encinitas Public Financing Authority"
+    )
+
+
+def test_boards_excludes_joint_council_meetings():
+    # "Special Joint City Council & Parks & Recreation Commission Meeting 4:00 p.m."
+    # on September 25, 2024 is only scraped by the council spider
+    title = "Special Joint City Council & Parks & Recreation Commission Meeting"
+    results = {}
+    for spider_cls in (
+        SandieEncinitasCouncilCommitteesSpider,
+        SandieEncinitasBoardsCommissionsSpider,
+    ):
+        spider = spider_cls()
+        spider.lookback_days = 365 * 3
+        with freeze_time("2026-10-21"):
+            results[spider.name] = [
+                item for item in run_spider(spider) if item["title"] == title
+            ]
+    assert [
+        item["start"] for item in results["sandie_encinitas_council_committees"]
+    ] == [datetime(2024, 9, 25, 16, 0)]
+    assert results["sandie_encinitas_boards_commissions"] == []
+
+
 def agenda_clip_ids(item):
     return [
         link["href"].split("clip_id=")[1]
@@ -470,8 +694,9 @@ def test_agenda_generated_time(boards_items):
     # Header of the generated agenda: "OCTOBER 1, 2026 - 06:00 PM"
     item = get_item(boards_items, datetime(2026, 10, 1, 18, 0))
     assert item["title"] == "Planning Commission"
+    # The ID is based on the date, the same as before the time was recovered
     assert item["id"] == (
-        "sandie_encinitas_boards_commissions/202610011800/x/planning_commission"
+        "sandie_encinitas_boards_commissions/202610010000/x/planning_commission"
     )
     assert item["status"] == PASSED
 
