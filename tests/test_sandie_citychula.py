@@ -7,7 +7,10 @@ from city_scrapers_core.constants import BOARD, CANCELLED
 from city_scrapers_core.utils import file_response
 from freezegun import freeze_time
 
-from city_scrapers.spiders.sandie_citychula import ChulaVistaBoardOfEthicsSpider
+from city_scrapers.spiders.sandie_citychula import (
+    ChulaVistaBoardOfEthicsSpider,
+    ChulaVistaTrafficSafetyCommissionSpider,
+)
 
 test_response = file_response(
     join(dirname(__file__), "files", "sandie_citychula.json"),
@@ -136,40 +139,64 @@ def test_upcoming_source(parsed_items_with_upcoming):
 # --- source matching between eScribe meetings and city calendar events ---
 
 ESCRIBE_URL = "https://pub-chulavista.escribemeetings.com/?MeetingviewId=15&Year=2026"
-EVENT_URL = (
-    "https://www.chulavistaca.gov/Home/Components/Calendar/Event/{event_id}/2854"
-)
 
 
-def _source_for(titles, events):
-    day = datetime(2026, 2, 25).date()
+def _event_url(event_id, day):
+    """City calendar event URL, as linked from that day's calendar month."""
+    return (
+        "https://www.chulavistaca.gov/Home/Components/Calendar/Event/"
+        f"{event_id}/2854?curm={day.month}&cury={day.year}"
+    )
+
+
+def _source_for(titles, events, start):
+    day = start.date()
     spider._calendar_event_urls = {day: events}
-    meetings = [{"title": t, "start": datetime(2026, 2, 25, 17)} for t in titles]
+    meetings = [{"title": t, "start": start} for t in titles]
     spider._parse_sources(day, meetings)
     return [m["source"] for m in meetings]
 
 
 def test_source_only_matching_meeting_gets_calendar_event():
+    """
+    Real case: Board of Ethics, Feb 25, 2026. eScribe has two interview panels;
+    the city calendar only lists the subcommittee one.
+    """
+    start = datetime(2026, 2, 25, 14)
+    event_url = _event_url(38373, start)
     sources = _source_for(
         [
             "Board of Ethics Interview Panel",
             "Board of Ethics Subcommittee Interview Panel",
         ],
-        [("Board of Ethics Subcommittee Interview Panel", EVENT_URL)],
+        [("Board of Ethics - Subcommittee Interview Panel", event_url)],
+        start,
     )
-    assert sources == [ESCRIBE_URL, EVENT_URL]
+    assert sources == [ESCRIBE_URL, event_url]
 
 
-def test_source_single_meeting_and_event_paired_despite_title():
+def test_source_pd_matches_police_department():
+    """
+    Real case: Police Department Community Advisory Committee, Jan 8, 2026.
+    The city calendar's "PD" title matches eScribe's "Police Department" one.
+    """
+    start = datetime(2026, 1, 8, 9, 30)
+    event_url = _event_url(38048, start)
     sources = _source_for(
-        ["Board of Ethics Regular Meeting"],
-        [("CANCELLED Board of Ethics Regular Meeting", EVENT_URL)],
+        ["Police Department Community Advisory Committee Special Meeting"],
+        [("PD Community Advisory Committee - Special Meeting", event_url)],
+        start,
     )
-    assert sources == [EVENT_URL]
+    assert sources == [event_url]
 
 
 def test_source_no_calendar_event_uses_escribe():
-    assert _source_for(["Board of Ethics Regular Meeting"], []) == [ESCRIBE_URL]
+    """
+    Real case: Board of Ethics Regular Meeting, Apr 15, 2026, is in eScribe
+    but has no city calendar event that day.
+    """
+    start = datetime(2026, 4, 15, 17, 15)
+    assert _source_for(["Board of Ethics Regular Meeting"], [], start) == [ESCRIBE_URL]
 
 
 # --- city calendar meetings missing from eScribe ---
@@ -185,43 +212,60 @@ def test_city_calendar_fetches_escribe_period():
     assert len(months) == 49
 
 
-def _calendar_meeting(title, event_url):
-    meeting = {
+def _calendar_meeting(title, start, event_url):
+    return {
         "title": title,
-        "start": datetime(2025, 12, 17, 17, 15),
+        "start": start,
         "links": [],
         "source": event_url,
+        "id": event_url,
     }
-    meeting["id"] = event_url
-    return meeting
 
 
 def test_calendar_meeting_not_in_escribe_is_kept():
-    day = datetime(2025, 12, 17).date()
-    other_url = "https://www.chulavistaca.gov/Home/Components/Calendar/Event/1/9999"
+    """
+    Real case: Traffic Safety Commission, Jun-Aug 2025. eScribe has the Jun 12
+    and Aug 14 meetings; the cancelled Jul 10 meeting is only on the city
+    calendar, so it is kept as its own meeting.
+    """
+    traffic_spider = ChulaVistaTrafficSafetyCommissionSpider()
+    traffic_response = file_response(
+        join(dirname(__file__), "files", "sandie_citychula_traffic_safety.json"),
+        url="https://pub-chulavista.escribemeetings.com/MeetingsCalendarView.aspx/GetCalendarMeetings?MeetingViewId=29",  # noqa
+    )
+    june = datetime(2025, 6, 12, 18)
+    july = datetime(2025, 7, 10, 18)
+    august = datetime(2025, 8, 14, 18)
     events = [
-        ("Board of Ethics Regular Meeting", EVENT_URL + "?curm=12&cury=2025"),
-        ("Board of Ethics Subcommittee", other_url),
+        ("Traffic Safety Commission", june, _event_url(35570, june)),
+        ("CANCELLED Traffic Safety Commission", july, _event_url(36244, july)),
+        ("Traffic Safety Commission", august, _event_url(36612, august)),
     ]
     with freeze_time("2026-01-09"):
-        spider._calendar_event_urls = {day: events}
-        spider._calendar_meetings = [
-            _calendar_meeting(title, url) for title, url in events
+        traffic_spider._calendar_event_urls = {
+            start.date(): [(title, url)] for title, start, url in events
+        }
+        traffic_spider._calendar_meetings = [
+            _calendar_meeting(*event) for event in events
         ]
-        items = list(spider.parse_calendar(test_response))
+        items = list(traffic_spider.parse_calendar(traffic_response))
 
-    escribe_item, calendar_item = items
-    assert escribe_item["source"] == EVENT_URL + "?curm=12&cury=2025"
-    assert escribe_item["links"]
-    assert calendar_item["title"] == "Board of Ethics Subcommittee"
-    assert calendar_item["source"] == other_url
+    june_item, august_item, calendar_item = items
+    assert june_item["source"] == _event_url(35570, june)
+    assert june_item["links"]
+    assert august_item["source"] == _event_url(36612, august)
+    assert august_item["links"]
+    assert calendar_item["title"] == "CANCELLED Traffic Safety Commission"
+    assert calendar_item["start"] == july
+    assert calendar_item["source"] == _event_url(36244, july)
     assert calendar_item["links"] == []
 
 
 def test_calendar_cancelled_event_cancels_escribe_meeting_if_no_cancellation_notice():
     day = datetime(2026, 9, 10).date()
+    event_url = _event_url(40994, day)
     spider._calendar_event_urls = {
-        day: [("Traffic Safety Commission Meeting - Cancelled", EVENT_URL)]
+        day: [("Traffic Safety Commission Meeting - Cancelled", event_url)]
     }
     meeting = {
         "title": "Traffic Safety Commission Regular Meeting",
@@ -230,7 +274,7 @@ def test_calendar_cancelled_event_cancels_escribe_meeting_if_no_cancellation_not
     }
     with freeze_time("2026-01-09"):
         spider._parse_sources(day, [meeting])
-    assert meeting["source"] == EVENT_URL
+    assert meeting["source"] == event_url
     assert meeting["status"] == CANCELLED
 
 
@@ -240,8 +284,8 @@ def test_calendar_cancelled_event_cancels_escribe_meeting_with_agenda_and_notice
     cancellation notice and an agenda, so on its own the meeting looks held;
     the city calendar title marks it cancelled.
     """
-    event_source = EVENT_URL.format(event_id=33142)
     day = datetime(2024, 11, 20).date()
+    event_source = _event_url(33142, day)
     meeting = {
         "title": "Veterans Advisory Commission Regular Meeting",
         "start": datetime(2024, 11, 20, 18),
