@@ -18,9 +18,11 @@ spider_configs = [
         "class_name": "SandieEncinitasCouncilCommitteesSpider",
         "name": "sandie_encinitas_council_committees",
         "agency": "City of Encinitas- City Council Committees",
-        # e.g. "Regular Encinitas Public Financing Authority - 6:00 p.m.
-        # (immediately following the City Council meeting)"
-        "exclude_pattern": r"public financing authority",
+        # Public Financing Authority meetings, e.g. "Regular Encinitas Public
+        # Financing Authority - 6:00 p.m. (immediately following the City Council
+        # meeting)", but not combined ones like "Regular City Council Meeting /
+        # Encinitas Public Financing Authority"
+        "exclude_pattern": r"^(?:regular\s+|special\s+)?encinitas\s+public\s+financing\s+authority",  # noqa
         "bodies": [
             {
                 # Regular, special, closed session and joint meetings

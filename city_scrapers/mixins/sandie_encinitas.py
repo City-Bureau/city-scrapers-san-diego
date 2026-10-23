@@ -209,18 +209,42 @@ class SandieEncinitasMixin(CityScrapersSpider, metaclass=SandieEncinitasMixinMet
         meeting["status"] = self._get_status(
             meeting, text=self.amendment_note_re.sub("", raw_title)
         )
-        meeting["id"] = self._get_id(meeting)
+        meeting["id"] = self._get_stable_id(meeting)
         return meeting
+
+    def _get_stable_id(self, meeting):
+        """Create an ID from the meeting's date, which doesn't change once archived"""
+        return self._get_id(
+            {
+                "title": meeting["title"],
+                "start": meeting["start"].replace(hour=0, minute=0),
+            }
+        )
 
     def _add_meeting(self, meetings, meeting):
         """
         Add a meeting unless it's already listed (e.g. a row repeated in the same
         panel), returning the meeting if it was added
         """
-        if meeting is None or meeting["id"] in meetings:
+        if meeting is None:
             return None
+        existing = meetings.get(meeting["id"])
+        if existing is not None:
+            if not self._is_separate_meeting(existing, meeting):
+                return None
+            # Meetings with the same title on the same day at different times
+            # keep IDs based on their start times so they don't collide
+            meeting["id"] = self._get_id(meeting)
+            if meeting["id"] in meetings:
+                return None
         meetings[meeting["id"]] = meeting
         return meeting
+
+    def _is_separate_meeting(self, meeting, other):
+        """Whether meetings with the same ID have different known start times"""
+        return all(m["start"].hour or m["start"].minute for m in (meeting, other)) and (
+            meeting["start"] != other["start"]
+        )
 
     def _get_listing_key(self, meeting):
         """Identify a meeting across the upcoming and archived listings"""
@@ -234,7 +258,6 @@ class SandieEncinitasMixin(CityScrapersSpider, metaclass=SandieEncinitasMixinMet
             # Cancellation notes were removed from the title, so keep that status
             if meeting["status"] != CANCELLED:
                 meeting["status"] = self._get_status(meeting)
-            meeting["id"] = self._get_id(meeting)
         yield meeting
 
     def _parse_upcoming_agenda(self, response, row, raw_title, archived_keys):
