@@ -75,8 +75,9 @@ class SandieSandagMixin(CityScrapersSpider, metaclass=SandieSandagMixinMeta):
         return urljoin(self.base_url, url)
 
     def _clean_text(self, text):
-        """Unescape HTML entities and collapse whitespace."""
-        return re.sub(r"\s+", " ", html.unescape(text or "")).strip()
+        """Strip HTML tags, unescape HTML entities and collapse whitespace."""
+        text = re.sub(r"<[^>]+>", "", text or "")
+        return re.sub(r"\s+", " ", html.unescape(text)).strip()
 
     def _shift_years(self, dt, years):
         """Shift a datetime by whole years, mapping Feb 29 to Feb 28 if needed."""
@@ -130,6 +131,12 @@ class SandieSandagMixin(CityScrapersSpider, metaclass=SandieSandagMixinMeta):
 
         for item in response.json().get("d", []):
             meeting_id = item.get("ID")
+            if not meeting_id:
+                # Without an ID we can't dedupe across views, so skip the item
+                self.logger.warning(
+                    "Skipping meeting without ID: %r", item.get("MeetingName")
+                )
+                continue
             if meeting_id in self._seen_meeting_ids:
                 continue
 
