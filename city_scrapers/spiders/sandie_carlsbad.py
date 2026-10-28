@@ -2,7 +2,7 @@
 This file dynamically creates spider classes for the spider factory
 mixin that City of Carlsbad agencies use.
 
-City of Carlsbad calendar (department "City Hall"):
+City of Carlsbad calendar (all departments):
 https://www.carlsbadca.gov/departments/calendar
 Attachments: https://www.carlsbadca.gov/city-hall/meetings-agendas and the
 Laserfiche records portal (https://records.carlsbadca.gov/WebLink)

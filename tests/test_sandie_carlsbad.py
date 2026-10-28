@@ -24,7 +24,9 @@ from city_scrapers.spiders.sandie_carlsbad import (
 )
 
 FILES = join(dirname(__file__), "files")
-CALENDAR_URL = "https://www.carlsbadca.gov/departments/calendar/-curm-{m}/-cury-{y}/-seldept-16"  # noqa
+CALENDAR_URL = (
+    "https://www.carlsbadca.gov/departments/calendar/-curm-{m}/-cury-{y}/"  # noqa
+)
 AGENDAS_URL = "https://www.carlsbadca.gov/city-hall/meetings-agendas"
 LASERFICHE = "https://records.carlsbadca.gov/WebLink/ElectronicFile.aspx?docid={}&dbid=0&repo=CityOfCarlsbad"  # noqa
 CHAMBER = {
@@ -42,7 +44,7 @@ def _calendar_day(label, events):
     items = "".join(
         f'<div class="calendar_item"><span class="calendar_eventtime">{t}</span>'
         f'<a class="calendar_eventlink" href="/Home/Components/Calendar/Event/'
-        f'{event_id}/17?curm=10&amp;cury=2025&amp;seldept=16" title="{title}">'
+        f'{event_id}/17?curm=10&amp;cury=2025" title="{title}">'
         f"{title}</a></div>"
         for t, title, event_id in events
     )
@@ -148,8 +150,8 @@ def _by_start(items, start):
     return next(item for item in items if item["start"] == start)
 
 
-# The live calendar for October 2026 (department "City Hall"), saved
-# 2026-10-19 (the page marks Oct. 19 as today). Frozen at that date so it has
+# The live calendar for October 2026 (all departments), saved 2026-10-27 (the
+# page marks Oct. 27 as today). Frozen at that afternoon in Carlsbad so it has
 # past, cancelled and upcoming meetings.
 @pytest.fixture(scope="module")
 def boards_items():
@@ -157,19 +159,19 @@ def boards_items():
         join(FILES, "sandie_carlsbad_boards_commissions.html"),
         url=CALENDAR_URL.format(m=10, y=2026),
     )
-    with freeze_time("2026-10-19 12:00"):
+    with freeze_time("2026-10-27 22:00"):
         return list(SandieCarlsbadBoardsCommissionsSpider().parse(response))
 
 
-# The live calendar for October 2025, saved 2026-10-19: both City Council
-# meetings that month were closed sessions.
+# The live calendar for October 2025 (all departments), saved 2026-10-27: three
+# regular City Council meetings and two closed sessions.
 @pytest.fixture(scope="module")
 def council_items():
     response = file_response(
         join(FILES, "sandie_carlsbad_council_committees.html"),
         url=CALENDAR_URL.format(m=10, y=2025),
     )
-    with freeze_time("2026-10-19 12:00"):
+    with freeze_time("2026-10-27 22:00"):
         return list(SandieCarlsbadCouncilCommitteesSpider().parse(response))
 
 
@@ -328,17 +330,42 @@ def test_start_cutoff_on_leap_day():
 
 
 def test_boards_meetings(boards_items):
-    """Only the ticket's boards: the page's City/Schools, Legislative and
-    Economic Development committees, holiday and library events are skipped."""
+    """Only the ticket's boards: the page's City Council meetings, City/Schools,
+    Legislative and Economic Development committees, holidays and library
+    events are skipped."""
     assert [
         (item["start"], item["title"], item["status"], item["classification"])
         for item in boards_items
     ] == [
+        (
+            datetime(2026, 10, 1, 15, 0),
+            "Environmental Sustainability Commission Meeting",
+            PASSED,
+            COMMISSION,
+        ),
         (datetime(2026, 10, 1, 17, 30), "Arts Commission", PASSED, COMMISSION),
         (
             datetime(2026, 10, 5, 16, 0),
             "Traffic Safety & Mobility Commission Meeting",
             CANCELLED,
+            COMMISSION,
+        ),
+        (
+            datetime(2026, 10, 7, 17, 0),
+            "Planning Commission Meeting",
+            PASSED,
+            COMMISSION,
+        ),
+        (
+            datetime(2026, 10, 8, 16, 0),
+            "Housing Commission Regular Meeting",
+            PASSED,
+            COMMISSION,
+        ),
+        (
+            datetime(2026, 10, 13, 17, 0),
+            "Community-Police Engagement Meeting",
+            PASSED,
             COMMISSION,
         ),
         (
@@ -348,9 +375,15 @@ def test_boards_meetings(boards_items):
             COMMISSION,
         ),
         (
+            datetime(2026, 10, 21, 17, 0),
+            "Planning Commission Meeting",
+            CANCELLED,
+            COMMISSION,
+        ),
+        (
             datetime(2026, 10, 22, 15, 0),
             "Senior Commission Meeting",
-            TENTATIVE,
+            PASSED,
             COMMISSION,
         ),
         (datetime(2026, 10, 28, 16, 0), "Library Board of Trustees", TENTATIVE, BOARD),
@@ -367,18 +400,19 @@ def test_boards_fields(boards_items):
         assert item["links"] == []
         assert item["closed_to_public"] is False
     assert (
-        boards_items[0]["source"]
+        boards_items[1]["source"]
         == "https://www.carlsbadca.gov/Home/Components/Calendar/Event/17455/17"
     )
     assert (
-        boards_items[0]["id"]
+        boards_items[1]["id"]
         == "sandie_carlsbad_boards_commissions/202610011730/x/arts_commission"
     )
     assert len({item["id"] for item in boards_items}) == len(boards_items)
 
 
 def test_council_meetings(council_items):
-    """Both closed sessions, and not the month's subcommittee meetings."""
+    """The regular meetings and closed sessions, and not the month's
+    subcommittee meetings or the commissions' meetings."""
     assert [
         (item["start"], item["title"], item["status"], item["closed_to_public"])
         for item in council_items
@@ -389,12 +423,15 @@ def test_council_meetings(council_items):
             PASSED,
             True,
         ),
+        (datetime(2025, 10, 7, 17, 0), "City Council Meeting", PASSED, False),
         (
             datetime(2025, 10, 21, 16, 15),
             "City Council Meeting - Closed Session",
             PASSED,
             True,
         ),
+        (datetime(2025, 10, 21, 17, 0), "City Council Meeting", PASSED, False),
+        (datetime(2025, 10, 28, 17, 0), "City Council Meeting", PASSED, False),
     ]
     for item in council_items:
         assert item["classification"] == CITY_COUNCIL
@@ -598,8 +635,11 @@ def test_board_page_folders():
             (date(2026, 9, 3), datetime(2026, 9, 3, 10, 0)),
         ),
         ("March 9, 2026 City Council Chamber", (date(2026, 3, 9), None)),
-        # A typo on the live Parks & Recreation page
-        ("Sept. 21, 2626, 5:30 p.m. City Council Chamber - Meeting", (None, None)),
+        # A typo on the live Parks & Recreation page, corrected
+        (
+            "Sept. 21, 2626, 5:30 p.m. City Council Chamber - Meeting",
+            (date(2026, 9, 21), datetime(2026, 9, 21, 17, 30)),
+        ),
         ("Agendas", (None, None)),
     ],
 )
@@ -608,6 +648,14 @@ def test_parse_folder_title(title, parsed):
         assert (
             SandieCarlsbadCouncilCommitteesSpider()._parse_folder_title(title) == parsed
         )
+
+
+def test_folder_year_typo_logs_warning(caplog):
+    with freeze_time("2026-10-20 12:00"), caplog.at_level(logging.WARNING):
+        SandieCarlsbadBoardsCommissionsSpider()._parse_folder_title(
+            "Sept. 21, 2626, 5:30 p.m. City Council Chamber - Meeting"
+        )
+    assert "Corrected year 2626 -> 2026" in caplog.text
 
 
 def test_folders_are_walked_recursively():
@@ -795,9 +843,9 @@ def test_akamai_page_is_returned_as_html_response():
 
 def test_crawl_requests(crawl):
     """Every calendar month, then the board page and its folders for dates
-    that have a meeting; the packets year folder and the run's meeting
-    folders, and not the Agendas folder (every date has a packet); one page
-    of the City Council video tab, which has no next page."""
+    that have a meeting; the packets year folder, the run's meeting folders
+    and the Agendas folder (Oct. 28 has no packet); one page of the City
+    Council video tab, which has no next page."""
     calendar_urls = [url for url in crawl["fetched"] if "/calendar/" in url]
     assert calendar_urls[0] == CALENDAR_URL.format(m=10, y=2024)
     assert len(calendar_urls) == 37
@@ -806,11 +854,11 @@ def test_crawl_requests(crawl):
         f"{AGENDAS_URL}/-folder-1001",
         f"{AGENDAS_URL}/-folder-1002",
     ]
-    assert sorted(crawl["listed"]) == [907, 921, 922, 2025, 9016814]
+    assert sorted(crawl["listed"]) == [907, 921, 922, 2025, 4486195, 9016814]
     assert crawl["videos"] == [
         "https://carlsbadca.new.swagit.com/views/295/city-council?page=1"
     ]
-    assert len(crawl["items"]) == 2
+    assert len(crawl["items"]) == 5
 
 
 def test_crawl_links_from_folder_with_the_same_start(crawl):
@@ -837,6 +885,23 @@ def test_crawl_links_from_laserfiche_packet_of_the_same_session(crawl):
         },
         {"href": LASERFICHE.format(24), "title": "Minutes - Closed Session"},
         _video(502),
+    ]
+
+
+def test_crawl_open_meeting_never_gets_closed_session_documents(crawl):
+    """The 5 p.m. regular meeting on Oct. 7 gets its own board-page folder,
+    not the closed session's Laserfiche minutes from the same date."""
+    item = _by_start(crawl["items"], datetime(2025, 10, 7, 17, 0))
+    assert item["links"] == [_document(12, "10-07-2025 Regular Meeting Agenda")]
+
+
+def test_crawl_regular_meeting_gets_its_session_and_video(crawl):
+    """The regular session's packet and the regular meeting's video, beside
+    the closed session's on the same date."""
+    item = _by_start(crawl["items"], datetime(2025, 10, 21, 17, 0))
+    assert item["links"] == [
+        {"href": LASERFICHE.format(22), "title": "Agenda - Regular Session"},
+        _video(501),
     ]
 
 

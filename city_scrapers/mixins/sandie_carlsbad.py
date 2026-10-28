@@ -1,8 +1,8 @@
 """
 A Mixin & Mixin Meta for City of Carlsbad, California scrapers.
 
-Meetings come from the city calendar (one page per month, department filter
-"City Hall"). Attachments come from two places:
+Meetings come from the city calendar (one page per month, all departments).
+Attachments come from two places:
 
 - the board's page under /city-hall/meetings-agendas, which has a document
   folder per recent or upcoming meeting (folders can hold subfolders, so they
@@ -45,7 +45,7 @@ from urllib.parse import urljoin
 from zoneinfo import ZoneInfo
 
 import scrapy
-from city_scrapers_core.constants import CANCELLED, PASSED, TENTATIVE
+from city_scrapers_core.constants import CANCELLED
 from city_scrapers_core.items import Meeting
 from city_scrapers_core.spiders import CityScrapersSpider
 from curl_cffi import requests as curl_requests
@@ -86,10 +86,9 @@ class SandieCarlsbadMixin(CityScrapersSpider, metaclass=SandieCarlsbadMixinMeta)
     tzinfo = ZoneInfo(timezone)
 
     base_url = "https://www.carlsbadca.gov"
-    # Department 16 is "City Hall"
-    calendar_url = (
-        base_url + "/departments/calendar/-curm-{month}/-cury-{year}/-seldept-16"
-    )
+    # This returns events for "All Departments"; each board's keywords pick its
+    # meetings
+    calendar_url = base_url + "/departments/calendar/-curm-{month}/-cury-{year}/"
     agendas_url = base_url + "/city-hall/meetings-agendas"
     laserfiche_listing_url = "https://records.carlsbadca.gov/WebLink/FolderListingService.aspx/GetFolderListing2"  # noqa
     laserfiche_file_url = "https://records.carlsbadca.gov/WebLink/ElectronicFile.aspx?docid={id}&dbid=0&repo=CityOfCarlsbad"  # noqa
@@ -169,19 +168,6 @@ class SandieCarlsbadMixin(CityScrapersSpider, metaclass=SandieCarlsbadMixinMeta)
         self._videos = defaultdict(list)
 
     # DATES
-
-    def _get_status(self, item, text=""):
-        """
-        Status from the title and the listing's own status text (not the
-        description), compared with the current time in Carlsbad rather than
-        the server's clock.
-        """
-        meeting_text = " ".join([item.get("title", ""), text]).lower()
-        if any(word in meeting_text for word in ["cancel", "rescheduled", "postpone"]):
-            return CANCELLED
-        if item["start"] < datetime.now(self.tzinfo).replace(tzinfo=None):
-            return PASSED
-        return TENTATIVE
 
     def _start_cutoff(self):
         """Earliest meeting start to scrape: today in Carlsbad minus
@@ -483,22 +469,22 @@ class SandieCarlsbadMixin(CityScrapersSpider, metaclass=SandieCarlsbadMixinMeta)
         """
         (date, start) from a folder title like "Oct. 20, 2026, 5 p.m. City
         Council Chamber - Regular Meeting". start is None without a time.
-        Returns (None, None) for an implausible year (one folder is titled
-        "Sept. 21, 2626").
+        A typo in the year's century ("Sept. 21, 2626" on the live Parks &
+        Recreation page) is corrected to the current century, with a warning.
         """
         match = self._FOLDER_RE.match(title.strip())
         if not match:
             return None, None
+        typed = int(match.group("year"))
+        year = datetime.now(self.tzinfo).year // 100 * 100 + typed % 100
+        if year != typed:
+            self.logger.warning("Corrected year %s -> %s in %r", typed, year, title)
         # "Sept." and "March" both become "Sep"/"Mar" for %b
-        date_text = (
-            f"{match.group('month')[:3]} {match.group('day')} {match.group('year')}"
-        )
+        date_text = f"{match.group('month')[:3]} {match.group('day')} {year}"
         try:
             folder_date = datetime.strptime(date_text, "%b %d %Y").date()
         except ValueError as e:
             self.logger.warning("Unparseable folder date %r: %s", title, e)
-            return None, None
-        if abs(folder_date.year - datetime.now(self.tzinfo).year) > 5:
             return None, None
         if not match.group("hour"):
             return folder_date, None
@@ -598,6 +584,13 @@ class SandieCarlsbadMixin(CityScrapersSpider, metaclass=SandieCarlsbadMixinMeta)
         """
         key = (board_title, meeting["start"].date())
         laserfiche = self._laserfiche_links.get(key, [])
+        if not meeting["closed_to_public"]:
+            # A closed session's documents never belong to an open meeting
+            laserfiche = [
+                (session, link)
+                for session, link in laserfiche
+                if not self._CLOSED_SESSION_RE.search(session)
+            ]
         # Narrow to sessions that are closed, special and cancelled like this
         # meeting; a filter that would leave nothing is skipped
         for pattern, wanted in [
