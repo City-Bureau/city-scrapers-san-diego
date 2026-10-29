@@ -109,12 +109,14 @@ class SandieCarlsbadMixin(CityScrapersSpider, metaclass=SandieCarlsbadMixinMeta)
     # Akamai intermittently rejects single requests; retry those with backoff.
     akamai_retries = 3
     akamai_retry_backoff = 20
+    # Akamai's block (403), rate limiting (429) and server errors are retried
+    retry_statuses = [403, 429, 500, 502, 503, 504]
     # Document folders nest at most a level or two; this only stops a loop.
     max_folder_depth = 4
     # A subcommittee ("Arts Commission Subcommittee Meeting") isn't the board
     # itself, so these never match any board; a spider config can add more
     exclude_keywords = ["subcommittee"]
-    # For a calendar listing without a time (and no folder that gives one)
+    # For a calendar listing without a time
     no_time_notes = "Please check the meeting attachment for start time details."
 
     location = {
@@ -129,9 +131,10 @@ class SandieCarlsbadMixin(CityScrapersSpider, metaclass=SandieCarlsbadMixinMeta)
         "FEED_EXPORT_ENCODING": "utf-8",
     }
 
-    # "Oct. 20, 2026, 5 p.m. City Council Chamber - Regular Meeting"
+    # "Oct. 20, 2026, 5 p.m. City Council Chamber - Regular Meeting" (one live
+    # title has no comma after the day: "Nov. 4 2026, 5 p.m. ...")
     _FOLDER_RE = re.compile(
-        r"^(?P<month>[A-Za-z]{3,9})\.?\s+(?P<day>\d{1,2}),\s*(?P<year>\d{4}),?\s*"
+        r"^(?P<month>[A-Za-z]{3,9})\.?\s+(?P<day>\d{1,2}),?\s*(?P<year>\d{4}),?\s*"
         r"(?:(?P<hour>\d{1,2})(?::(?P<minute>\d{2}))?\s*(?P<ampm>[ap])\.?m\.?)?",
         re.IGNORECASE,
     )
@@ -211,12 +214,17 @@ class SandieCarlsbadMixin(CityScrapersSpider, metaclass=SandieCarlsbadMixinMeta)
     def _run_crawl(self, response):
         """Read the calendar, then attach each meeting's documents."""
         cutoff = self._start_cutoff()
+        now = datetime.now(self.tzinfo)
         meetings = {}
         for year, month in self._calendar_months():
             url = self.calendar_url.format(month=month, year=year)
             page = self._akamai_get(url)
             if page is None:
-                self.logger.warning("Could not fetch calendar month: %s", url)
+                # A missing upcoming month would mark its meetings cancelled
+                if (year, month) >= (now.year, now.month):
+                    self.logger.error("Could not fetch calendar month: %s", url)
+                else:
+                    self.logger.warning("Could not fetch calendar month: %s", url)
                 continue
             for meeting in self.parse(page):
                 if meeting["start"] >= cutoff:
@@ -243,9 +251,10 @@ class SandieCarlsbadMixin(CityScrapersSpider, metaclass=SandieCarlsbadMixinMeta)
         """GET a www.carlsbadca.gov page with curl-cffi Chrome impersonation.
 
         Akamai intermittently answers with a 403 or its JavaScript challenge
-        page (bm-verify); those are retried with an increasing backoff. Returns
-        a Scrapy HtmlResponse, or None if every attempt failed. Blocks the
-        Twisted reactor; callers run sequentially.
+        page (bm-verify); those, timeouts and other request errors, 429s and
+        5xx are retried with an increasing backoff. Returns a Scrapy
+        HtmlResponse, or None if every attempt failed. Blocks the Twisted
+        reactor; callers run sequentially.
         """
         for attempt in range(1, self.akamai_retries + 1):
             # Keep at least request_delay (+ jitter) seconds between requests
@@ -261,22 +270,26 @@ class SandieCarlsbadMixin(CityScrapersSpider, metaclass=SandieCarlsbadMixinMeta)
                     headers={"Referer": referer or self.base_url + "/"},
                 )
             except curl_requests.RequestsError as e:
-                self.logger.warning("Request failed for %s: %s", url, e)
-                return None
-
-            challenge = b"bm-verify" in response.content
-            if response.status_code == 200 and not challenge:
-                return HtmlResponse(url=url, body=response.content, encoding="utf-8")
+                problem = e
+            else:
+                challenge = b"bm-verify" in response.content
+                status = response.status_code
+                if status == 200 and not challenge:
+                    return HtmlResponse(
+                        url=url, body=response.content, encoding="utf-8"
+                    )
+                if not challenge and status not in self.retry_statuses:
+                    self.logger.warning("Got %s for %s", status, url)
+                    return None
+                problem = "an Akamai challenge page" if challenge else status
 
             self.logger.warning(
                 "Got %s for %s (attempt %s/%s)",
-                "an Akamai challenge page" if challenge else response.status_code,
+                problem,
                 url,
                 attempt,
                 self.akamai_retries,
             )
-            if response.status_code != 403 and not challenge:
-                return None
             if attempt < self.akamai_retries:
                 time.sleep(self.akamai_retry_backoff * attempt)
         return None
@@ -429,16 +442,20 @@ class SandieCarlsbadMixin(CityScrapersSpider, metaclass=SandieCarlsbadMixinMeta)
             if folder_date not in dates:
                 continue
             links = self._folder_documents(urljoin(page_url, href), page_url, 1)
+            if links is None:
+                # Not loaded, so the meeting falls back to Laserfiche
+                continue
             self._folder_links[(board["title"], folder_date)].append(
                 (title, folder_start, links)
             )
 
     def _folder_documents(self, url, referer, depth):
-        """Documents in a folder and, recursively, in its subfolders."""
+        """Documents in a folder and, recursively, in its subfolders, or None
+        if the folder couldn't be fetched."""
         page = self._akamai_get(url, referer=referer)
         if page is None:
             self.logger.warning("Could not fetch document folder: %s", url)
-            return []
+            return None
         links = []
         for link in page.css(".document_widget li a[href]"):
             href = link.attrib["href"].strip()
@@ -452,7 +469,9 @@ class SandieCarlsbadMixin(CityScrapersSpider, metaclass=SandieCarlsbadMixinMeta)
         if depth >= self.max_folder_depth:
             return links
         for _, href in self._parse_folders(page):
-            links.extend(self._folder_documents(urljoin(url, href), url, depth + 1))
+            links.extend(
+                self._folder_documents(urljoin(url, href), url, depth + 1) or []
+            )
         return links
 
     def _parse_folders(self, response):
@@ -468,7 +487,8 @@ class SandieCarlsbadMixin(CityScrapersSpider, metaclass=SandieCarlsbadMixinMeta)
     def _parse_folder_title(self, title):
         """
         (date, start) from a folder title like "Oct. 20, 2026, 5 p.m. City
-        Council Chamber - Regular Meeting". start is None without a time.
+        Council Chamber - Regular Meeting". start is None without a time, or
+        with an impossible one ("13 p.m.").
         A typo in the year's century ("Sept. 21, 2626" on the live Parks &
         Recreation page) is corrected to the current century, with a warning.
         """
@@ -490,9 +510,12 @@ class SandieCarlsbadMixin(CityScrapersSpider, metaclass=SandieCarlsbadMixinMeta)
             return folder_date, None
         minute = match.group("minute") or "00"
         clock = f"{match.group('hour')}:{minute} {match.group('ampm').upper()}M"
-        return folder_date, datetime.strptime(
-            f"{date_text} {clock}", "%b %d %Y %I:%M %p"
-        )
+        try:
+            start = datetime.strptime(f"{date_text} {clock}", "%b %d %Y %I:%M %p")
+        except ValueError as e:
+            self.logger.warning("Unparseable folder time %r: %s", title, e)
+            return folder_date, None
+        return folder_date, start
 
     def _load_laserfiche(self, board, folder_id, dates):
         """
@@ -606,9 +629,11 @@ class SandieCarlsbadMixin(CityScrapersSpider, metaclass=SandieCarlsbadMixinMeta)
         laserfiche = [link for _, link in laserfiche]
 
         folders = self._folder_links.get(key, [])
-        # A meeting listed without a time matches its date's only folder
         timed = [f for f in folders if f[1] == meeting["start"]]
-        chosen = timed or (folders if len(folders) == 1 else [])
+        # Without a time on the meeting or the folder, the date's only folder
+        # is used; otherwise a folder at another time is another session
+        untimed = [f for f in folders if meeting["time_notes"] or f[1] is None]
+        chosen = timed or (untimed if len(folders) == 1 else [])
         if not chosen:
             return laserfiche, ""
         folder_title, _, links = chosen[0]

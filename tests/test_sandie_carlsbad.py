@@ -136,13 +136,14 @@ def _laserfiche_folder(entry_id, name):
     return {"name": name, "entryId": entry_id, "type": 0, "isEdoc": False}
 
 
-def _meeting(title, start, status=PASSED, closed=False, links=()):
+def _meeting(title, start, status=PASSED, closed=False, links=(), time_notes=""):
     return {
         "title": title,
         "start": start,
         "status": status,
         "closed_to_public": closed,
         "links": list(links),
+        "time_notes": time_notes,
     }
 
 
@@ -293,7 +294,6 @@ def test_spider_configuration():
     assert [(b["title"], b["classification"]) for b in council.boards] == [
         ("City Council", CITY_COUNCIL)
     ]
-    # The Jira ticket's is_main agency, read by the Airtable slug sync workflow
     assert boards.is_main is True
     assert not getattr(council, "is_main", False)
 
@@ -640,6 +640,16 @@ def test_board_page_folders():
             "Sept. 21, 2626, 5:30 p.m. City Council Chamber - Meeting",
             (date(2026, 9, 21), datetime(2026, 9, 21, 17, 30)),
         ),
+        # The live Planning Commission page has no comma after the day
+        (
+            "Nov. 4 2026, 5 p.m. City Council Chamber - Planning Commission Meeting",
+            (date(2026, 11, 4), datetime(2026, 11, 4, 17, 0)),
+        ),
+        # An impossible time keeps the date
+        (
+            "Oct. 7, 2025, 13 p.m. City Council Chamber - Regular Meeting",
+            (date(2025, 10, 7), None),
+        ),
         ("Agendas", (None, None)),
     ],
 )
@@ -656,6 +666,14 @@ def test_folder_year_typo_logs_warning(caplog):
             "Sept. 21, 2626, 5:30 p.m. City Council Chamber - Meeting"
         )
     assert "Corrected year 2626 -> 2026" in caplog.text
+
+
+def test_folder_time_typo_logs_warning(caplog):
+    with freeze_time("2026-10-20 12:00"), caplog.at_level(logging.WARNING):
+        SandieCarlsbadCouncilCommitteesSpider()._parse_folder_title(
+            "Oct. 7, 2025, 13 p.m. City Council Chamber - Regular Meeting"
+        )
+    assert "Unparseable folder time" in caplog.text
 
 
 def test_folders_are_walked_recursively():
@@ -686,6 +704,56 @@ def test_folders_are_walked_recursively():
         spider.max_folder_depth = 2
         links = spider._folder_documents(f"{AGENDAS_URL}/-folder-1", None, 1)
         assert len(links) == 2
+
+
+def test_lone_folder_at_another_time_is_another_session():
+    """A date's only folder is used when the meeting or the folder has no
+    time, but not for a 5 p.m. meeting when it's a 3:45 p.m. closed session."""
+    spider = SandieCarlsbadCouncilCommitteesSpider()
+    key = ("City Council", date(2025, 10, 7))
+    closed = "Oct. 7, 2025, 3:45 p.m. City Council Chamber - Closed Session"
+    agenda = _document(11, "10-07-2025 Closed Session Agenda")
+    spider._folder_links[key] = [(closed, datetime(2025, 10, 7, 15, 45), [agenda])]
+    regular = _meeting("City Council Meeting", datetime(2025, 10, 7, 17, 0))
+    assert spider._links_for("City Council", regular) == ([], "")
+    untimed = _meeting(
+        "City Council Meeting",
+        datetime(2025, 10, 7, 0, 0),
+        time_notes=spider.no_time_notes,
+    )
+    assert spider._links_for("City Council", untimed) == ([agenda], closed)
+    spider._folder_links[key] = [("Oct. 7, 2025 City Council Chamber", None, [agenda])]
+    assert spider._links_for("City Council", regular) == (
+        [agenda],
+        "Oct. 7, 2025 City Council Chamber",
+    )
+
+
+def test_folder_that_fails_to_load_falls_back_to_laserfiche(caplog):
+    """A folder whose page can't be fetched isn't indexed, so the meeting
+    still gets its Laserfiche documents."""
+    spider = SandieCarlsbadCouncilCommitteesSpider()
+    page = _folder_list(
+        ("Oct. 7, 2025, 5 p.m. City Council Chamber - Regular Meeting", 1002)
+    )
+    with freeze_time("2026-10-20 12:00"), caplog.at_level(
+        logging.WARNING
+    ), patch.object(
+        spider,
+        "_akamai_get",
+        side_effect=lambda url, referer=None: (
+            _html(url, page) if url == AGENDAS_URL else None
+        ),
+    ):
+        spider._load_board_folders(spider.boards[0], {date(2025, 10, 7)})
+    assert "Could not fetch document folder" in caplog.text
+    assert ("City Council", date(2025, 10, 7)) not in spider._folder_links
+    agenda = {"href": LASERFICHE.format(22), "title": "Agenda - Regular Session"}
+    spider._laserfiche_links[("City Council", date(2025, 10, 7))] = [
+        ("2025-10-07; City Council; Regular Session", agenda)
+    ]
+    meeting = _meeting("City Council Meeting", datetime(2025, 10, 7, 17, 0))
+    assert spider._links_for("City Council", meeting) == ([agenda], "")
 
 
 # ============ Laserfiche ============
@@ -830,6 +898,36 @@ def test_akamai_challenge_is_retried_then_given_up(caplog):
     assert "Akamai challenge page" in caplog.text
 
 
+@pytest.mark.parametrize(
+    "failure",
+    [
+        mixin.curl_requests.RequestsError("Operation timed out"),
+        MagicMock(status_code=429, content=b""),
+        MagicMock(status_code=503, content=b""),
+    ],
+)
+def test_akamai_timeout_and_server_errors_are_retried(failure, caplog):
+    spider = SandieCarlsbadCouncilCommitteesSpider()
+    spider.request_delay = 0
+    spider.akamai_retry_backoff = 0
+    page = MagicMock(status_code=200, content=b"<html><td>ok</td></html>")
+    with caplog.at_level(logging.WARNING), patch.object(
+        mixin.curl_requests, "get", side_effect=[failure, page]
+    ) as get:
+        response = spider._akamai_get("https://www.carlsbadca.gov/x")
+    assert response.css("td::text").get() == "ok"
+    assert get.call_count == 2
+    assert "attempt 1/3" in caplog.text
+
+
+def test_akamai_not_found_is_not_retried():
+    spider = SandieCarlsbadCouncilCommitteesSpider()
+    missing = MagicMock(status_code=404, content=b"")
+    with patch.object(mixin.curl_requests, "get", return_value=missing) as get:
+        assert spider._akamai_get("https://www.carlsbadca.gov/x") is None
+    assert get.call_count == 1
+
+
 def test_akamai_page_is_returned_as_html_response():
     spider = SandieCarlsbadCouncilCommitteesSpider()
     page = MagicMock(status_code=200, content=b"<html><td>ok</td></html>")
@@ -927,12 +1025,19 @@ def test_folder_title_cancellation_reaches_the_meeting():
 
 
 def test_crawl_skips_unfetchable_month(caplog):
+    """A past month that can't be fetched is a warning; the current or an
+    upcoming one is an error, since its meetings would be marked cancelled."""
     spider = SandieCarlsbadCouncilCommitteesSpider()
-    spider.months_ahead = 0
+    spider.months_ahead = 1
     with freeze_time("2026-10-01 12:00"), caplog.at_level(
         logging.WARNING
     ), patch.object(spider, "_akamai_get", return_value=None):
         assert list(spider._run_crawl(None)) == []
+    errors = [r.args[0] for r in caplog.records if r.levelno == logging.ERROR]
+    assert errors == [
+        CALENDAR_URL.format(m=10, y=2026),
+        CALENDAR_URL.format(m=11, y=2026),
+    ]
     assert "Could not fetch calendar month" in caplog.text
 
 
