@@ -131,6 +131,32 @@ def test_calendar_start():
     assert parsed_details[-1]["start"] == datetime(2026, 10, 27, 18, 15)
 
 
+def _calendar_detail(event_id, title, start):
+    return {
+        "title": title,
+        "start": start,
+        "source": f"https://www.ci.oceanside.ca.us/Home/Components/Calendar/Event/{event_id}/16",  # noqa
+    }
+
+
+def test_dedupe_details():
+    crc = datetime(2025, 4, 1, 18, 0)
+    workshop = datetime(2026, 4, 1, 17, 30)
+    details = [
+        _calendar_detail(1861, "Community Relations Commission", crc),
+        _calendar_detail(3350, "Community Relations Commission", crc),
+        _calendar_detail(3259, "Community Relations Commission", crc),
+        _calendar_detail(2843, "Planning Commission Workshop", workshop),
+        _calendar_detail(3072, "Planning Commission Interview Workshop", workshop),
+        # Same meeting linked from the next month's page
+        _calendar_detail(3072, "Planning Commission Interview Workshop", workshop),
+        # Different body at the same time is kept
+        _calendar_detail(3100, "Housing Commission", workshop),
+    ]
+    deduped = spider._dedupe_details(details)
+    assert [d["source"].split("/")[-2] for d in deduped] == ["3350", "3072", "3100"]
+
+
 def test_parse_detail_without_details():
     # Page without event details (e.g. unsolved Akamai challenge): no meeting
     blocked = file_response(
@@ -257,8 +283,8 @@ def test_status():
 
 def test_location():
     assert parsed_items[0]["location"] == {
-        "name": "TBD",
-        "address": "",
+        "name": "Council Chambers - City Hall'",
+        "address": "300 N COAST HWY, OCEANSIDE, California 92054",
     }
 
 

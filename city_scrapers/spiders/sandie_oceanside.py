@@ -5,7 +5,9 @@ https://www.ci.oceanside.ca.us/government/about-us/city-calendar
 The city calendar is a monthly grid that mixes public meetings with community
 events. We fetch a window of months around the current one, keep only the
 meeting types listed in MEETING_PATTERNS, and follow each meeting to its detail
-page for the time range and location.
+page for the time range and location. The calendar sometimes lists the same
+meeting more than once under different event IDs, so only the latest posting
+for each body and start time is kept (see _dedupe_details).
 
 The city site sits behind Akamai bot protection, so its pages are fetched with
 curl_cffi (browser TLS impersonation). Detail
@@ -46,7 +48,7 @@ class SandieOceansideSpider(LegistarSpider):
     start_urls = ["https://oceanside.legistar.com/Calendar.aspx"]
     link_types = ["Español"]
 
-    months_back = 36
+    months_back = 12
     months_ahead = 6
     # Seconds to wait between curl_cffi requests to the city site
     request_delay = 0.5
@@ -221,19 +223,36 @@ class SandieOceansideSpider(LegistarSpider):
         """Fetch each calendar month and the detail page of every matching
         meeting, and yield Meetings."""
         self.session = curl_requests.Session(impersonate="chrome110")
-        seen = set()
+        details = []
         for url in self._calendar_urls():
             html = self._fetch_html(url, referer=self.base_url + "/")
-            if not html:
-                continue
-            for detail in self._parse_calendar(Selector(text=html)):
-                # The same meeting can be linked from more than one month page
-                if detail["source"] in seen:
-                    continue
-                seen.add(detail["source"])
-                meeting = self._fetch_meeting(detail, referer=url)
-                if meeting:
-                    yield meeting
+            if html:
+                details.extend(self._parse_calendar(Selector(text=html)))
+        for detail in self._dedupe_details(details):
+            start = detail["start"]
+            referer = self.calendar_url.format(month=start.month, year=start.year)
+            meeting = self._fetch_meeting(detail, referer=referer)
+            if meeting:
+                yield meeting
+
+    def _dedupe_details(self, details):
+        """Drop repeated calendar entries. The same meeting can be linked from
+        more than one month page, and can also be posted several times under
+        different event IDs, sometimes with a slightly different title (e.g.
+        "Planning Commission Workshop" and "Planning Commission Interview
+        Workshop" at the same time). Keeps the highest event ID, i.e. the most
+        recent posting, for each body and start time."""
+        latest = {}
+        for detail in details:
+            key = (self._meeting_body(detail["title"]), detail["start"])
+            current = latest.get(key)
+            if current is None or self._event_id(detail) > self._event_id(current):
+                latest[key] = detail
+        return list(latest.values())
+
+    def _event_id(self, detail):
+        match = re.search(r"/Event/(\d+)", detail["source"])
+        return int(match.group(1)) if match else 0
 
     def _fetch_meeting(self, detail, referer, attempts=2):
         """Fetch and parse a detail page, retrying once: the site occasionally
@@ -368,8 +387,15 @@ class SandieOceansideSpider(LegistarSpider):
         return meeting
 
     def _is_relevant(self, title):
+        return self._meeting_body(title) is not None
+
+    def _meeting_body(self, title):
+        """Return the first MEETING_PATTERNS entry the title matches, or None."""
         normalized = title.lower().replace("&", "and")
-        return any(re.search(pattern, normalized) for pattern in self.MEETING_PATTERNS)
+        for pattern in self.MEETING_PATTERNS:
+            if re.search(pattern, normalized):
+                return pattern
+        return None
 
     def _parse_classification(self, title):
         title_lower = title.lower()
