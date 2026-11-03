@@ -3,21 +3,24 @@ City of Oceanside - Boards, Commissions & Committees
 https://www.ci.oceanside.ca.us/government/about-us/city-calendar
 
 The city calendar is a monthly grid that mixes public meetings with community
-events. We fetch a window of months around the current one, keep only the
-meeting types listed in MEETING_PATTERNS, and follow each meeting to its detail
-page for the time range and location. The calendar sometimes lists the same
-meeting more than once under different event IDs, so only the latest posting
-for each body and start time is kept (see _dedupe_details).
+events. We fetch meeting types listed in MEETING_PATTERNS, and follow each meeting
+to its detail page for the time range and location.
+The calendar sometimes lists the same meeting more than once under different event IDs,
+so only the latest posting for each body and start time is kept (see _dedupe_details).
 
 The city site sits behind Akamai bot protection, so its pages are fetched with
-curl_cffi (browser TLS impersonation). Detail
-pages also serve Akamai's interstitial challenge, which we solve once per
-session (see _solve_challenge).
+curl_cffi (browser TLS impersonation). Detail pages also serve Akamai's
+interstitial challenge, which we solve once per session (see _solve_challenge).
 
 City Council agendas, minutes and videos come from Legistar
 (https://oceanside.legistar.com/Calendar.aspx). Legistar is scraped first with
 the core LegistarSpider flow; the city calendar is fetched once it finishes,
 so each meeting can be matched to its Legistar links when it's built.
+
+Police and Fire Commission,Citizen Investment Oversight Committee, Utilities Commission,
+and UC Water/Sewer agendas and minutes come from the city records archive
+(https://records.ci.oceanside.ca.us/gov/council/agenda.asp). They're fetched
+alongside Legistar and matched to meetings by date (see ARCHIVE_RECORDS_SOURCES).
 """
 
 import re
@@ -25,9 +28,15 @@ import time
 from collections import defaultdict
 from datetime import datetime
 from urllib.parse import urljoin, urlparse
+from zoneinfo import ZoneInfo
 
 import scrapy
-from city_scrapers_core.constants import CITY_COUNCIL, COMMISSION, COMMITTEE
+from city_scrapers_core.constants import (
+    CITY_COUNCIL,
+    COMMISSION,
+    COMMITTEE,
+    NOT_CLASSIFIED,
+)
 from city_scrapers_core.items import Meeting
 from city_scrapers_core.spiders import LegistarSpider
 from curl_cffi import requests as curl_requests
@@ -47,6 +56,31 @@ class SandieOceansideSpider(LegistarSpider):
     )
     start_urls = ["https://oceanside.legistar.com/Calendar.aspx"]
     link_types = ["Español"]
+    records_url = (
+        "https://records.ci.oceanside.ca.us/custom/filebank/"
+        "archive-search-details.asp?{}&Search=Search"
+    )
+
+    ARCHIVE_RECORDS_SOURCES = {
+        r"police and fire commission": {
+            "document_types": [16, 11],
+            "date_from_title": False,
+        },
+        r"citizen investment oversight committee": {
+            "document_types": [172, 173],
+            "date_from_title": True,
+        },
+        r"water[\s/-]*sewer": {
+            "document_types": [184, 185],
+            "date_from_title": True,
+        },
+        r"utilities commission": {
+            "document_types": [69, 116],
+            "date_from_title": True,
+        },
+    }
+
+    tz = ZoneInfo(timezone)
 
     months_back = 12
     months_ahead = 6
@@ -62,10 +96,13 @@ class SandieOceansideSpider(LegistarSpider):
     # Matched against the lowercased calendar title with "&" replaced by "and".
     # Calendar titles vary ("Police & Fire Commission Meeting", "Police and Fire
     # Commission Meeting", "Joint City Council/CDC/Harbor/OPFA Regular Meeting").
+    # Order matters: the first match is the meeting's body, so the Water/Sewer
+    # Committee ("Utilities Commission Water-Sewer Committee Meeting") comes
+    # before the Utilities Commission.
     MEETING_PATTERNS = [
         r"police and fire commission",
+        r"water[\s/-]*sewer",
         r"utilities commission",
-        r"water[\s/-]*sewer committee",
         r"economic development commission",
         r"planning commission",
         r"city council",
@@ -73,6 +110,11 @@ class SandieOceansideSpider(LegistarSpider):
         r"community relations commission",
         r"housing commission",
         r"citizen investment oversight committee",
+    ]
+    # Other bodies whose titles match a pattern above, e.g. "Utilities
+    # Commission Budget Committee Meeting" (a separate committee).
+    EXCLUDED_PATTERNS = [
+        r"budget committee",
     ]
 
     default_location = {
@@ -84,18 +126,27 @@ class SandieOceansideSpider(LegistarSpider):
         super().__init__(*args, **kwargs)
         self.since_year = self._first_month().year
         self._legistar_links = defaultdict(list)
+        self._records_links = defaultdict(list)
         self._calendar_started = False
 
     @classmethod
+    # Connect to the spider_idle signal so the city calendar is fetched once
     def from_crawler(cls, crawler, *args, **kwargs):
         spider = super().from_crawler(crawler, *args, **kwargs)
         crawler.signals.connect(spider._start_calendar, signal=signals.spider_idle)
         return spider
 
     def start_requests(self):
-        # Legistar first (handled by LegistarSpider.parse); the city calendar
-        # is fetched in _start_calendar once Legistar is done.
+        # Legistar and the records archive are fetched first;
+        # the city calendar is fetched in _start_calendar once both are done.
         yield scrapy.Request(self.start_urls[0], callback=self.parse)
+        for body, source in self.ARCHIVE_RECORDS_SOURCES.items():
+            query = "&".join(f"DocumentTypeID={t}" for t in source["document_types"])
+            yield scrapy.Request(
+                self.records_url.format(query),
+                callback=self.parse_records,
+                cb_kwargs={"body": body},
+            )
 
     def _start_calendar(self, spider):
         if self._calendar_started:
@@ -116,14 +167,15 @@ class SandieOceansideSpider(LegistarSpider):
             yield self.calendar_url.format(month=month.month, year=month.year)
 
     def _first_month(self):
-        return datetime.today().replace(day=1) - relativedelta(months=self.months_back)
+        return datetime.now(self.tz).replace(day=1) - relativedelta(
+            months=self.months_back
+        )
 
     # LEGISTAR
 
     def parse_legistar(self, events):
         """Store City Council Legistar links by meeting date for matching in
-        _parse_detail. Before 2025 Legistar also lists other bodies (Planning
-        Commission, Parks and Recreation, ...), which are skipped."""
+        _parse_detail."""
         for event in events:
             if "city council" not in (event.get("Name") or "").lower():
                 continue
@@ -135,13 +187,11 @@ class SandieOceansideSpider(LegistarSpider):
 
     def _parse_legistar_events(self, response):
         """
-        Copy of LegistarSpider._parse_legistar_events with two fixes for this
+        Copy of LegistarSpider._parse_legistar_events from the core with two fixes for
         Legistar page:
         - Use the gridCalendar table. The first rgMasterTable on the page is
           an empty "upcoming meetings" grid.
-        - Detect the iCal link by URL only. The core also requires the column
-          header to be "" or "ics", but here the header reads " " (from a
-          hidden sort button), so every row was skipped.
+        - Detect the iCal link by URL only.
         """
         tables = response.css("table[id$='gridCalendar_ctl00']")
         if not tables:
@@ -200,6 +250,7 @@ class SandieOceansideSpider(LegistarSpider):
                     self._scraped_urls.add(ical_url)
                 events.append(dict(data))
             except Exception:
+                self.logger.warning(f"Failed to parse event from row: {row}")
                 pass
 
         return events
@@ -216,6 +267,74 @@ class SandieOceansideSpider(LegistarSpider):
         if len(same_day) == 1:
             return same_day[0][1]
         return []
+
+    # RECORDS ARCHIVE
+
+    def parse_records(self, response, body):
+        """Store agenda and minutes links from the records archive by body and
+        meeting date for matching in _parse_detail."""
+        date_from_title = self.ARCHIVE_RECORDS_SOURCES[body]["date_from_title"]
+        for row in response.css("tr"):
+            cells = row.css("td")
+            link = row.css("a")
+            if len(cells) != 2 or not link:
+                continue
+            title = self._clean_text(cells[0].css("::text").get())
+            title = title.split("|", 1)[-1].strip()
+            href = link.attrib.get("href", "")
+            if not re.search(r"agenda|minutes", title, flags=re.IGNORECASE):
+                continue
+            # Some rows have no file ("blobdload.asp?blobid=")
+            if not re.search(r"blobid=\d+", href):
+                continue
+            if date_from_title:
+                date = self._parse_title_date(title)
+            else:
+                date = self._parse_date(link.css("::text").get())
+            if not date:
+                continue
+            link_item = {"href": response.urljoin(href), "title": title}
+            # The same file is often listed under more than one document type
+            if link_item not in self._records_links[(body, date)]:
+                self._records_links[(body, date)].append(link_item)
+        return []
+
+    def _get_records_links(self, start, title):
+        """Find records archive links for a meeting of the same body on the
+        same date."""
+        if not start:
+            return []
+        return self._records_links.get((self._meeting_body(title), start.date()), [])
+
+    def _parse_date(self, text):
+        try:
+            return datetime.strptime(self._clean_text(text), "%m/%d/%Y").date()
+        except ValueError:
+            self.logger.warning(f"Failed to parse date from {text}")
+            return None
+
+    def _parse_title_date(self, title):
+        """Parse a date from a file title, e.g. "CIOC Minutes - May 12,2026",
+        "Minutes February 9th, 2021", "SR CIOC Minutes 11/18/25" or
+        "01 SR CIOC Minutes 05.28.25". Returns None if there isn't one."""
+        match = re.search(
+            r"\b([A-Z][a-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s*(\d{4})\b", title
+        )
+        if match:
+            try:
+                return datetime.strptime(" ".join(match.groups()), "%B %d %Y").date()
+            except ValueError:
+                self.logger.warning(f"Failed to parse date from {title}")
+                return None
+        match = re.search(r"\b(\d{1,2})[/.-](\d{1,2})[/.-](\d{4}|\d{2})\b", title)
+        if match:
+            month, day, year = (int(part) for part in match.groups())
+            try:
+                return datetime(year if year > 99 else 2000 + year, month, day).date()
+            except ValueError:
+                self.logger.warning(f"Failed to parse date from {title}")
+                return None
+        return None
 
     # CITY CALENDAR REQUESTS (curl_cffi)
 
@@ -379,7 +498,8 @@ class SandieOceansideSpider(LegistarSpider):
             all_day=False,
             time_notes="",
             location=self._parse_location(selector),
-            links=self._get_legistar_links(start, classification),
+            links=self._get_legistar_links(start, classification)
+            + self._get_records_links(start, title),
             source=source,
         )
         meeting["status"] = self._get_status(meeting)
@@ -390,8 +510,11 @@ class SandieOceansideSpider(LegistarSpider):
         return self._meeting_body(title) is not None
 
     def _meeting_body(self, title):
-        """Return the first MEETING_PATTERNS entry the title matches, or None."""
+        """Return the first MEETING_PATTERNS entry the title matches, or None
+        (also for titles matching EXCLUDED_PATTERNS)."""
         normalized = title.lower().replace("&", "and")
+        if any(re.search(pattern, normalized) for pattern in self.EXCLUDED_PATTERNS):
+            return None
         for pattern in self.MEETING_PATTERNS:
             if re.search(pattern, normalized):
                 return pattern
@@ -403,7 +526,9 @@ class SandieOceansideSpider(LegistarSpider):
             return CITY_COUNCIL
         if "commission" in title_lower:
             return COMMISSION
-        return COMMITTEE
+        if "committee" in title_lower:
+            return COMMITTEE
+        return NOT_CLASSIFIED
 
     def _parse_day_date(self, day):
         """Parse the date from a day cell's aria-label, e.g.
@@ -485,8 +610,6 @@ class SandieOceansideSpider(LegistarSpider):
         )
 
     def _clean_detail_url(self, href):
-        """Drop the curm/cury query string so the source URL is stable no
-        matter which month page linked to it."""
         url = urljoin(self.base_url, href)
         return urlparse(url)._replace(query="", fragment="").geturl()
 

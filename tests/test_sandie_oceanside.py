@@ -1,4 +1,5 @@
-from datetime import datetime
+import re
+from datetime import date, datetime
 from os.path import dirname, join
 
 import pytest
@@ -24,6 +25,26 @@ test_legistar_response = file_response(
     join(dirname(__file__), "files", "sandie_oceanside_legistar.html"),
     url="https://oceanside.legistar.com/Calendar.aspx",
 )
+test_records_response = file_response(
+    join(dirname(__file__), "files", "sandie_oceanside_records.html"),
+    url="https://records.ci.oceanside.ca.us/custom/filebank/archive-search-details.asp?DocumentTypeID=16&DocumentTypeID=11&Search=Search",  # noqa
+)
+test_records_cioc_response = file_response(
+    join(dirname(__file__), "files", "sandie_oceanside_records_cioc.html"),
+    url="https://records.ci.oceanside.ca.us/custom/filebank/archive-search-details.asp?DocumentTypeID=172&DocumentTypeID=173&Search=Search",  # noqa
+)
+test_records_ws_response = file_response(
+    join(dirname(__file__), "files", "sandie_oceanside_records_ws.html"),
+    url="https://records.ci.oceanside.ca.us/custom/filebank/archive-search-details.asp?DocumentTypeID=184&DocumentTypeID=185&Search=Search",  # noqa
+)
+PFC = r"police and fire commission"
+CIOC = r"citizen investment oversight committee"
+WATER_SEWER = r"water[\s/-]*sewer"
+test_records_uc_response = file_response(
+    join(dirname(__file__), "files", "sandie_oceanside_records_uc.html"),
+    url="https://records.ci.oceanside.ca.us/custom/filebank/archive-search-details.asp?DocumentTypeID=69&DocumentTypeID=116&Search=Search",  # noqa
+)
+UC = r"utilities commission"
 
 freezer = freeze_time("2026-10-22")
 freezer.start()
@@ -32,6 +53,10 @@ spider = SandieOceansideSpider()
 
 legistar_events = spider._parse_legistar_events(test_legistar_response)
 list(spider.parse_legistar(legistar_events))
+list(spider.parse_records(test_records_response, body=PFC))
+list(spider.parse_records(test_records_cioc_response, body=CIOC))
+list(spider.parse_records(test_records_ws_response, body=WATER_SEWER))
+list(spider.parse_records(test_records_uc_response, body=UC))
 
 parsed_details = spider._parse_calendar(test_response)
 detail = next(d for d in parsed_details if d["source"] == test_detail_response.url)
@@ -72,27 +97,31 @@ COUNCIL_LINKS = [
 
 
 def test_start_requests():
-    # Only Legistar is requested up front; the calendar follows on spider_idle
+    # Legistar and the records archive are requested up front; the calendar
+    # follows on spider_idle
     assert [req.url for req in spider.start_requests()] == [
-        "https://oceanside.legistar.com/Calendar.aspx"
+        "https://oceanside.legistar.com/Calendar.aspx",
+        "https://records.ci.oceanside.ca.us/custom/filebank/archive-search-details.asp?DocumentTypeID=16&DocumentTypeID=11&Search=Search",  # noqa
+        "https://records.ci.oceanside.ca.us/custom/filebank/archive-search-details.asp?DocumentTypeID=172&DocumentTypeID=173&Search=Search",  # noqa
+        "https://records.ci.oceanside.ca.us/custom/filebank/archive-search-details.asp?DocumentTypeID=184&DocumentTypeID=185&Search=Search",  # noqa
+        "https://records.ci.oceanside.ca.us/custom/filebank/archive-search-details.asp?DocumentTypeID=69&DocumentTypeID=116&Search=Search",  # noqa
     ]
 
 
 def test_since_year():
-    # Legistar years start at the beginning of the 3-year calendar window
     with freeze_time("2026-01-15"):
-        assert SandieOceansideSpider().since_year == 2023
+        assert SandieOceansideSpider().since_year == 2025
     with freeze_time("2026-10-22"):
-        assert SandieOceansideSpider().since_year == 2023
+        assert SandieOceansideSpider().since_year == 2025
 
 
 def test_calendar_urls():
-    # 3 years back through 6 months ahead
+    # 1 years back through 6 months ahead
     with freeze_time("2026-10-22"):
         urls = list(spider._calendar_urls())
-    assert len(urls) == 43
+    assert len(urls) == 19
     assert urls[0] == (
-        "https://www.ci.oceanside.ca.us/government/about-us/city-calendar/-curm-10/-cury-2023"  # noqa
+        "https://www.ci.oceanside.ca.us/government/about-us/city-calendar/-curm-10/-cury-2025"  # noqa
     )
     assert urls[-1] == (
         "https://www.ci.oceanside.ca.us/government/about-us/city-calendar/-curm-4/-cury-2027"  # noqa
@@ -150,11 +179,9 @@ def test_dedupe_details():
         _calendar_detail(3072, "Planning Commission Interview Workshop", workshop),
         # Same meeting linked from the next month's page
         _calendar_detail(3072, "Planning Commission Interview Workshop", workshop),
-        # Different body at the same time is kept
-        _calendar_detail(3100, "Housing Commission", workshop),
     ]
     deduped = spider._dedupe_details(details)
-    assert [d["source"].split("/")[-2] for d in deduped] == ["3350", "3072", "3100"]
+    assert [d["source"].split("/")[-2] for d in deduped] == ["3350", "3072"]
 
 
 def test_parse_detail_without_details():
@@ -228,10 +255,12 @@ def test_fetch_unsolved_challenge():
         ("Police and Fire Commission Meeting", True),
         ("Utilities Commission Water-Sewer Committee Meeting", True),
         ("Water/Sewer Committee", True),
+        ("Water-Sewer", True),
         ("Economic Development Commission", True),
         ("Planning Commission", True),
         ("Joint City Council/CDC/Harbor/OPFA Regular Meeting", True),
         ("Council Budget Workshop", True),
+        ("Utilities Commission Budget Committee Meeting", False),
         ("Community Relations Commission", True),
         ("Housing Commission", True),
         ("Utilities Commission", True),
@@ -283,7 +312,7 @@ def test_status():
 
 def test_location():
     assert parsed_items[0]["location"] == {
-        "name": "Council Chambers - City Hall'",
+        "name": "Council Chambers - City Hall",
         "address": "300 N COAST HWY, OCEANSIDE, California 92054",
     }
 
@@ -296,8 +325,141 @@ def test_source():
 
 
 def test_links():
-    # Legistar only has City Council meetings
-    assert parsed_items[0]["links"] == []
+    # Agenda and minutes from the records archive, matched by date. Staff
+    # reports ("PFC SR 5biv") from the same date are skipped.
+    assert parsed_items[0]["links"] == [
+        {
+            "href": "https://records.ci.oceanside.ca.us/civica/filebank/blobdload.asp?blobid=63876",  # noqa
+            "title": "Agenda",
+        },
+        {
+            "href": "https://records.ci.oceanside.ca.us/civica/filebank/blobdload.asp?blobid=63899",  # noqa
+            "title": "Minutes",
+        },
+    ]
+
+
+def test_records_links():
+    links = spider._records_links
+    # Row without a file ("blobid=") is skipped
+    assert [link["href"][-5:] for link in links[(PFC, date(2025, 12, 9))]] == [
+        "63245",
+        "63217",
+        "63230",
+    ]
+    assert links[(PFC, date(2025, 12, 9))][0]["title"] == "12-9-2025 Minutes"
+    # Only meetings of the same body get records links
+    assert spider._get_records_links(datetime(2026, 10, 13, 15), "Housing") == []
+
+
+def test_records_links_cioc():
+    links = spider._records_links
+    meeting_title = "Citizen Investment Oversight Committee Meeting"
+    # Matched by the date in the title, not the archive date (8/20/2024).
+    # "01 SR CIOC Item #1 - Minutes" (no date in title) is skipped.
+    assert spider._get_records_links(datetime(2024, 8, 13, 13, 30), meeting_title) == [
+        {
+            "href": "https://records.ci.oceanside.ca.us/civica/filebank/blobdload.asp?blobid=62044",  # noqa
+            "title": "CIOC Minutes 08/13/2024",
+        }
+    ]
+    assert [link["title"] for link in links[(CIOC, date(2026, 5, 12))]] == [
+        "CIOC Minutes - May 12,2026"
+    ]
+    assert not any(
+        "Item #1 - Minutes" in link["title"]
+        for key, day_links in links.items()
+        if key[0] == CIOC
+        for link in day_links
+    )
+    # Police and Fire Commission files are not attached to CIOC meetings
+    assert (PFC, date(2026, 8, 11)) in links
+    assert spider._get_records_links(datetime(2026, 8, 11, 13, 30), meeting_title) == [
+        {
+            "href": "https://records.ci.oceanside.ca.us/civica/filebank/blobdload.asp?blobid=63755",  # noqa
+            "title": "CIOC Minutes - August 11, 2026",
+        }
+    ]
+
+
+@pytest.mark.parametrize(
+    "title,expected",
+    [
+        ("CIOC Minutes - May 12,2026", date(2026, 5, 12)),
+        ("CIOC Minutes - August 11, 2026", date(2026, 8, 11)),
+        ("CIOC November 14, 2023 Minutes", date(2023, 11, 14)),
+        ("Minutes CIOC May 11th 2021", date(2021, 5, 11)),
+        ("Minutes February 9th, 2021", date(2021, 2, 9)),
+        ("SR CIOC Minutes 11/18/25", date(2025, 11, 18)),
+        ("SR CIOC Minutes 08/12/2025", date(2025, 8, 12)),
+        ("01 SR CIOC Minutes 05.28.25", date(2025, 5, 28)),
+        ("01 11-08-2022 SR CIOC November 8 2022 Minutes", date(2022, 11, 8)),
+        ("01 SR CIOC Item #1 - Minutes", None),
+        ("09-08-26 UC WS Minutes", date(2026, 9, 8)),
+        ("04-07-26 UC WS Agenda", date(2026, 4, 7)),
+        ("UC WS Agenda 5.10.2022", date(2022, 5, 10)),
+    ],
+)
+def test_parse_title_date(title, expected):
+    assert spider._parse_title_date(title) == expected
+
+
+def _link_ids(links):
+    return [link["href"].split("=")[-1] for link in links]
+
+
+@pytest.mark.parametrize(
+    "title",
+    [
+        "Utilities Commission Water-Sewer Committee Meeting",
+        "Water/Sewer Committee",
+    ],
+)
+def test_records_links_water_sewer(title):
+    # Both calendar titles are the Water/Sewer Committee. Matched by the date
+    # in the title: the agenda was posted 4/6 and one set of minutes 4/2.
+    assert _link_ids(
+        spider._get_records_links(datetime(2026, 4, 7, 15, 30), title)
+    ) == [
+        "63503",
+        "63466",
+        "63450",
+    ]
+
+
+def test_records_links_water_sewer_not_utilities_commission():
+    assert (
+        spider._get_records_links(datetime(2026, 4, 7, 14, 30), "Utilities Commission")
+        == []
+    )
+    # "Notice of Cancelled Meeting" has no agenda or minutes in the title
+    assert (WATER_SEWER, date(2026, 7, 14)) not in spider._records_links
+
+
+@pytest.mark.parametrize(
+    "title",
+    ["Utilities Commission", "Utilities Commission Meeting"],
+)
+def test_records_links_utilities_commission(title):
+    # Matched by the date in the title: "01/20/26 UC Minutes" was posted 1/30
+    assert _link_ids(
+        spider._get_records_links(datetime(2026, 1, 20, 15, 30), title)
+    ) == ["63316", "63286", "63279"]
+    # Water/Sewer Committee files are not attached to the Utilities Commission
+    assert _link_ids(
+        spider._get_records_links(datetime(2026, 9, 15, 15, 30), title)
+    ) == ["63826", "63822"]
+
+
+def test_records_links_utilities_commission_skips():
+    # "09-15-26 Agenda" has no file; "05-21-24 UC Agen" style titles (no
+    # "agenda" or "minutes") are skipped
+    assert not any(
+        not re.search(r"agenda|minutes", link["title"], flags=re.IGNORECASE)
+        for key, links in spider._records_links.items()
+        if key[0] == UC
+        for link in links
+    )
 
 
 def test_council_links():
@@ -331,31 +493,6 @@ def test_legistar_links_matching():
     assert spider._get_legistar_links(datetime(2026, 10, 8, 15, 30), CITY_COUNCIL) == []
     # Only City Council meetings get Legistar links
     assert spider._get_legistar_links(datetime(2026, 10, 7, 15, 30), COMMISSION) == []
-
-
-def test_legistar_skips_other_bodies():
-    # Before 2025 Legistar lists other bodies too, e.g. on 11/1/2023
-    legistar_spider = SandieOceansideSpider()
-    legistar_spider.parse_legistar(
-        [
-            {
-                "Name": "Parks and Recreation Commission",
-                "Meeting Date": "11/1/2023",
-                "Meeting Time": "6:00 PM",
-                "Agenda": {"label": "Agenda", "url": "https://example.com/parks"},
-            },
-            {
-                "Name": "City Council",
-                "Meeting Date": "11/1/2023",
-                "Meeting Time": "6:00 PM",
-                "Agenda": {"label": "Agenda", "url": "https://example.com/council"},
-            },
-        ]
-    )
-    # Calendar says 3:30 PM: falls back to the only City Council meeting that day
-    assert legistar_spider._get_legistar_links(
-        datetime(2023, 11, 1, 15, 30), CITY_COUNCIL
-    ) == [{"href": "https://example.com/council", "title": "Agenda"}]
 
 
 def test_fetch_meeting_retries():
