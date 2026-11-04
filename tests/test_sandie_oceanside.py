@@ -226,7 +226,10 @@ def test_dedupe_details(spider):
         _calendar_detail(3072, "Planning Commission Interview Workshop", workshop),
     ]
     deduped = spider._dedupe_details(details)
-    assert [d["source"].split("/")[-2] for d in deduped] == ["3350", "3072"]
+    assert [[d["source"].split("/")[-2] for d in group] for group in deduped] == [
+        ["3350", "3259", "1861"],
+        ["3072", "2843"],
+    ]
 
 
 def test_parse_detail_without_details(spider, detail):
@@ -550,6 +553,32 @@ def test_fetch_meeting_retries(detail):
     meeting = retry_spider._fetch_meeting(detail, referer="")
     assert meeting["title"] == "Police and Fire Commission Meeting"
     assert pages == []
+
+
+def test_parse_calendar_pages_falls_back_to_older_posting():
+    fallback_spider = SandieOceansideSpider()
+    start = datetime(2026, 10, 13, 17, 0)
+    details = [
+        _calendar_detail(3350, "Police and Fire Commission Meeting", start),
+        _calendar_detail(3259, "Police and Fire Commission Meeting", start),
+    ]
+    fallback_spider._calendar_urls = lambda: ["calendar"]
+    fallback_spider._parse_calendar = lambda selector: details
+    detail_html = open(
+        join(dirname(__file__), "files", "sandie_oceanside_detail.html")
+    ).read()
+    fetched = []
+
+    def fetch_html(url, referer):
+        fetched.append(url.split("/")[-2] if "/Event/" in url else url)
+        # The newest posting's page never loads
+        return None if "/3350/" in url else detail_html
+
+    fallback_spider._fetch_html = fetch_html
+    meetings = list(fallback_spider.parse_calendar_pages(None))
+    assert len(meetings) == 1
+    assert meetings[0]["source"].split("/")[-2] == "3259"
+    assert fetched == ["calendar", "3350", "3350", "3259"]
 
 
 def test_classification(parsed_items):

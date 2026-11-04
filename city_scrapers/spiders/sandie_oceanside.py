@@ -346,27 +346,31 @@ class SandieOceansideSpider(LegistarSpider):
             html = self._fetch_html(url, referer=self.base_url + "/")
             if html:
                 details.extend(self._parse_calendar(Selector(text=html)))
-        for detail in self._dedupe_details(details):
-            start = detail["start"]
-            referer = self.calendar_url.format(month=start.month, year=start.year)
-            meeting = self._fetch_meeting(detail, referer=referer)
-            if meeting:
-                yield meeting
+        for candidates in self._dedupe_details(details):
+            # Use the most recent posting whose detail page can be parsed
+            for detail in candidates:
+                start = detail["start"]
+                referer = self.calendar_url.format(month=start.month, year=start.year)
+                meeting = self._fetch_meeting(detail, referer=referer)
+                if meeting:
+                    yield meeting
+                    break
 
     def _dedupe_details(self, details):
-        """Drop repeated calendar entries. The same meeting can be linked from
+        """Group repeated calendar entries. The same meeting can be linked from
         more than one month page, and can also be posted several times under
         different event IDs, sometimes with a slightly different title (e.g.
         "Planning Commission Workshop" and "Planning Commission Interview
-        Workshop" at the same time). Keeps the highest event ID, i.e. the most
-        recent posting, for each body and start time."""
-        latest = {}
+        Workshop" at the same time). Returns the postings for each body and
+        start time, one per event page, highest event ID (most recent) first."""
+        groups = defaultdict(dict)
         for detail in details:
             key = (self._meeting_body(detail["title"]), detail["start"])
-            current = latest.get(key)
-            if current is None or self._event_id(detail) > self._event_id(current):
-                latest[key] = detail
-        return list(latest.values())
+            groups[key].setdefault(detail["source"], detail)
+        return [
+            sorted(group.values(), key=self._event_id, reverse=True)
+            for group in groups.values()
+        ]
 
     def _event_id(self, detail):
         match = re.search(r"/Event/(\d+)", detail["source"])
@@ -523,10 +527,10 @@ class SandieOceansideSpider(LegistarSpider):
         title_lower = title.lower()
         if "council" in title_lower:
             return CITY_COUNCIL
-        if "commission" in title_lower:
-            return COMMISSION
         if "committee" in title_lower:
             return COMMITTEE
+        if "commission" in title_lower:
+            return COMMISSION
         return NOT_CLASSIFIED
 
     def _parse_day_date(self, day):
