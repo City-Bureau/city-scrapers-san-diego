@@ -249,9 +249,8 @@ class SandieOceansideSpider(LegistarSpider):
                 else:
                     self._scraped_urls.add(ical_url)
                 events.append(dict(data))
-            except Exception:
-                self.logger.warning(f"Failed to parse event from row: {row}")
-                pass
+            except Exception as e:
+                self.logger.warning(f"Failed to parse event from row: {row}: {e}")
 
         return events
 
@@ -546,7 +545,7 @@ class SandieOceansideSpider(LegistarSpider):
                 time = datetime.strptime(time_str, "%I:%M %p").time()
                 return datetime.combine(date, time)
             except ValueError:
-                pass
+                self.logger.warning(f"Failed to parse time from {time_str}")
         return datetime.combine(date, datetime.min.time())
 
     def _parse_detail_times(self, selector):
@@ -575,6 +574,7 @@ class SandieOceansideSpider(LegistarSpider):
                 f"{date_str} {time_str.upper().replace(' ', '')}", "%m/%d/%Y %I:%M%p"
             )
         except ValueError:
+            self.logger.warning(f"Failed to parse datetime from {date_str} {time_str}")
             return None
 
     def _parse_location(self, selector):

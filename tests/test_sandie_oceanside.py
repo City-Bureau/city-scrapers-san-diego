@@ -46,27 +46,72 @@ test_records_uc_response = file_response(
 )
 UC = r"utilities commission"
 
-freezer = freeze_time("2026-10-22")
-freezer.start()
 
-spider = SandieOceansideSpider()
+@pytest.fixture(scope="module")
+def parsed():
+    # The context manager unfreezes time even if parsing raises, so frozen
+    # time can't leak into other tests
+    with freeze_time("2026-10-22"):
+        spider = SandieOceansideSpider()
 
-legistar_events = spider._parse_legistar_events(test_legistar_response)
-list(spider.parse_legistar(legistar_events))
-list(spider.parse_records(test_records_response, body=PFC))
-list(spider.parse_records(test_records_cioc_response, body=CIOC))
-list(spider.parse_records(test_records_ws_response, body=WATER_SEWER))
-list(spider.parse_records(test_records_uc_response, body=UC))
+        legistar_events = spider._parse_legistar_events(test_legistar_response)
+        list(spider.parse_legistar(legistar_events))
+        list(spider.parse_records(test_records_response, body=PFC))
+        list(spider.parse_records(test_records_cioc_response, body=CIOC))
+        list(spider.parse_records(test_records_ws_response, body=WATER_SEWER))
+        list(spider.parse_records(test_records_uc_response, body=UC))
 
-parsed_details = spider._parse_calendar(test_response)
-detail = next(d for d in parsed_details if d["source"] == test_detail_response.url)
-parsed_items = [spider._parse_detail(test_detail_response, **detail)]
-council_detail = next(
-    d for d in parsed_details if d["source"] == test_council_detail_response.url
-)
-council_items = [spider._parse_detail(test_council_detail_response, **council_detail)]
+        parsed_details = spider._parse_calendar(test_response)
+        detail = next(
+            d for d in parsed_details if d["source"] == test_detail_response.url
+        )
+        parsed_items = [spider._parse_detail(test_detail_response, **detail)]
+        council_detail = next(
+            d for d in parsed_details if d["source"] == test_council_detail_response.url
+        )
+        council_items = [
+            spider._parse_detail(test_council_detail_response, **council_detail)
+        ]
 
-freezer.stop()
+    return {
+        "spider": spider,
+        "legistar_events": legistar_events,
+        "parsed_details": parsed_details,
+        "detail": detail,
+        "parsed_items": parsed_items,
+        "council_items": council_items,
+    }
+
+
+@pytest.fixture(scope="module")
+def spider(parsed):
+    return parsed["spider"]
+
+
+@pytest.fixture(scope="module")
+def legistar_events(parsed):
+    return parsed["legistar_events"]
+
+
+@pytest.fixture(scope="module")
+def parsed_details(parsed):
+    return parsed["parsed_details"]
+
+
+@pytest.fixture(scope="module")
+def detail(parsed):
+    return parsed["detail"]
+
+
+@pytest.fixture(scope="module")
+def parsed_items(parsed):
+    return parsed["parsed_items"]
+
+
+@pytest.fixture(scope="module")
+def council_items(parsed):
+    return parsed["council_items"]
+
 
 CHALLENGE_HTML = """
 <html><head><script> var i = 1792696350; var j = i + Number("8912" + "10911");
@@ -96,7 +141,7 @@ COUNCIL_LINKS = [
 ]
 
 
-def test_start_requests():
+def test_start_requests(spider):
     # Legistar and the records archive are requested up front; the calendar
     # follows on spider_idle
     assert [req.url for req in spider.start_requests()] == [
@@ -115,7 +160,7 @@ def test_since_year():
         assert SandieOceansideSpider().since_year == 2025
 
 
-def test_calendar_urls():
+def test_calendar_urls(spider):
     # 1 years back through 6 months ahead
     with freeze_time("2026-10-22"):
         urls = list(spider._calendar_urls())
@@ -128,13 +173,13 @@ def test_calendar_urls():
     )
 
 
-def test_calendar_count():
+def test_calendar_count(parsed_details):
     # Community events, Arts/Youth/Historic Preservation commissions, Library
     # Board, etc. are filtered out
     assert len(parsed_details) == 8
 
 
-def test_calendar_titles():
+def test_calendar_titles(parsed_details):
     assert [d["title"] for d in parsed_details] == [
         "Joint City Council/CDC/Harbor/OPFA Regular Meeting",
         "Planning Commission",
@@ -147,7 +192,7 @@ def test_calendar_titles():
     ]
 
 
-def test_calendar_source():
+def test_calendar_source(parsed_details):
     # Query string (?curm=10&cury=2026) is dropped
     assert (
         parsed_details[0]["source"]
@@ -155,7 +200,7 @@ def test_calendar_source():
     )
 
 
-def test_calendar_start():
+def test_calendar_start(parsed_details):
     assert parsed_details[0]["start"] == datetime(2026, 10, 7, 15, 30)
     assert parsed_details[-1]["start"] == datetime(2026, 10, 27, 18, 15)
 
@@ -168,7 +213,7 @@ def _calendar_detail(event_id, title, start):
     }
 
 
-def test_dedupe_details():
+def test_dedupe_details(spider):
     crc = datetime(2025, 4, 1, 18, 0)
     workshop = datetime(2026, 4, 1, 17, 30)
     details = [
@@ -184,7 +229,7 @@ def test_dedupe_details():
     assert [d["source"].split("/")[-2] for d in deduped] == ["3350", "3072"]
 
 
-def test_parse_detail_without_details():
+def test_parse_detail_without_details(spider, detail):
     # Page without event details (e.g. unsolved Akamai challenge): no meeting
     blocked = file_response(
         join(dirname(__file__), "files", "sandie_oceanside.html"),
@@ -193,7 +238,7 @@ def test_parse_detail_without_details():
     assert spider._parse_detail(blocked, **detail) is None
 
 
-def test_parse_challenge():
+def test_parse_challenge(spider):
     assert spider._parse_challenge(CHALLENGE_HTML) == {
         "bm-verify": "AAQAAAAO/////abc+def==",
         "pow": 1792696350 + 891210911,
@@ -271,60 +316,60 @@ def test_fetch_unsolved_challenge():
         ("Halloween Trunk or Treat", False),
     ],
 )
-def test_is_relevant(title, expected):
+def test_is_relevant(title, expected, spider):
     assert spider._is_relevant(title) is expected
 
 
-def test_count():
+def test_count(parsed_items):
     assert len(parsed_items) == 1
 
 
-def test_title():
+def test_title(parsed_items):
     assert parsed_items[0]["title"] == "Police and Fire Commission Meeting"
 
 
-def test_description():
+def test_description(parsed_items):
     assert parsed_items[0]["description"] == ""
 
 
-def test_start():
+def test_start(parsed_items):
     assert parsed_items[0]["start"] == datetime(2026, 10, 13, 17, 0)
 
 
-def test_end():
+def test_end(parsed_items):
     assert parsed_items[0]["end"] == datetime(2026, 10, 13, 19, 0)
 
 
-def test_time_notes():
+def test_time_notes(parsed_items):
     assert parsed_items[0]["time_notes"] == ""
 
 
-def test_id():
+def test_id(parsed_items):
     assert (
         parsed_items[0]["id"]
         == "sandie_oceanside/202610131700/x/police_and_fire_commission_meeting"
     )
 
 
-def test_status():
+def test_status(parsed_items):
     assert parsed_items[0]["status"] == PASSED
 
 
-def test_location():
+def test_location(parsed_items):
     assert parsed_items[0]["location"] == {
         "name": "Council Chambers - City Hall",
         "address": "300 N COAST HWY, OCEANSIDE, California 92054",
     }
 
 
-def test_source():
+def test_source(parsed_items):
     assert (
         parsed_items[0]["source"]
         == "https://www.ci.oceanside.ca.us/Home/Components/Calendar/Event/3642/16"
     )
 
 
-def test_links():
+def test_links(parsed_items):
     # Agenda and minutes from the records archive, matched by date. Staff
     # reports ("PFC SR 5biv") from the same date are skipped.
     assert parsed_items[0]["links"] == [
@@ -339,7 +384,7 @@ def test_links():
     ]
 
 
-def test_records_links():
+def test_records_links(spider):
     links = spider._records_links
     # Row without a file ("blobid=") is skipped
     assert [link["href"][-5:] for link in links[(PFC, date(2025, 12, 9))]] == [
@@ -352,7 +397,7 @@ def test_records_links():
     assert spider._get_records_links(datetime(2026, 10, 13, 15), "Housing") == []
 
 
-def test_records_links_cioc():
+def test_records_links_cioc(spider):
     links = spider._records_links
     meeting_title = "Citizen Investment Oversight Committee Meeting"
     # Matched by the date in the title, not the archive date (8/20/2024).
@@ -400,7 +445,7 @@ def test_records_links_cioc():
         ("UC WS Agenda 5.10.2022", date(2022, 5, 10)),
     ],
 )
-def test_parse_title_date(title, expected):
+def test_parse_title_date(title, expected, spider):
     assert spider._parse_title_date(title) == expected
 
 
@@ -415,7 +460,7 @@ def _link_ids(links):
         "Water/Sewer Committee",
     ],
 )
-def test_records_links_water_sewer(title):
+def test_records_links_water_sewer(title, spider):
     # Both calendar titles are the Water/Sewer Committee. Matched by the date
     # in the title: the agenda was posted 4/6 and one set of minutes 4/2.
     assert _link_ids(
@@ -427,7 +472,7 @@ def test_records_links_water_sewer(title):
     ]
 
 
-def test_records_links_water_sewer_not_utilities_commission():
+def test_records_links_water_sewer_not_utilities_commission(spider):
     assert (
         spider._get_records_links(datetime(2026, 4, 7, 14, 30), "Utilities Commission")
         == []
@@ -440,7 +485,7 @@ def test_records_links_water_sewer_not_utilities_commission():
     "title",
     ["Utilities Commission", "Utilities Commission Meeting"],
 )
-def test_records_links_utilities_commission(title):
+def test_records_links_utilities_commission(title, spider):
     # Matched by the date in the title: "01/20/26 UC Minutes" was posted 1/30
     assert _link_ids(
         spider._get_records_links(datetime(2026, 1, 20, 15, 30), title)
@@ -451,7 +496,7 @@ def test_records_links_utilities_commission(title):
     ) == ["63826", "63822"]
 
 
-def test_records_links_utilities_commission_skips():
+def test_records_links_utilities_commission_skips(spider):
     # "09-15-26 Agenda" has no file; "05-21-24 UC Agen" style titles (no
     # "agenda" or "minutes") are skipped
     assert not any(
@@ -462,7 +507,7 @@ def test_records_links_utilities_commission_skips():
     )
 
 
-def test_council_links():
+def test_council_links(council_items):
     assert council_items[0]["title"] == (
         "Joint City Council/CDC/Harbor/OPFA Regular Meeting"
     )
@@ -470,20 +515,20 @@ def test_council_links():
     assert council_items[0]["links"] == COUNCIL_LINKS
 
 
-def test_legistar_events():
+def test_legistar_events(legistar_events):
     assert len(legistar_events) == 23
     assert legistar_events[1]["Name"] == "City Council"
     assert legistar_events[1]["Meeting Date"] == "10/7/2026"
     assert legistar_events[1]["Meeting Time"] == "3:30 PM"
 
 
-def test_legistar_links_not_available():
+def test_legistar_links_not_available(spider):
     # Future meeting: no minutes yet ("Not available" has no link)
     oct_21 = spider._get_legistar_links(datetime(2026, 10, 21, 15, 30), CITY_COUNCIL)
     assert [link["title"] for link in oct_21] == ["Agenda", "Video", "Español"]
 
 
-def test_legistar_links_matching():
+def test_legistar_links_matching(spider):
     # Same day, different time: falls back to the only Legistar meeting that day
     assert (
         spider._get_legistar_links(datetime(2026, 10, 7, 17, 0), CITY_COUNCIL)
@@ -495,7 +540,7 @@ def test_legistar_links_matching():
     assert spider._get_legistar_links(datetime(2026, 10, 7, 15, 30), COMMISSION) == []
 
 
-def test_fetch_meeting_retries():
+def test_fetch_meeting_retries(detail):
     retry_spider = SandieOceansideSpider()
     pages = [
         "<html>No details</html>",
@@ -507,7 +552,7 @@ def test_fetch_meeting_retries():
     assert pages == []
 
 
-def test_classification():
+def test_classification(parsed_items):
     assert parsed_items[0]["classification"] == COMMISSION
 
 
@@ -519,9 +564,9 @@ def test_classification():
         ("Citizen Investment Oversight Committee Meeting", COMMITTEE),
     ],
 )
-def test_parse_classification(title, expected):
+def test_parse_classification(title, expected, spider):
     assert spider._parse_classification(title) == expected
 
 
-def test_all_day():
+def test_all_day(parsed_items):
     assert parsed_items[0]["all_day"] is False
