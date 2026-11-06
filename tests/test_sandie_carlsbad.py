@@ -729,20 +729,36 @@ def test_lone_folder_at_another_time_is_another_session():
     )
 
 
-def test_folder_that_fails_to_load_falls_back_to_laserfiche(caplog):
-    """A folder whose page can't be fetched isn't indexed, so the meeting
-    still gets its Laserfiche documents."""
+@pytest.mark.parametrize(
+    "folder_pages",
+    [
+        # The meeting's folder fails
+        {},
+        # The folder loads but its subfolder fails, so it's incomplete
+        {
+            f"{AGENDAS_URL}/-folder-1002": _folder_page(
+                ("Item 1 Staff Report", 5), subfolders=[("Staff Reports", 1003)]
+            )
+        },
+    ],
+)
+def test_folder_that_fails_to_load_falls_back_to_laserfiche(folder_pages, caplog):
+    """A folder whose page, or a subfolder's page, can't be fetched isn't
+    indexed, so the meeting still gets its Laserfiche documents."""
     spider = SandieCarlsbadCouncilCommitteesSpider()
-    page = _folder_list(
-        ("Oct. 7, 2025, 5 p.m. City Council Chamber - Regular Meeting", 1002)
-    )
+    pages = {
+        AGENDAS_URL: _folder_list(
+            ("Oct. 7, 2025, 5 p.m. City Council Chamber - Regular Meeting", 1002)
+        ),
+        **folder_pages,
+    }
     with freeze_time("2026-10-20 12:00"), caplog.at_level(
         logging.WARNING
     ), patch.object(
         spider,
         "_akamai_get",
         side_effect=lambda url, referer=None: (
-            _html(url, page) if url == AGENDAS_URL else None
+            _html(url, pages[url]) if url in pages else None
         ),
     ):
         spider._load_board_folders(spider.boards[0], {date(2025, 10, 7)})
@@ -904,6 +920,8 @@ def test_akamai_challenge_is_retried_then_given_up(caplog):
         mixin.curl_requests.RequestsError("Operation timed out"),
         MagicMock(status_code=429, content=b""),
         MagicMock(status_code=503, content=b""),
+        # Not a standard code, but any 5xx is a server error
+        MagicMock(status_code=520, content=b""),
     ],
 )
 def test_akamai_timeout_and_server_errors_are_retried(failure, caplog):
