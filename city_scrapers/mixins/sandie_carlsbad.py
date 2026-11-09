@@ -109,8 +109,9 @@ class SandieCarlsbadMixin(CityScrapersSpider, metaclass=SandieCarlsbadMixinMeta)
     # Akamai intermittently rejects single requests; retry those with backoff.
     akamai_retries = 3
     akamai_retry_backoff = 20
-    # Akamai's block (403), rate limiting (429) and server errors are retried
-    retry_statuses = [403, 429, 500, 502, 503, 504]
+    # Akamai's block (403) and rate limiting (429) are retried, as is every
+    # 5xx server error (including CDN codes like 520)
+    retry_statuses = [403, 429]
     # Document folders nest at most a level or two; this only stops a loop.
     max_folder_depth = 4
     # A subcommittee ("Arts Commission Subcommittee Meeting") isn't the board
@@ -278,7 +279,8 @@ class SandieCarlsbadMixin(CityScrapersSpider, metaclass=SandieCarlsbadMixinMeta)
                     return HtmlResponse(
                         url=url, body=response.content, encoding="utf-8"
                     )
-                if not challenge and status not in self.retry_statuses:
+                retryable = status in self.retry_statuses or 500 <= status < 600
+                if not challenge and not retryable:
                     self.logger.warning("Got %s for %s", status, url)
                     return None
                 problem = "an Akamai challenge page" if challenge else status
@@ -451,7 +453,8 @@ class SandieCarlsbadMixin(CityScrapersSpider, metaclass=SandieCarlsbadMixinMeta)
 
     def _folder_documents(self, url, referer, depth):
         """Documents in a folder and, recursively, in its subfolders, or None
-        if the folder couldn't be fetched."""
+        if the folder or any of its subfolders couldn't be fetched (a partial
+        folder would hide the meeting's Laserfiche documents)."""
         page = self._akamai_get(url, referer=referer)
         if page is None:
             self.logger.warning("Could not fetch document folder: %s", url)
@@ -469,9 +472,10 @@ class SandieCarlsbadMixin(CityScrapersSpider, metaclass=SandieCarlsbadMixinMeta)
         if depth >= self.max_folder_depth:
             return links
         for _, href in self._parse_folders(page):
-            links.extend(
-                self._folder_documents(urljoin(url, href), url, depth + 1) or []
-            )
+            subfolder_links = self._folder_documents(urljoin(url, href), url, depth + 1)
+            if subfolder_links is None:
+                return None
+            links.extend(subfolder_links)
         return links
 
     def _parse_folders(self, response):
