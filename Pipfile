@@ -5,12 +5,15 @@ name = "pypi"
 
 [packages]
 scrapy = "==2.11.2"
+w3lib = "<2.5"
+twisted = "<26"
 scrapy-sentry-errors = "*"
 city-scrapers-core = {ref = "main", git = "https://github.com/City-Bureau/city-scrapers-core.git", extras = ["azure"]}
 scrapy-wayback-middleware = "*"
 pytz = "*"
 curl-cffi = "*"
 scrapy-playwright = "*"
+python-dateutil = "*"
 
 [dev-packages]
 freezegun = "*"
