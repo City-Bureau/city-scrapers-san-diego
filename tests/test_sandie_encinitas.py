@@ -88,7 +88,7 @@ def get_item(items, start, title=None):
 
 
 def test_count(council_items, boards_items):
-    assert len(council_items) == 50
+    assert len(council_items) == 56
     assert len(boards_items) == 58
 
 
@@ -260,6 +260,7 @@ def test_council_excluded_meetings(council_items):
         or "Cultural Tourism Committee" in title
         or "School District Liaison Committee" in title
         or "Skate Feature Committee" in title
+        or "Mobility and Traffic Safety Commission" in title
         for title in titles
     )
     # Housing Authority, San Dieguito Water District and Zoning Administrative

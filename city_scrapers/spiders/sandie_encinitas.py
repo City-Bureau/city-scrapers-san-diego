@@ -48,6 +48,12 @@ spider_configs = [
                 "classification": COMMITTEE,
                 "location": CITY_HALL,
             },
+            {
+                "pattern": r"mobility\s+(?:and|&)\s+traffic\s+(?:safety\s+)?commission",
+                "panel": "Mobility & Traffic Safety Commission",
+                "classification": COMMISSION,
+                "location": CITY_HALL,
+            },
         ],
         "is_main": True,
     },
