@@ -8,7 +8,6 @@ from city_scrapers_core.constants import (
     COMMITTEE,
     NOT_CLASSIFIED,
     PASSED,
-    TENTATIVE,
 )
 from city_scrapers_core.utils import file_response
 from freezegun import freeze_time
@@ -21,12 +20,6 @@ from city_scrapers.spiders.sandie_city_council import SandieCityCouncilSpider
 def _file(name):
     return join(dirname(__file__), "files", name)
 
-
-# Old calendar page for February 2024, when the page itself took calendar_timestamp
-test_response = file_response(
-    _file("sandie_city_council.html"),
-    url="https://www.sandiego.gov/city-clerk/officialdocs/meetings-calendar?calendar_timestamp=1706778000",  # noqa: E501
-)
 
 # Views AJAX response for October 2026, as fetched by _calendar_requests
 test_ajax_response = file_response(
@@ -60,17 +53,10 @@ def spider():
 
 
 @pytest.fixture
-def parsed_items(spider):
-    """Meetings from the old February 2024 calendar page"""
-    with freeze_time("2024-01-30"):
-        return list(spider.parse(test_response))
-
-
-@pytest.fixture
 def parsed_ajax_items(spider):
     """Meetings from the October 2026 calendar, with no videos or documents"""
     with freeze_time("2026-11-05"):
-        return list(spider.parse_ajax(test_ajax_response))
+        return list(spider.parse_ajax_calendar(test_ajax_response))
 
 
 @pytest.fixture
@@ -92,7 +78,7 @@ def video_spider():
 @pytest.fixture
 def parsed_video_items(video_spider):
     with freeze_time("2026-11-05"):
-        return list(video_spider.parse_ajax(test_ajax_response))
+        return list(video_spider.parse_ajax_calendar(test_ajax_response))
 
 
 @pytest.fixture
@@ -109,7 +95,7 @@ def council_spider():
 @pytest.fixture
 def parsed_council_items(council_spider):
     with freeze_time("2026-11-05"):
-        return list(council_spider.parse_ajax(test_ajax_response))
+        return list(council_spider.parse_ajax_calendar(test_ajax_response))
 
 
 def _find(items, title, day):
@@ -121,72 +107,6 @@ def _find(items, title, day):
 
 def _video_links(item):
     return [link["href"] for link in item["links"] if link["title"] == "Video"]
-
-
-# ============ Calendar Page Tests ============
-
-
-def test_count(parsed_items):
-    assert len(parsed_items) == 25
-
-
-def test_title(parsed_items):
-    assert parsed_items[20]["title"] == "City Council"
-
-
-def test_description(parsed_items):
-    assert parsed_items[20]["description"] == ""
-
-
-def test_start(parsed_items):
-    assert parsed_items[20]["start"] == datetime(2024, 2, 26, 10, 0)
-
-
-def test_end(parsed_items):
-    assert parsed_items[20]["end"] is None
-
-
-def test_time_notes(parsed_items):
-    assert parsed_items[20]["time_notes"] == ""
-
-
-def test_id(parsed_items):
-    assert parsed_items[20]["id"] == "sandie_city_council/202402261000/x/city_council"
-
-
-def test_status(parsed_items):
-    assert parsed_items[20]["status"] == TENTATIVE
-
-
-def test_location(parsed_items):
-    assert parsed_items[20]["location"] == {
-        "name": "San Diego City Administration Center",
-        "address": "202 C Street, San Diego",
-    }
-
-
-def test_source(parsed_items):
-    assert (
-        parsed_items[20]["source"]
-        == "https://www.sandiego.gov/city-clerk/officialdocs/meetings-calendar?calendar_timestamp=1706778000"  # noqa: E501
-    )
-
-
-def test_links(parsed_items):
-    """The calendar's own links aren't used"""
-    assert parsed_items[20]["links"] == []
-
-
-def test_classification(parsed_items):
-    assert parsed_items[20]["classification"] == CITY_COUNCIL
-
-
-def test_all_day(parsed_items):
-    assert parsed_items[20]["all_day"] is False
-
-
-def test_closed_to_public(parsed_items):
-    assert parsed_items[20]["closed_to_public"] is False
 
 
 # ============ Request Chain Tests ============
@@ -254,7 +174,9 @@ def test_committee_then_council_documents_request(spider):
 def test_documents_then_calendar_requests(spider):
     requests = list(spider.parse_documents(documents_response))
     assert len(requests) == 3
-    assert all(request.callback.__name__ == "parse_ajax" for request in requests)
+    assert all(
+        request.callback.__name__ == "parse_ajax_calendar" for request in requests
+    )
 
 
 @freeze_time("2026-11-05")
@@ -286,6 +208,21 @@ def test_ajax_title(parsed_ajax_items):
 
 def test_ajax_start(parsed_ajax_items):
     assert parsed_ajax_items[8]["start"] == datetime(2026, 10, 8, 13, 0)
+
+
+def test_ajax_defaults(parsed_ajax_items):
+    item = parsed_ajax_items[8]
+    assert item["description"] == ""
+    assert item["end"] is None
+    assert item["time_notes"] == ""
+    assert item["all_day"] is False
+
+
+def test_ajax_location(parsed_ajax_items):
+    assert parsed_ajax_items[8]["location"] == {
+        "name": "San Diego City Administration Center",
+        "address": "202 C Street, San Diego",
+    }
 
 
 def test_ajax_status(parsed_ajax_items):
@@ -356,6 +293,7 @@ def test_parse_view_id(spider):
     )
     assert spider._parse_view_id("Closed Session") is None
     assert spider._parse_view_id("Special Housing Authority") is None
+
 
 # ============ Video Link Tests ============
 
@@ -595,7 +533,7 @@ def test_ajax_response_not_json(spider, caplog):
     response = HtmlResponse(
         url=test_ajax_response.url, body=b"<textarea>[]</textarea>", encoding="utf-8"
     )
-    assert list(spider.parse_ajax(response)) == []
+    assert list(spider.parse_ajax_calendar(response)) == []
     assert "Calendar response is not JSON" in caplog.text
 
 
@@ -603,7 +541,7 @@ def test_ajax_response_without_calendar(spider, caplog):
     response = TextResponse(
         url=test_ajax_response.url, body=b'[{"command": "settings"}]', encoding="utf-8"
     )
-    assert list(spider.parse_ajax(response)) == []
+    assert list(spider.parse_ajax_calendar(response)) == []
     assert "No calendar found in response" in caplog.text
 
 
