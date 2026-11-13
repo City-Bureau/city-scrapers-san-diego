@@ -16,10 +16,10 @@ from scrapy import Request, Selector
 
 class SandieCityCouncilSpider(CityScrapersSpider):
     name = "sandie_city_council"
-    agency = "San Diego City Council"
+    agency = "City of San Diego- City Council Committees"
     timezone = "America/Los_Angeles"
     location = {
-        "address": "202 C Street, San Diego",
+        "address": "202 C Street, San Diego, CA  92101",
         "name": "San Diego City Administration Center",
     }
     base_url = "https://www.sandiego.gov/city-clerk/officialdocs/meetings-calendar"
@@ -345,6 +345,7 @@ class SandieCityCouncilSpider(CityScrapersSpider):
         try:
             return datetime.strptime(date_str[:10], "%Y-%m-%d").date()
         except ValueError:
+            self.logger.warning(f"Failed to parse date: {date_str}")
             return None
 
     def _parse_classification(self, title):
@@ -365,10 +366,6 @@ class SandieCityCouncilSpider(CityScrapersSpider):
         except ValueError:
             return None
         return datetime.combine(date_obj, time_obj)
-
-    def _parse_location(self, item):
-        """Parse or generate location."""
-        return
 
     def _normalize_title(self, title):
         return " ".join(title.lower().replace("&", "and").split())

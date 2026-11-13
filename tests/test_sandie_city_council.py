@@ -221,7 +221,7 @@ def test_ajax_defaults(parsed_ajax_items):
 def test_ajax_location(parsed_ajax_items):
     assert parsed_ajax_items[8]["location"] == {
         "name": "San Diego City Administration Center",
-        "address": "202 C Street, San Diego",
+        "address": "202 C Street, San Diego, CA  92101",
     }
 
 
