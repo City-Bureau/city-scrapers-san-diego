@@ -1,0 +1,907 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="x-ua-compatible" content="IE=Edge" />
+	<title>Meeting Search Results - OnBase Agenda Online</title>
+	<link href="/211agendaonlinecomm/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+	<meta name="viewport" content="width=device-width" />
+	
+	<meta name="format-detection" content="telephone=no" />
+	<script async src="https://docaccess.com/docbox.js"></script>
+
+	<script src="/211agendaonlinecomm/bundles/jquery?v=9ktsOtIo0upvJP7-7FiXuOoOJe58RLFJ__wIRPL2vGo1"></script>
+
+
+	<link href="/211agendaonlinecomm/bundles/css?v=DRk4-i98xgECysKu9WVBQQzGWVS-p3dGRK3lDMW9ZTo1" rel="stylesheet"/>
+
+
+	<!-- Dynamic Stylesheet -->
+	<link href="/211agendaonlinecomm/Style" rel="stylesheet" />
+	<link type="text/css" rel="stylesheet" href="//fonts.googleapis.com/css?family=Open+Sans:400,600,800,700|Merriweather:400,700" media="all" />
+	<link rel="stylesheet" href="/211agendaonlinecomm/Content/css/cosd-onbase.css">
+</head>
+<body>
+	<div id="logo-container">
+		
+<!-- <div class="logo"><img src="~/Images/cosd-logo-stacked-white-color-sails-72ppi.png" /></div> -->
+<!-- <div style="font-size:1.5rem; padding:1rem; background-color: #fffceb;text-align:center"><p class="l-margin-bn"><strong>NOTICE:</strong> This site will be unavailable during scheduled maintenance on Friday, November 22 from 12 - 12:30 p.m.</p></div> -->
+<div id="logo-container">
+<div class="logo l-constrained">
+  <div class="three columns text-center l-padding-mobile-bd l-padding-desktop-lm">
+	<a href="https://www.sandiego.gov/council-committees"><img src="/211agendaonlinecomm/Images/cosd-logo-primary-white-color-sails-72ppi.png" width="205" height="50" class="hide-on-mobile" alt="City of San Diego logo"/><img src="/211agendaonlinecomm/Images/cosd-logo-primary-white-color-sails-72ppi.png" width="200" height="auto" class="hide-on-desktop" alt="City of San Diego logo"/></a>
+  </div>
+  <div class="nine columns l-padding-mobile-hd">
+	<h1 class="heading--trim hide-on-mobile">City Council Committees Agendas and Minutes</h1>
+	<h1 class="h2 heading--trim hide-on-desktop text-center">City Council Committees Agendas and Minutes</h1>
+  </div>
+</div>
+</div>
+	</div>
+	<!--<div id="navbar" class="navbar navbar-inverse" role="navigation">
+		<div class="navbar-header">
+			<button id="btnNavToggle" class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-responsive-collapse">
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+			</button>
+			<div class="media-collapse">
+				<span id="media-collapse-text">Hide Media</span>
+			</div>
+		</div>
+		<div class="navbar-collapse collapse navbar-responsive-collapse">
+			<ul class="nav navbar-nav">
+				<li><a href="/211agendaonlinecomm/" id="lnkNavHome">Home</a></li>
+				<li><a href="/211agendaonlinecomm/Meetings" id="lnkNavMeetings">Meetings</a></li>
+				<li><a href="/211agendaonlinecomm/Home/Contact" id="lnkNavContact">Contact</a></li>
+			</ul>
+		</div>
+
+	</div>-->
+	<div id="navbar" class="navbar navbar-inverse l-constrained" role="navigation">
+		<div class="navbar-header">
+			<button id="btnNavToggle" class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-responsive-collapse">
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+			</button>
+			<div class="media-collapse">
+				<span id="media-collapse-text">Hide Media</span>
+			</div>
+		</div>
+		<div class="navbar-collapse collapse navbar-responsive-collapse">
+			<ul class="nav navbar-nav">
+				<li><a href="/211agendaonlinecomm/" id="lnkNavHome">Home</a></li>
+				<!--<li><a href="/211agendaonlinecomm/Meetings" id="lnkNavMeetings">Meetings</a></li>-->
+				<li><a href="/211agendaonlinecomm/Meetings" id="lnkNavMeetings">Meeting Search</a></li>
+				<!--<li><a href="/211agendaonlinecomm/Home/Contact" id="lnkNavContact">Contact</a></li>-->
+				<li><a href="/211agendaonlinecomm/Home/Contact" id="lnkNavContact">Committee Resources</a></li>
+			</ul>
+		</div>
+	</div>
+	<div>
+		
+		<section class="content-wrapper main-content clear-fix l-constrained">
+			
+
+
+
+
+
+
+    <div class="row l-margin-vd">
+		<div class="six columns l-padding-vd l-padding-desktop-rm border border--right no-border-on-mobile">
+			<p><strong>This website includes Committee Agendas and Minutes from September 2017 to present.</strong></p>
+		</div>
+		<div class="six columns l-padding-vd l-padding-desktop-lm">
+			<p><a href="https://www.sandiego.gov/council-committees">Search for Committee Agendas and Minutes prior to September 2017</a></p>
+		</div>
+	</div>
+	<div class="panel-group">
+		<div class="panel panel-primary">
+			<div class="panel-body" id="searchOptions">
+				<div class="search-header">
+					Search Meeting Content
+				</div>
+
+<form action="/211agendaonlinecomm/Meetings" class="form-horizontal" method="post"><input name="__RequestVerificationToken" type="hidden" value="keiKfr6ZUoNCQCUYGBTkynjcPubbQFlNXzJwAe7hB5sk8QkEOdoyDGHTYhpnTJZk28gwW3sn2N7rbqrJeojd6mD2TOlEOePaQwxnpe-vxP81" />                        <div class="row form-group">
+                            <label class="col-sm-2 control-label" for="Keywords">Search Text</label>
+                            <div class="col-sm-10">
+								<input class="form-control" id="Keywords" name="Keywords" type="text" value="" />
+							</div>
+						</div>
+                        <div class="row form-group">
+                            <label class="col-sm-2 control-label" for="MeetingTypeIDs">Meeting Type</label>
+                            <div class="col-sm-10">
+								<div class="multi-select form-control"
+									 id="MeetingTypeIDs"
+									 name="MeetingTypeIDs"
+									 noselectiontext="Select a Meeting Type"
+									 selectiontext="{0} Items Selected"
+									 checkalltext="Check All"
+									 uncheckalltext="Uncheck All"
+									 nextfocusid="DateRangeOptionID"
+									 selectedvalues="131,135,114,119,102,116,115,127,133,122,120,121,132,123,117,134,118">
+											<button id="btnListItem" value="131" style="display: none;">Active Transportation and Infrastructure Committee</button>
+											<button id="btnListItem" value="135" style="display: none;">Ad Hoc Committee on the Recruitment of the Executive Director of the Commission on Police Practices</button>
+											<button id="btnListItem" value="114" style="display: none;">Adjourned Committee</button>
+											<button id="btnListItem" value="119" style="display: none;">Audit Committee</button>
+											<button id="btnListItem" value="102" style="display: none;">Budget</button>
+											<button id="btnListItem" value="116" style="display: none;">Budget &amp; Government Efficiency Committee</button>
+											<button id="btnListItem" value="115" style="display: none;">Budget Review Committee</button>
+											<button id="btnListItem" value="127" style="display: none;">Committee of the Whole</button>
+											<button id="btnListItem" value="133" style="display: none;">Community and Neighborhood Services Committee</button>
+											<button id="btnListItem" value="122" style="display: none;">Economic Development &amp; Intergovernmental Relations Committee</button>
+											<button id="btnListItem" value="120" style="display: none;">Environment Committee</button>
+											<button id="btnListItem" value="121" style="display: none;">Infrastructure Committee</button>
+											<button id="btnListItem" value="132" style="display: none;">Land Use and Housing Committee</button>
+											<button id="btnListItem" value="123" style="display: none;">Public Safety Committee</button>
+											<button id="btnListItem" value="117" style="display: none;">Rules Committee</button>
+											<button id="btnListItem" value="134" style="display: none;">Select Committee on Addressing Cost of Living</button>
+											<button id="btnListItem" value="118" style="display: none;">Smart Growth &amp; Land Use Committee</button>
+								</div>
+							</div>
+						</div>
+                        <div class="row form-group">
+                            <label class="col-sm-2 control-label" for="DateRangeOptionID">Date Range</label>
+                            <div class="col-sm-10">
+								<select class="form-control single-select" id="DateRangeOptionID" name="DateRangeOptionID"><option value="1">Last Year</option>
+<option value="2">Last Month</option>
+<option value="3">Last Week</option>
+<option value="4">Recent/Upcoming</option>
+<option value="5">This Week</option>
+<option value="6">This Month</option>
+<option value="7">This Year</option>
+<option value="8">Next Week</option>
+<option value="9">Next Month</option>
+<option value="10">Next Year</option>
+<option selected="selected" value="11">Custom Date Range</option>
+</select>
+							</div>
+						</div>
+						<div class="col-sm-2"></div>
+						<div id="divDatePicker" class="col-sm-10 form-group" style="display: none;">
+							<div class="col-lg-10">
+								<label for="DateRangeCustomStartDate" class="hidden">Start Date</label>
+								<input class="input-normal" id="DateRangeCustomStartDate" name="DateRangeCustomStartDate" type="text" value="10/5/2026 12:00:00 AM" />
+								<span class="control-label">-&nbsp;</span>
+								<label for="DateRangeCustomEndDate" class="hidden">End Date</label>							
+								<input class="input-normal" id="DateRangeCustomEndDate" name="DateRangeCustomEndDate" type="text" value="12/5/2026 11:59:59 PM" />
+							</div>
+						</div>
+					<div class="row form-group">
+						<div class="col-sm-10 col-sm-offset-2">
+							<input type="submit" id="btnSearch" value="Search" class="btn btn-primary" />
+						</div>
+					</div>
+</form>
+			</div>
+		</div>
+	</div>
+
+<!-- Can't bundle this due to the language .js files-->
+<script type="text/javascript" src="/211agendaonlinecomm/Scripts/datepicker-6.3.6.min.js"></script>
+
+<script type="text/javascript">
+	$(document).ready(function ()
+	{
+		$("#DateRangeOptionID").change(function (e)
+		{
+			showCustomDateRangePicker();
+		});
+
+		datePickerController.createDatePicker(
+		{
+			// Associate the text input to a Local date format
+			formElements: { "DateRangeCustomStartDate": "%n/%j/%Y" }
+		});
+		datePickerController.createDatePicker(
+		{
+			// Associate the text input to a Local date format
+			formElements: { "DateRangeCustomEndDate": "%n/%j/%Y" }
+		});
+
+		showCustomDateRangePicker();
+	})
+
+	function showCustomDateRangePicker()
+	{
+		if ($("#DateRangeOptionID").val() == 11)
+		{
+			$("#divDatePicker").show();
+		}
+		else
+		{
+			$("#divDatePicker").hide();
+		}
+	}
+</script>
+
+
+
+	<div class="header">Meeting Search Results</div>
+	<div id="divResults">
+		
+
+
+<script type="text/javascript">
+	var localeSortableStrings =
+	{
+		FILTER_MENU_ALL:	'All',
+		COUNT_LABEL:		'Showing {0} Meeting(s)',
+	};
+	var realCount = 0;
+</script>
+<div id="meetings-list">
+			<div>
+				<ul id="meetings-upcoming-list-tabs" class="nav nav-tabs">
+					<li><a href="#meetings-list-upcoming" id="lnkUpcoming" data-toggle="tabs">Upcoming</a></li>
+				</ul>
+				<div id="meetings-upcoming-list-content" class="tab-content">
+					<div class="tab-pane" id="meetings-list-upcoming">
+							<div class="border border--dark l-margin-bm">
+						<div class="row l-padding-vd l-padding-mobile-hd background-white">
+							<div class="two columns l-padding-desktop-lm">
+								<p class="l-margin-desktop-vs l-margin-mobile-bd date"><strong>11/12/2026</strong></p>
+							</div>
+							<div class="ten columns">
+								<div class="row">
+									<div class="six columns">
+										<p class="l-margin-desktop-vs l-margin-mobile-bn">Environment Committee Meeting</p>
+									</div>
+									<div class="six columns l-margin-mobile-td">
+										<p class="l-margin-bn">		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7245&amp;doctype=1&amp;site=comm"
+		   title="View Agenda for Environment Committee Meeting Environment Committee on 11/12/2026 1:00:00 PM" id="lnkMeetingAgenda_7245">Agenda</a>
+		<!--<a class="btn" href="/211agendaonlinecomm/Documents/Downloadfile/Environment_Committee_Meeting_7245_Agenda_11_12_2026_1_00_00_PM.pdf?documentType=1&amp;meetingId=7245" id="lnkMeetingAgendaDoc_7245" target="_blank"
+		   title="Download Agenda for Environment Committee Meeting Environment Committee on 11/12/2026 1:00:00 PM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+</p>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row l-padding-mobile-hd background-white">
+							<div class="two columns hide-on-mobile">
+								<p class="l-margin-vs"><span class="visuallyhidden">11/12/2026</span>&nbsp;</p>
+							</div>
+							<div class="ten columns">
+								<hr class="l-margin-vn hr--dashed">
+								<div class="row l-padding-vd">
+									<div class="six columns">
+										<p class="l-margin-desktop-vs l-margin-mobile-bd">Audit Committee Written Public Comment</p>
+									</div>
+									<div class="six columns">
+										<p class="l-margin-bn">		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7255&amp;doctype=1&amp;site=comm"
+		   title="View Agenda for Audit Committee Written Public Comment Audit Committee on 11/12/2026 9:00:00 AM" id="lnkMeetingAgenda_7255">Public Comment</a>
+		<!--<a class="btn" href="/211agendaonlinecomm/Documents/Downloadfile/Audit_Committee_Written_Public_Comment_7255_Agenda_11_12_2026_9_00_00_AM.pdf?documentType=1&amp;meetingId=7255" id="lnkMeetingAgendaDoc_7255" target="_blank"
+		   title="Download Agenda for Audit Committee Written Public Comment Audit Committee on 11/12/2026 9:00:00 AM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+</p>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row l-padding-mobile-hd background-white">
+							<div class="two columns hide-on-mobile">
+								<p class="l-margin-vs"><span class="visuallyhidden">11/12/2026</span>&nbsp;</p>
+							</div>
+							<div class="ten columns">
+								<hr class="l-margin-vn hr--dashed">
+								<div class="row l-padding-vd">
+									<div class="six columns">
+										<p class="l-margin-desktop-vs l-margin-mobile-bd">Audit Committee Meeting</p>
+									</div>
+									<div class="six columns">
+										<p class="l-margin-bn">		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7247&amp;doctype=1&amp;site=comm"
+		   title="View Agenda for Audit Committee Meeting Audit Committee on 11/12/2026 9:00:00 AM" id="lnkMeetingAgenda_7247">Agenda</a>
+		<!--<a class="btn" href="/211agendaonlinecomm/Documents/Downloadfile/Audit_Committee_Meeting_7247_Agenda_11_12_2026_9_00_00_AM.pdf?documentType=1&amp;meetingId=7247" id="lnkMeetingAgendaDoc_7247" target="_blank"
+		   title="Download Agenda for Audit Committee Meeting Audit Committee on 11/12/2026 9:00:00 AM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+</p>
+									</div>
+								</div>
+							</div>
+						</div>
+	</div>
+
+					</div>
+				</div>
+			</div>
+			<div>
+				<ul id="meetings-list-tabs" class="nav nav-tabs">
+
+							<li><a href="#meetings-list-2026" id="lnkMeetingYear" data-toggle="tabs">2026</a></li>
+				</ul>
+
+				<div id="meetings-list-content" class="tab-content">
+
+							<div class="tab-pane" id="meetings-list-2026">
+									<div class="border border--dark l-margin-bm">
+						<div class="row l-padding-vd l-padding-mobile-hd background-white">
+							<div class="two columns l-padding-desktop-lm">
+								<p class="l-margin-desktop-vs l-margin-mobile-bd date"><strong>11/5/2026</strong></p>
+							</div>
+							<div class="ten columns">
+								<div class="row">
+									<div class="six columns">
+										<p class="l-margin-desktop-vs l-margin-mobile-bn">Adjourned Land Use and Housing Committee Meeting</p>
+									</div>
+									<div class="six columns l-margin-mobile-td">
+										<p class="l-margin-bn">		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7235&amp;doctype=1&amp;site=comm"
+		   title="View Agenda for Adjourned Land Use and Housing Committee Meeting Land Use and Housing Committee on 11/5/2026 1:00:00 PM" id="lnkMeetingAgenda_7235">Agenda</a>
+		<!--<a class="btn" href="/211agendaonlinecomm/Documents/Downloadfile/Adjourned_Land_Use_and_Housing_Committee_Meeting_7235_Agenda_11_5_2026_1_00_00_PM.pdf?documentType=1&amp;meetingId=7235" id="lnkMeetingAgendaDoc_7235" target="_blank"
+		   title="Download Agenda for Adjourned Land Use and Housing Committee Meeting Land Use and Housing Committee on 11/5/2026 1:00:00 PM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+</p>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row l-padding-mobile-hd background-white">
+							<div class="two columns hide-on-mobile">
+								<p class="l-margin-vs"><span class="visuallyhidden">11/5/2026</span>&nbsp;</p>
+							</div>
+							<div class="ten columns">
+								<hr class="l-margin-vn hr--dashed">
+								<div class="row l-padding-vd">
+									<div class="six columns">
+										<p class="l-margin-desktop-vs l-margin-mobile-bd">Economic Development &amp; Intergovernmental Relations Committee Written Public Comment</p>
+									</div>
+									<div class="six columns">
+										<p class="l-margin-bn">		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7250&amp;doctype=1&amp;site=comm"
+		   title="View Agenda for Economic Development &amp; Intergovernmental Relations Committee Written Public Comment Economic Development &amp; Intergovernmental Relations Committee on 11/5/2026 9:00:00 AM" id="lnkMeetingAgenda_7250">Public Comment</a>
+		<!--<a class="btn" href="/211agendaonlinecomm/Documents/Downloadfile/Economic_Development___Intergovernmental_Relations_Committee_Writt_7250_Agenda_11_5_2026_9_00_00_AM.pdf?documentType=1&amp;meetingId=7250" id="lnkMeetingAgendaDoc_7250" target="_blank"
+		   title="Download Agenda for Economic Development &amp; Intergovernmental Relations Committee Written Public Comment Economic Development &amp; Intergovernmental Relations Committee on 11/5/2026 9:00:00 AM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+</p>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row l-padding-mobile-hd background-white">
+							<div class="two columns hide-on-mobile">
+								<p class="l-margin-vs"><span class="visuallyhidden">11/5/2026</span>&nbsp;</p>
+							</div>
+							<div class="ten columns">
+								<hr class="l-margin-vn hr--dashed">
+								<div class="row l-padding-vd">
+									<div class="six columns">
+										<p class="l-margin-desktop-vs l-margin-mobile-bd">Economic Development &amp; Intergovernmental Relations Committee Meeting</p>
+									</div>
+									<div class="six columns">
+										<p class="l-margin-bn">		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7236&amp;doctype=1&amp;site=comm"
+		   title="View Agenda for Economic Development &amp; Intergovernmental Relations Committee Meeting Economic Development &amp; Intergovernmental Relations Committee on 11/5/2026 9:00:00 AM" id="lnkMeetingAgenda_7236">Agenda</a>
+		<!--<a class="btn" href="/211agendaonlinecomm/Documents/Downloadfile/Economic_Development___Intergovernmental_Relations_Committee_Meeti_7236_Agenda_11_5_2026_9_00_00_AM.pdf?documentType=1&amp;meetingId=7236" id="lnkMeetingAgendaDoc_7236" target="_blank"
+		   title="Download Agenda for Economic Development &amp; Intergovernmental Relations Committee Meeting Economic Development &amp; Intergovernmental Relations Committee on 11/5/2026 9:00:00 AM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+</p>
+									</div>
+								</div>
+							</div>
+						</div>
+							<hr class="l-margin-vn border--dark">
+						<div class="row l-padding-vd l-padding-mobile-hd background--off-white">
+							<div class="two columns l-padding-desktop-lm">
+								<p class="l-margin-desktop-vs l-margin-mobile-bd date"><strong>10/28/2026</strong></p>
+							</div>
+							<div class="ten columns">
+								<div class="row">
+									<div class="six columns">
+										<p class="l-margin-desktop-vs l-margin-mobile-bn">Rules Committee Meeting</p>
+									</div>
+									<div class="six columns l-margin-mobile-td">
+										<p class="l-margin-bn">		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7229&amp;doctype=1&amp;site=comm"
+		   title="View Agenda for Rules Committee Meeting Rules Committee on 10/28/2026 9:00:00 AM" id="lnkMeetingAgenda_7229">Agenda</a>
+		<!--<a class="btn" href="/211agendaonlinecomm/Documents/Downloadfile/Rules_Committee_Meeting_7229_Agenda_10_28_2026_9_00_00_AM.pdf?documentType=1&amp;meetingId=7229" id="lnkMeetingAgendaDoc_7229" target="_blank"
+		   title="Download Agenda for Rules Committee Meeting Rules Committee on 10/28/2026 9:00:00 AM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+</p>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row l-padding-mobile-hd background--off-white">
+							<div class="two columns hide-on-mobile">
+								<p class="l-margin-vs"><span class="visuallyhidden">10/28/2026</span>&nbsp;</p>
+							</div>
+							<div class="ten columns">
+								<hr class="l-margin-vn hr--dashed">
+								<div class="row l-padding-vd">
+									<div class="six columns">
+										<p class="l-margin-desktop-vs l-margin-mobile-bd">Rules Committee Written Public Comment</p>
+									</div>
+									<div class="six columns">
+										<p class="l-margin-bn">		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7244&amp;doctype=1&amp;site=comm"
+		   title="View Agenda for Rules Committee Written Public Comment Rules Committee on 10/28/2026 9:00:00 AM" id="lnkMeetingAgenda_7244">Public Comment</a>
+		<!--<a class="btn" href="/211agendaonlinecomm/Documents/Downloadfile/Rules_Committee_Written_Public_Comment_7244_Agenda_10_28_2026_9_00_00_AM.pdf?documentType=1&amp;meetingId=7244" id="lnkMeetingAgendaDoc_7244" target="_blank"
+		   title="Download Agenda for Rules Committee Written Public Comment Rules Committee on 10/28/2026 9:00:00 AM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+</p>
+									</div>
+								</div>
+							</div>
+						</div>
+							<hr class="l-margin-vn border--dark">
+						<div class="row l-padding-vd l-padding-mobile-hd background-white">
+							<div class="two columns l-padding-desktop-lm">
+								<p class="l-margin-desktop-vs l-margin-mobile-bd date"><strong>10/22/2026</strong></p>
+							</div>
+							<div class="ten columns">
+								<div class="row">
+									<div class="six columns">
+										<p class="l-margin-desktop-vs l-margin-mobile-bn">Revised Active Transportation and Infrastructure Committee Meeting</p>
+									</div>
+									<div class="six columns l-margin-mobile-td">
+										<p class="l-margin-bn">		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7209&amp;doctype=1&amp;site=comm"
+		   title="View Agenda for Revised Active Transportation and Infrastructure Committee Meeting Active Transportation and Infrastructure Committee on 10/22/2026 1:00:00 PM" id="lnkMeetingAgenda_7209">Agenda</a>
+		<!--<a class="btn" href="/211agendaonlinecomm/Documents/Downloadfile/Revised_Active_Transportation_and_Infrastructure_Committee_Meeting_7209_Agenda_10_22_2026_1_00_00_PM.pdf?documentType=1&amp;meetingId=7209" id="lnkMeetingAgendaDoc_7209" target="_blank"
+		   title="Download Agenda for Revised Active Transportation and Infrastructure Committee Meeting Active Transportation and Infrastructure Committee on 10/22/2026 1:00:00 PM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+</p>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row l-padding-mobile-hd background-white">
+							<div class="two columns hide-on-mobile">
+								<p class="l-margin-vs"><span class="visuallyhidden">10/22/2026</span>&nbsp;</p>
+							</div>
+							<div class="ten columns">
+								<hr class="l-margin-vn hr--dashed">
+								<div class="row l-padding-vd">
+									<div class="six columns">
+										<p class="l-margin-desktop-vs l-margin-mobile-bd">Active Transportation and Infrastructure Committee Written Public Comment</p>
+									</div>
+									<div class="six columns">
+										<p class="l-margin-bn">		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7230&amp;doctype=1&amp;site=comm"
+		   title="View Agenda for Active Transportation and Infrastructure Committee Written Public Comment Active Transportation and Infrastructure Committee on 10/22/2026 1:00:00 PM" id="lnkMeetingAgenda_7230">Public Comment</a>
+		<!--<a class="btn" href="/211agendaonlinecomm/Documents/Downloadfile/Active_Transportation_and_Infrastructure_Committee_Written_Public_7230_Agenda_10_22_2026_1_00_00_PM.pdf?documentType=1&amp;meetingId=7230" id="lnkMeetingAgendaDoc_7230" target="_blank"
+		   title="Download Agenda for Active Transportation and Infrastructure Committee Written Public Comment Active Transportation and Infrastructure Committee on 10/22/2026 1:00:00 PM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+</p>
+									</div>
+								</div>
+							</div>
+						</div>
+							<hr class="l-margin-vn border--dark">
+						<div class="row l-padding-vd l-padding-mobile-hd background--off-white">
+							<div class="two columns l-padding-desktop-lm">
+								<p class="l-margin-desktop-vs l-margin-mobile-bd date"><strong>10/21/2026</strong></p>
+							</div>
+							<div class="ten columns">
+								<div class="row">
+									<div class="six columns">
+										<p class="l-margin-desktop-vs l-margin-mobile-bn">Community and Neighborhood Services Committee Meeting Minutes</p>
+									</div>
+									<div class="six columns l-margin-mobile-td">
+										<p class="l-margin-bn">		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7226&amp;doctype=1&amp;site=comm"
+		   title="View Agenda for Community and Neighborhood Services Committee Meeting Minutes Community and Neighborhood Services Committee on 10/21/2026 2:00:00 PM" id="lnkMeetingAgenda_7226">Agenda</a>
+		<!--<a class="btn" href="/211agendaonlinecomm/Documents/Downloadfile/Community_and_Neighborhood_Services_Committee_Meeting_Minutes_7226_Agenda_10_21_2026_2_00_00_PM.pdf?documentType=1&amp;meetingId=7226" id="lnkMeetingAgendaDoc_7226" target="_blank"
+		   title="Download Agenda for Community and Neighborhood Services Committee Meeting Minutes Community and Neighborhood Services Committee on 10/21/2026 2:00:00 PM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7226&amp;doctype=2&amp;site=comm"
+		   id="lnkMinutes_7226" title="View Minutes for Community and Neighborhood Services Committee Meeting Minutes Community and Neighborhood Services Committee on 10/21/2026 2:00:00 PM">Actions</a>
+		<!--<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Documents/DownloadFile/Community_and_Neighborhood_Services_Committee_Meeting_Minutes_7226_Minutes_10_21_2026_2_00_00_PM.pdf?documentType=2&amp;meetingId=7226" id="lnkMinutesDoc_7226" target="_blank"
+		   title="Download Minutes for Community and Neighborhood Services Committee Meeting Minutes Community and Neighborhood Services Committee on 10/21/2026 2:00:00 PM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+</p>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row l-padding-mobile-hd background--off-white">
+							<div class="two columns hide-on-mobile">
+								<p class="l-margin-vs"><span class="visuallyhidden">10/21/2026</span>&nbsp;</p>
+							</div>
+							<div class="ten columns">
+								<hr class="l-margin-vn hr--dashed">
+								<div class="row l-padding-vd">
+									<div class="six columns">
+										<p class="l-margin-desktop-vs l-margin-mobile-bd">Community and Neighborhood Services Committee Written Public Comment</p>
+									</div>
+									<div class="six columns">
+										<p class="l-margin-bn">		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7227&amp;doctype=1&amp;site=comm"
+		   title="View Agenda for Community and Neighborhood Services Committee Written Public Comment Community and Neighborhood Services Committee on 10/21/2026 2:00:00 PM" id="lnkMeetingAgenda_7227">Public Comment</a>
+		<!--<a class="btn" href="/211agendaonlinecomm/Documents/Downloadfile/Community_and_Neighborhood_Services_Committee_Written_Public_Comm_7227_Agenda_10_21_2026_2_00_00_PM.pdf?documentType=1&amp;meetingId=7227" id="lnkMeetingAgendaDoc_7227" target="_blank"
+		   title="Download Agenda for Community and Neighborhood Services Committee Written Public Comment Community and Neighborhood Services Committee on 10/21/2026 2:00:00 PM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+</p>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row l-padding-mobile-hd background--off-white">
+							<div class="two columns hide-on-mobile">
+								<p class="l-margin-vs"><span class="visuallyhidden">10/21/2026</span>&nbsp;</p>
+							</div>
+							<div class="ten columns">
+								<hr class="l-margin-vn hr--dashed">
+								<div class="row l-padding-vd">
+									<div class="six columns">
+										<p class="l-margin-desktop-vs l-margin-mobile-bd">Revised Budget &amp; Government Efficiency Committee Meeting</p>
+									</div>
+									<div class="six columns">
+										<p class="l-margin-bn">		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7225&amp;doctype=1&amp;site=comm"
+		   title="View Agenda for Revised Budget &amp; Government Efficiency Committee Meeting Budget &amp; Government Efficiency Committee on 10/21/2026 9:00:00 AM" id="lnkMeetingAgenda_7225">Agenda</a>
+		<!--<a class="btn" href="/211agendaonlinecomm/Documents/Downloadfile/Revised_Budget___Government_Efficiency_Committee_Meeting_7225_Agenda_10_21_2026_9_00_00_AM.pdf?documentType=1&amp;meetingId=7225" id="lnkMeetingAgendaDoc_7225" target="_blank"
+		   title="Download Agenda for Revised Budget &amp; Government Efficiency Committee Meeting Budget &amp; Government Efficiency Committee on 10/21/2026 9:00:00 AM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+</p>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row l-padding-mobile-hd background--off-white">
+							<div class="two columns hide-on-mobile">
+								<p class="l-margin-vs"><span class="visuallyhidden">10/21/2026</span>&nbsp;</p>
+							</div>
+							<div class="ten columns">
+								<hr class="l-margin-vn hr--dashed">
+								<div class="row l-padding-vd">
+									<div class="six columns">
+										<p class="l-margin-desktop-vs l-margin-mobile-bd">Budget &amp; Government Efficiency Committee Written Public Comment</p>
+									</div>
+									<div class="six columns">
+										<p class="l-margin-bn">		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7233&amp;doctype=1&amp;site=comm"
+		   title="View Agenda for Budget &amp; Government Efficiency Committee Written Public Comment Budget &amp; Government Efficiency Committee on 10/21/2026 9:00:00 AM" id="lnkMeetingAgenda_7233">Public Comment</a>
+		<!--<a class="btn" href="/211agendaonlinecomm/Documents/Downloadfile/Budget___Government_Efficiency_Committee_Written_Public_Comment_7233_Agenda_10_21_2026_9_00_00_AM.pdf?documentType=1&amp;meetingId=7233" id="lnkMeetingAgendaDoc_7233" target="_blank"
+		   title="Download Agenda for Budget &amp; Government Efficiency Committee Written Public Comment Budget &amp; Government Efficiency Committee on 10/21/2026 9:00:00 AM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+</p>
+									</div>
+								</div>
+							</div>
+						</div>
+							<hr class="l-margin-vn border--dark">
+						<div class="row l-padding-vd l-padding-mobile-hd background-white">
+							<div class="two columns l-padding-desktop-lm">
+								<p class="l-margin-desktop-vs l-margin-mobile-bd date"><strong>10/16/2026</strong></p>
+							</div>
+							<div class="ten columns">
+								<div class="row">
+									<div class="six columns">
+										<p class="l-margin-desktop-vs l-margin-mobile-bn">Revised Special Land Use and Housing Committee Meeting Minutes</p>
+									</div>
+									<div class="six columns l-margin-mobile-td">
+										<p class="l-margin-bn">		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7204&amp;doctype=1&amp;site=comm"
+		   title="View Agenda for Revised Special Land Use and Housing Committee Meeting Minutes Land Use and Housing Committee on 10/16/2026 1:00:00 PM" id="lnkMeetingAgenda_7204">Agenda</a>
+		<!--<a class="btn" href="/211agendaonlinecomm/Documents/Downloadfile/Revised_Special_Land_Use_and_Housing_Committee_Meeting_Minutes_7204_Agenda_10_16_2026_1_00_00_PM.pdf?documentType=1&amp;meetingId=7204" id="lnkMeetingAgendaDoc_7204" target="_blank"
+		   title="Download Agenda for Revised Special Land Use and Housing Committee Meeting Minutes Land Use and Housing Committee on 10/16/2026 1:00:00 PM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7204&amp;doctype=2&amp;site=comm"
+		   id="lnkMinutes_7204" title="View Minutes for Revised Special Land Use and Housing Committee Meeting Minutes Land Use and Housing Committee on 10/16/2026 1:00:00 PM">Actions</a>
+		<!--<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Documents/DownloadFile/Revised_Special_Land_Use_and_Housing_Committee_Meeting_Minutes_7204_Minutes_10_16_2026_1_00_00_PM.pdf?documentType=2&amp;meetingId=7204" id="lnkMinutesDoc_7204" target="_blank"
+		   title="Download Minutes for Revised Special Land Use and Housing Committee Meeting Minutes Land Use and Housing Committee on 10/16/2026 1:00:00 PM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+</p>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row l-padding-mobile-hd background-white">
+							<div class="two columns hide-on-mobile">
+								<p class="l-margin-vs"><span class="visuallyhidden">10/16/2026</span>&nbsp;</p>
+							</div>
+							<div class="ten columns">
+								<hr class="l-margin-vn hr--dashed">
+								<div class="row l-padding-vd">
+									<div class="six columns">
+										<p class="l-margin-desktop-vs l-margin-mobile-bd">Special Land Use and Housing Committee Written Public Comment</p>
+									</div>
+									<div class="six columns">
+										<p class="l-margin-bn">		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7216&amp;doctype=1&amp;site=comm"
+		   title="View Agenda for Special Land Use and Housing Committee Written Public Comment Land Use and Housing Committee on 10/16/2026 1:00:00 PM" id="lnkMeetingAgenda_7216">Public Comment</a>
+		<!--<a class="btn" href="/211agendaonlinecomm/Documents/Downloadfile/Special_Land_Use_and_Housing_Committee_Written_Public_Comment_7216_Agenda_10_16_2026_1_00_00_PM.pdf?documentType=1&amp;meetingId=7216" id="lnkMeetingAgendaDoc_7216" target="_blank"
+		   title="Download Agenda for Special Land Use and Housing Committee Written Public Comment Land Use and Housing Committee on 10/16/2026 1:00:00 PM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+</p>
+									</div>
+								</div>
+							</div>
+						</div>
+							<hr class="l-margin-vn border--dark">
+						<div class="row l-padding-vd l-padding-mobile-hd background--off-white">
+							<div class="two columns l-padding-desktop-lm">
+								<p class="l-margin-desktop-vs l-margin-mobile-bd date"><strong>10/15/2026</strong></p>
+							</div>
+							<div class="ten columns">
+								<div class="row">
+									<div class="six columns">
+										<p class="l-margin-desktop-vs l-margin-mobile-bn">Environment Committee Written Public Comment</p>
+									</div>
+									<div class="six columns l-margin-mobile-td">
+										<p class="l-margin-bn">		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7221&amp;doctype=1&amp;site=comm"
+		   title="View Agenda for Environment Committee Written Public Comment Environment Committee on 10/15/2026 1:00:00 PM" id="lnkMeetingAgenda_7221">Public Comment</a>
+		<!--<a class="btn" href="/211agendaonlinecomm/Documents/Downloadfile/Environment_Committee_Written_Public_Comment_7221_Agenda_10_15_2026_1_00_00_PM.pdf?documentType=1&amp;meetingId=7221" id="lnkMeetingAgendaDoc_7221" target="_blank"
+		   title="Download Agenda for Environment Committee Written Public Comment Environment Committee on 10/15/2026 1:00:00 PM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+</p>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row l-padding-mobile-hd background--off-white">
+							<div class="two columns hide-on-mobile">
+								<p class="l-margin-vs"><span class="visuallyhidden">10/15/2026</span>&nbsp;</p>
+							</div>
+							<div class="ten columns">
+								<hr class="l-margin-vn hr--dashed">
+								<div class="row l-padding-vd">
+									<div class="six columns">
+										<p class="l-margin-desktop-vs l-margin-mobile-bd">Environment Committee Meeting Minutes</p>
+									</div>
+									<div class="six columns">
+										<p class="l-margin-bn">		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7207&amp;doctype=1&amp;site=comm"
+		   title="View Agenda for Environment Committee Meeting Minutes Environment Committee on 10/15/2026 1:00:00 PM" id="lnkMeetingAgenda_7207">Agenda</a>
+		<!--<a class="btn" href="/211agendaonlinecomm/Documents/Downloadfile/Environment_Committee_Meeting_Minutes_7207_Agenda_10_15_2026_1_00_00_PM.pdf?documentType=1&amp;meetingId=7207" id="lnkMeetingAgendaDoc_7207" target="_blank"
+		   title="Download Agenda for Environment Committee Meeting Minutes Environment Committee on 10/15/2026 1:00:00 PM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+</p>
+									</div>
+								</div>
+							</div>
+						</div>
+							<hr class="l-margin-vn border--dark">
+						<div class="row l-padding-vd l-padding-mobile-hd background-white">
+							<div class="two columns l-padding-desktop-lm">
+								<p class="l-margin-desktop-vs l-margin-mobile-bd date"><strong>10/14/2026</strong></p>
+							</div>
+							<div class="ten columns">
+								<div class="row">
+									<div class="six columns">
+										<p class="l-margin-desktop-vs l-margin-mobile-bn">Public Safety Committee Written Public Comment</p>
+									</div>
+									<div class="six columns l-margin-mobile-td">
+										<p class="l-margin-bn">		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7213&amp;doctype=1&amp;site=comm"
+		   title="View Agenda for Public Safety Committee Written Public Comment Public Safety Committee on 10/14/2026 2:00:00 PM" id="lnkMeetingAgenda_7213">Public Comment</a>
+		<!--<a class="btn" href="/211agendaonlinecomm/Documents/Downloadfile/Public_Safety_Committee_Written_Public_Comment_7213_Agenda_10_14_2026_2_00_00_PM.pdf?documentType=1&amp;meetingId=7213" id="lnkMeetingAgendaDoc_7213" target="_blank"
+		   title="Download Agenda for Public Safety Committee Written Public Comment Public Safety Committee on 10/14/2026 2:00:00 PM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+</p>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row l-padding-mobile-hd background-white">
+							<div class="two columns hide-on-mobile">
+								<p class="l-margin-vs"><span class="visuallyhidden">10/14/2026</span>&nbsp;</p>
+							</div>
+							<div class="ten columns">
+								<hr class="l-margin-vn hr--dashed">
+								<div class="row l-padding-vd">
+									<div class="six columns">
+										<p class="l-margin-desktop-vs l-margin-mobile-bd">Revised Public Safety Committee Meeting</p>
+									</div>
+									<div class="six columns">
+										<p class="l-margin-bn">		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7203&amp;doctype=1&amp;site=comm"
+		   title="View Agenda for Revised Public Safety Committee Meeting Public Safety Committee on 10/14/2026 2:00:00 PM" id="lnkMeetingAgenda_7203">Agenda</a>
+		<!--<a class="btn" href="/211agendaonlinecomm/Documents/Downloadfile/Revised_Public_Safety_Committee_Meeting_7203_Agenda_10_14_2026_2_00_00_PM.pdf?documentType=1&amp;meetingId=7203" id="lnkMeetingAgendaDoc_7203" target="_blank"
+		   title="Download Agenda for Revised Public Safety Committee Meeting Public Safety Committee on 10/14/2026 2:00:00 PM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+</p>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row l-padding-mobile-hd background-white">
+							<div class="two columns hide-on-mobile">
+								<p class="l-margin-vs"><span class="visuallyhidden">10/14/2026</span>&nbsp;</p>
+							</div>
+							<div class="ten columns">
+								<hr class="l-margin-vn hr--dashed">
+								<div class="row l-padding-vd">
+									<div class="six columns">
+										<p class="l-margin-desktop-vs l-margin-mobile-bd">Rules Committee Written Public Comment</p>
+									</div>
+									<div class="six columns">
+										<p class="l-margin-bn">		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7222&amp;doctype=1&amp;site=comm"
+		   title="View Agenda for Rules Committee Written Public Comment Rules Committee on 10/14/2026 9:00:00 AM" id="lnkMeetingAgenda_7222">Public Comment</a>
+		<!--<a class="btn" href="/211agendaonlinecomm/Documents/Downloadfile/Rules_Committee_Written_Public_Comment_7222_Agenda_10_14_2026_9_00_00_AM.pdf?documentType=1&amp;meetingId=7222" id="lnkMeetingAgendaDoc_7222" target="_blank"
+		   title="Download Agenda for Rules Committee Written Public Comment Rules Committee on 10/14/2026 9:00:00 AM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+</p>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row l-padding-mobile-hd background-white">
+							<div class="two columns hide-on-mobile">
+								<p class="l-margin-vs"><span class="visuallyhidden">10/14/2026</span>&nbsp;</p>
+							</div>
+							<div class="ten columns">
+								<hr class="l-margin-vn hr--dashed">
+								<div class="row l-padding-vd">
+									<div class="six columns">
+										<p class="l-margin-desktop-vs l-margin-mobile-bd">Revised Rules Committee Meeting Minutes</p>
+									</div>
+									<div class="six columns">
+										<p class="l-margin-bn">		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7208&amp;doctype=1&amp;site=comm"
+		   title="View Agenda for Revised Rules Committee Meeting Minutes Rules Committee on 10/14/2026 9:00:00 AM" id="lnkMeetingAgenda_7208">Agenda</a>
+		<!--<a class="btn" href="/211agendaonlinecomm/Documents/Downloadfile/Revised_Rules_Committee_Meeting_Minutes_7208_Agenda_10_14_2026_9_00_00_AM.pdf?documentType=1&amp;meetingId=7208" id="lnkMeetingAgendaDoc_7208" target="_blank"
+		   title="Download Agenda for Revised Rules Committee Meeting Minutes Rules Committee on 10/14/2026 9:00:00 AM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7208&amp;doctype=2&amp;site=comm"
+		   id="lnkMinutes_7208" title="View Minutes for Revised Rules Committee Meeting Minutes Rules Committee on 10/14/2026 9:00:00 AM">Actions</a>
+		<!--<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Documents/DownloadFile/Revised_Rules_Committee_Meeting_Minutes_7208_Minutes_10_14_2026_9_00_00_AM.pdf?documentType=2&amp;meetingId=7208" id="lnkMinutesDoc_7208" target="_blank"
+		   title="Download Minutes for Revised Rules Committee Meeting Minutes Rules Committee on 10/14/2026 9:00:00 AM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+</p>
+									</div>
+								</div>
+							</div>
+						</div>
+							<hr class="l-margin-vn border--dark">
+						<div class="row l-padding-vd l-padding-mobile-hd background--off-white">
+							<div class="two columns l-padding-desktop-lm">
+								<p class="l-margin-desktop-vs l-margin-mobile-bd date"><strong>10/8/2026</strong></p>
+							</div>
+							<div class="ten columns">
+								<div class="row">
+									<div class="six columns">
+										<p class="l-margin-desktop-vs l-margin-mobile-bn">Adjourned Land Use and Housing Committee Meeting</p>
+									</div>
+									<div class="six columns l-margin-mobile-td">
+										<p class="l-margin-bn">		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7199&amp;doctype=1&amp;site=comm"
+		   title="View Agenda for Adjourned Land Use and Housing Committee Meeting Land Use and Housing Committee on 10/8/2026 1:00:00 PM" id="lnkMeetingAgenda_7199">Agenda</a>
+		<!--<a class="btn" href="/211agendaonlinecomm/Documents/Downloadfile/Adjourned_Land_Use_and_Housing_Committee_Meeting_7199_Agenda_10_8_2026_1_00_00_PM.pdf?documentType=1&amp;meetingId=7199" id="lnkMeetingAgendaDoc_7199" target="_blank"
+		   title="Download Agenda for Adjourned Land Use and Housing Committee Meeting Land Use and Housing Committee on 10/8/2026 1:00:00 PM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+</p>
+									</div>
+								</div>
+							</div>
+						</div>
+							<hr class="l-margin-vn border--dark">
+						<div class="row l-padding-vd l-padding-mobile-hd background-white">
+							<div class="two columns l-padding-desktop-lm">
+								<p class="l-margin-desktop-vs l-margin-mobile-bd date"><strong>10/7/2026</strong></p>
+							</div>
+							<div class="ten columns">
+								<div class="row">
+									<div class="six columns">
+										<p class="l-margin-desktop-vs l-margin-mobile-bn">Adjourned Economic Development &amp; Intergovernmental Relations Committee Meeting</p>
+									</div>
+									<div class="six columns l-margin-mobile-td">
+										<p class="l-margin-bn">		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7189&amp;doctype=1&amp;site=comm"
+		   title="View Agenda for Adjourned Economic Development &amp; Intergovernmental Relations Committee Meeting Economic Development &amp; Intergovernmental Relations Committee on 10/7/2026 2:00:00 PM" id="lnkMeetingAgenda_7189">Agenda</a>
+		<!--<a class="btn" href="/211agendaonlinecomm/Documents/Downloadfile/Adjourned_Economic_Development___Intergovernmental_Relations_Commi_7189_Agenda_10_7_2026_2_00_00_PM.pdf?documentType=1&amp;meetingId=7189" id="lnkMeetingAgendaDoc_7189" target="_blank"
+		   title="Download Agenda for Adjourned Economic Development &amp; Intergovernmental Relations Committee Meeting Economic Development &amp; Intergovernmental Relations Committee on 10/7/2026 2:00:00 PM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+</p>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row l-padding-mobile-hd background-white">
+							<div class="two columns hide-on-mobile">
+								<p class="l-margin-vs"><span class="visuallyhidden">10/7/2026</span>&nbsp;</p>
+							</div>
+							<div class="ten columns">
+								<hr class="l-margin-vn hr--dashed">
+								<div class="row l-padding-vd">
+									<div class="six columns">
+										<p class="l-margin-desktop-vs l-margin-mobile-bd">Economic Development &amp; Intergovernmental Relations Written Public Comment</p>
+									</div>
+									<div class="six columns">
+										<p class="l-margin-bn">		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7202&amp;doctype=1&amp;site=comm"
+		   title="View Agenda for Economic Development &amp; Intergovernmental Relations Written Public Comment Economic Development &amp; Intergovernmental Relations Committee on 10/7/2026 2:00:00 PM" id="lnkMeetingAgenda_7202">Public Comment</a>
+		<!--<a class="btn" href="/211agendaonlinecomm/Documents/Downloadfile/Economic_Development___Intergovernmental_Relations_Written_Public_7202_Agenda_10_7_2026_2_00_00_PM.pdf?documentType=1&amp;meetingId=7202" id="lnkMeetingAgendaDoc_7202" target="_blank"
+		   title="Download Agenda for Economic Development &amp; Intergovernmental Relations Written Public Comment Economic Development &amp; Intergovernmental Relations Committee on 10/7/2026 2:00:00 PM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+</p>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row l-padding-mobile-hd background-white">
+							<div class="two columns hide-on-mobile">
+								<p class="l-margin-vs"><span class="visuallyhidden">10/7/2026</span>&nbsp;</p>
+							</div>
+							<div class="ten columns">
+								<hr class="l-margin-vn hr--dashed">
+								<div class="row l-padding-vd">
+									<div class="six columns">
+										<p class="l-margin-desktop-vs l-margin-mobile-bd">Audit Committee Meeting Minutes</p>
+									</div>
+									<div class="six columns">
+										<p class="l-margin-bn">		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7196&amp;doctype=1&amp;site=comm"
+		   title="View Agenda for Audit Committee Meeting Minutes Audit Committee on 10/7/2026 9:00:00 AM" id="lnkMeetingAgenda_7196">Agenda</a>
+		<!--<a class="btn" href="/211agendaonlinecomm/Documents/Downloadfile/Audit_Committee_Meeting_Minutes_7196_Agenda_10_7_2026_9_00_00_AM.pdf?documentType=1&amp;meetingId=7196" id="lnkMeetingAgendaDoc_7196" target="_blank"
+		   title="Download Agenda for Audit Committee Meeting Minutes Audit Committee on 10/7/2026 9:00:00 AM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+		<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Meetings/ViewMeeting?id=7196&amp;doctype=2&amp;site=comm"
+		   id="lnkMinutes_7196" title="View Minutes for Audit Committee Meeting Minutes Audit Committee on 10/7/2026 9:00:00 AM">Actions</a>
+		<!--<a class="btn l-margin-mobile-bs" href="/211agendaonlinecomm/Documents/DownloadFile/Audit_Committee_Meeting_Minutes_7196_Minutes_10_7_2026_9_00_00_AM.pdf?documentType=2&amp;meetingId=7196" id="lnkMinutesDoc_7196" target="_blank"
+		   title="Download Minutes for Audit Committee Meeting Minutes Audit Committee on 10/7/2026 9:00:00 AM">
+			<img src="~/Images/PDF_16x16.png" />
+		</a>-->
+</p>
+									</div>
+								</div>
+							</div>
+						</div>
+	</div>
+
+							</div>
+				</div>
+			</div>
+<script src="/211agendaonlinecomm/bundles/meetinglisttabs?v=51hsMNIHnj_B_3yXTotEAkYgxxYtAo8UTLYAzCngnCA1"></script>
+
+	<div id="footer-results-message">
+	</div>
+</div>
+
+<script src="/211agendaonlinecomm/bundles/meetinglistsort?v=Zyu7yuvwuJ4fcqfIpoVt-6d6DcwlDK9_67_62s3mKkY1"></script>
+
+
+
+
+
+
+	</div>
+	<div class="post-meeting-grid-spacer">
+		&nbsp;
+	</div>
+
+		</section>
+	</div>
+	<div class="footer">
+		<!--<div class="container">
+			<div class="row">
+                <div class="col-md-12 no-padding-left">
+                    <img src="~/Images/OnBase_Logo.png" class="onbase-logo" />
+                    Copyright &#169; 2015-2026 Hyland Software, Inc.
+                </div>
+			</div>
+		</div>-->
+		<div class="footer__privacy l-constrained">
+			<div class="row text-center l-padding-vd background-off-white">
+				<ul>
+					<li>Copyright &#169; 2026 City of San Diego</li>
+					<li><a href="https://www.sandiego.gov/disclaimers">Disclaimers</a></li>
+					<li><a href="https://www.sandiego.gov/privacy-policy">Privacy Policy</a></li>
+					<li><a href="https://www.sandiego.gov/accessibility">Accessibility</a></li>
+					<li><a href="https://www.sandiego.gov/contact">Contact the City</a></li>
+				</ul>
+			</div>
+		</div>
+	</div>
+
+	<script src="/211agendaonlinecomm/bundles/corescripts?v=6h0g3m818gbdrW57_Q6xLaHjZitU5RtArUxI7lFhH9E1"></script>
+
+	<script src="/211agendaonlinecomm/Scripts/cosd-onbase.js"></script>
+
+</body>
+</html>
