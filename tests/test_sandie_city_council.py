@@ -348,15 +348,15 @@ def test_document_links_agenda_and_actions(parsed_video_items):
     assert item["links"] == [
         {
             "href": "https://sandiego.hylandcloud.com/211agendaonlinecomm/Meetings/ViewMeeting?id=7204&doctype=1&site=comm",  # noqa: E501
-            "title": "Agenda",
+            "title": "Revised Special Land Use and Housing Committee Meeting Minutes Agenda",  # noqa: E501
         },
         {
             "href": "https://sandiego.hylandcloud.com/211agendaonlinecomm/Meetings/ViewMeeting?id=7204&doctype=2&site=comm",  # noqa: E501
-            "title": "Actions",
+            "title": "Revised Special Land Use and Housing Committee Meeting Minutes Actions",  # noqa: E501
         },
         {
             "href": "https://sandiego.hylandcloud.com/211agendaonlinecomm/Meetings/ViewMeeting?id=7216&doctype=1&site=comm",  # noqa: E501
-            "title": "Public Comment",
+            "title": "Special Land Use and Housing Committee Written Public Comment",
         },
         {
             "href": "https://sandiego.granicus.com/MediaPlayer.php?view_id=12&clip_id=9513",  # noqa: E501
@@ -369,7 +369,7 @@ def test_document_links_public_comment(parsed_video_items):
     item = _find(parsed_video_items, "Public Safety Committee", 14)
     assert {
         "href": "https://sandiego.hylandcloud.com/211agendaonlinecomm/Meetings/ViewMeeting?id=7213&doctype=1&site=comm",  # noqa: E501
-        "title": "Public Comment",
+        "title": "Public Safety Committee Written Public Comment",
     } in item["links"]
 
 
@@ -381,7 +381,10 @@ def test_document_links_economic_development(parsed_video_items):
         "Adjourned Economic Development and Intergovernmental Relations Committee",
         7,
     )
-    assert [link["title"] for link in item["links"]] == ["Agenda", "Public Comment"]
+    assert [link["title"] for link in item["links"]] == [
+        "Adjourned Economic Development & Intergovernmental Relations Committee Meeting Agenda",  # noqa: E501
+        "Economic Development & Intergovernmental Relations Written Public Comment",
+    ]
 
 
 def test_no_document_links_for_council_without_council_search(parsed_video_items):
@@ -399,6 +402,49 @@ def test_no_document_links_for_council_without_council_search(parsed_video_items
 # ============ City Council Document Tests ============
 
 
+@pytest.mark.parametrize(
+    "name,button,expected",
+    [
+        # Names that say what the document is are used as is
+        (
+            "Tuesday Agenda Revised Added S500-S506",
+            "Agenda",
+            "Tuesday Agenda Revised Added S500-S506",
+        ),
+        ("Special Meeting Memo", "Agenda", "Special Meeting Memo"),
+        (
+            "Public Comments for Monday Meeting",
+            "Public Comment",
+            "Public Comments for Monday Meeting",
+        ),
+        # Other names get the button name added
+        ("Closed Session", "Agenda", "Closed Session Agenda"),
+        # Names of two documents are split between the buttons
+        ("Monday Agenda and Results Summary", "Agenda", "Monday Agenda"),
+        ("Monday Agenda and Results Summary", "Summary", "Results Summary"),
+        ("Special Agenda and Results Summary", "Agenda", "Special Agenda"),
+        # Names of the agenda alone give the Summary button its own name
+        ("Special Agenda", "Agenda", "Special Agenda"),
+        ("Special Agenda", "Summary", "Summary"),
+        ("Tuesday Agenda Revised Added S500-S506", "Summary", "Summary"),
+    ],
+)
+def test_document_title(spider, name, button, expected):
+    selector = Selector(text=f"""
+        <div class="row l-padding-vd">
+            <div class="six columns"><p>{name}</p></div>
+            <div class="six columns"><p><a href="/x">{button}</a></p></div>
+        </div>
+        """)
+    assert spider._parse_document_title(selector.css("a")) == expected
+
+
+def test_document_title_without_row_name(spider):
+    """Falls back to the button name"""
+    selector = Selector(text='<p><a href="/x"> Agenda </a></p>')
+    assert spider._parse_document_title(selector.css("a")) == "Agenda"
+
+
 def test_council_document_links_agenda_and_summary(parsed_council_items):
     items = [
         item
@@ -408,15 +454,15 @@ def test_council_document_links_agenda_and_summary(parsed_council_items):
     assert items[0]["links"] == [
         {
             "href": "https://sandiego.hylandcloud.com/211agendaonlinecouncil/Meetings/ViewMeeting?id=7211&doctype=1&site=council",  # noqa: E501
-            "title": "Agenda",
+            "title": "Monday Agenda",
         },
         {
             "href": "https://sandiego.hylandcloud.com/211agendaonlinecouncil/Meetings/ViewMeeting?id=7211&doctype=3&site=council",  # noqa: E501
-            "title": "Summary",
+            "title": "Results Summary",
         },
         {
             "href": "https://sandiego.hylandcloud.com/211agendaonlinecouncil/Meetings/ViewMeeting?id=7223&doctype=1&site=council",  # noqa: E501
-            "title": "Public Comment",
+            "title": "Public Comments for Monday Meeting",
         },
     ]
 
@@ -446,7 +492,7 @@ def test_council_document_links_housing_authority(parsed_council_items):
 
 def test_council_document_links_closed_session(parsed_council_items):
     item = _find(parsed_council_items, "Closed Session", 5)
-    assert [link["title"] for link in item["links"]] == ["Agenda"]
+    assert [link["title"] for link in item["links"]] == ["Closed Session Agenda"]
 
 
 def test_council_document_links_public_comment(parsed_council_items):
@@ -456,9 +502,9 @@ def test_council_document_links_public_comment(parsed_council_items):
         if item["title"] == "City Council" and item["start"].day == 12
     ]
     assert [link["title"] for link in items[0]["links"]] == [
-        "Public Comment",
-        "Agenda",
-        "Summary",
+        "Public Comments for Monday Meeting",
+        "Monday Agenda",
+        "Results Summary",
     ]
 
 
@@ -477,6 +523,59 @@ def test_council_document_links_special_meeting(parsed_council_items):
                 "https://sandiego.hylandcloud.com/211agendaonlinecouncil/Meetings/ViewMeeting?id=7218&doctype=3&site=council",  # noqa: E501
                 "https://sandiego.hylandcloud.com/211agendaonlinecouncil/Meetings/ViewMeeting?id=7239&doctype=1&site=council",  # noqa: E501
             ]
+
+
+def _nov_9_meetings(spider, titles):
+    events = "".join(
+        f'<li><a href="/a">{title}</a><span class="fine-print">10:00 am</span></li>'
+        for title in titles
+    )
+    html = _calendar_html(_day(events, date="2026-11-09T12:00:00Z"))
+    return list(spider._parse_calendar(Selector(text=html), spider.base_url))
+
+
+def test_council_document_links_special_without_special_meeting(council_spider):
+    """On Nov 9 the calendar lists only "City Council", but its agenda is listed
+    as "Special Agenda", so the special documents go to the regular meeting"""
+    (item,) = _nov_9_meetings(council_spider, ["City Council"])
+    assert [link["title"] for link in item["links"]] == [
+        "Public Comments for Monday Meeting",
+        "Special Meeting Memo",
+        "Special Agenda",
+        "Summary",
+    ]
+
+
+def test_council_document_links_special_with_special_meeting(council_spider):
+    """With a special meeting listed the same day, it keeps its documents"""
+    regular, special = _nov_9_meetings(
+        council_spider, ["City Council", "Special City Council"]
+    )
+    assert [link["title"] for link in regular["links"]] == [
+        "Public Comments for Monday Meeting"
+    ]
+    assert [link["title"] for link in special["links"]] == [
+        "Special Meeting Memo",
+        "Special Agenda",
+        "Summary",
+    ]
+
+
+def test_video_link_special_without_special_meeting(spider):
+    """A "Special Agenda" clip goes to the regular meeting when the calendar
+    lists no special meeting that day"""
+    clip = "https://sandiego.granicus.com/MediaPlayer.php?view_id=3&clip_id=1"
+    spider.video_links[(3, datetime(2026, 11, 9).date(), True)] = clip
+    (item,) = _nov_9_meetings(spider, ["City Council"])
+    assert _video_links(item) == [clip]
+
+
+def test_video_link_special_with_special_meeting(spider):
+    clip = "https://sandiego.granicus.com/MediaPlayer.php?view_id=3&clip_id=1"
+    spider.video_links[(3, datetime(2026, 11, 9).date(), True)] = clip
+    regular, special = _nov_9_meetings(spider, ["City Council", "Special City Council"])
+    assert _video_links(regular) == []
+    assert _video_links(special) == [clip]
 
 
 # ============ Warning Tests ============

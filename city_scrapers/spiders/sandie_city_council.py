@@ -173,13 +173,37 @@ class SandieCityCouncilSpider(CityScrapersSpider):
             # Meetings can be listed under both the upcoming and recent tabs
             if href in [existing["href"] for existing in links]:
                 continue
-            links.append(
-                {
-                    "href": href,
-                    "title": " ".join(link.css("::text").get("").split()),
-                }
-            )
+            links.append({"href": href, "title": self._parse_document_title(link)})
         yield from self._next_documents_requests(list(remaining))
+
+    def _parse_document_title(self, link):
+        """
+        Title a document link by the name listed in its row, e.g. "Tuesday Agenda
+        Revised Added S500-S506". Names that don't say what the document is, like
+        "Closed Session", get the button name added: "Closed Session Agenda".
+        """
+        button = " ".join(link.css("::text").get("").split())
+        row = link.xpath(
+            "ancestor::div[contains(concat(' ', normalize-space(@class), ' '),"
+            " ' row ')][1]"
+        )
+        name = " ".join(" ".join(row.xpath("./div[1]//p//text()").getall()).split())
+        if not name:
+            return button
+        # "Monday Agenda and Results Summary" names both documents in the row,
+        # so each button gets its own part: "Monday Agenda", "Results Summary"
+        both = re.match(r"(.+\bagenda) and (.+\bsummary)$", name, re.IGNORECASE)
+        if both and button.lower() == "agenda":
+            return both.group(1)
+        if both and button.lower() == "summary":
+            return both.group(2)
+        if not re.search(r"memo|agenda|public comment", name, re.IGNORECASE):
+            return f"{name} {button}"
+        # "Special Agenda" names the agenda, so its Summary button is just
+        # "Summary"
+        if button.lower() == "summary" and "summary" not in name.lower():
+            return button
+        return name
 
     def _date_range(self):
         """Start of the previous month and start of the month after next."""
@@ -299,6 +323,13 @@ class SandieCityCouncilSpider(CityScrapersSpider):
                 )
                 continue
 
+            # Bodies with a special meeting listed on this day
+            special_bodies = {
+                self._parse_body(title)
+                for title in day.css("ul li a::text").getall()
+                if self._is_special_meeting(title)
+            }
+
             # loop through events
             for event in events:
                 title = " ".join((event.css("a::text").get() or "").split())
@@ -323,7 +354,7 @@ class SandieCityCouncilSpider(CityScrapersSpider):
                     closed_to_public="closed session" in title.lower(),
                     time_notes="",
                     location=self.location,
-                    links=self._parse_links(date_obj, title),
+                    links=self._parse_links(date_obj, title, special_bodies),
                     source=source,
                 )
                 meeting["status"] = self._parse_status(meeting)
@@ -389,21 +420,33 @@ class SandieCityCouncilSpider(CityScrapersSpider):
         """Find the Granicus view_id of the body a meeting title belongs to."""
         return self.video_view_ids.get(self._parse_body(title))
 
-    def _parse_links(self, date_obj, title):
+    def _parse_links(self, date_obj, title, special_bodies=()):
         """
         Parse document and video links. The calendar's own links aren't used:
         they're mostly general pages, like the OnBase home page, and the ones
         to a single meeting are also found by the documents search.
+        special_bodies are the bodies with a special meeting listed that day.
         """
         body = self._parse_body(title)
         view_id = self._parse_view_id(title)
         is_special = self._is_special_meeting(title)
         links = list(self.document_links.get((body, date_obj, is_special), []))
+        # A special meeting can be listed on the calendar under the body's
+        # regular name, e.g. "City Council" on Nov 9 2026, so special documents
+        # and video go to the regular meeting when no special one is listed
+        # that day
+        use_special = not is_special and body not in special_bodies
+        if use_special:
+            links += self.document_links.get((body, date_obj, True), [])
         # City Council can meet twice on the same day under one clip, so all
         # meetings of a body on a date share it
-        video_link = self.video_links.get((view_id, date_obj, is_special))
-        if video_link:
-            links.append({"href": video_link, "title": "Video"})
+        video_keys = [(view_id, date_obj, is_special)]
+        if use_special:
+            video_keys.append((view_id, date_obj, True))
+        for key in video_keys:
+            video_link = self.video_links.get(key)
+            if video_link:
+                links.append({"href": video_link, "title": "Video"})
         return links
 
     def _parse_source(self, response):
