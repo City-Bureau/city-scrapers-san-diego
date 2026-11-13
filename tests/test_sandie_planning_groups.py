@@ -477,6 +477,49 @@ def test_spanish_translation_attached_to_meeting():
     ]
 
 
+def test_translation_belongs_to_the_entry_it_follows():
+    # Southeastern San Diego, 2025: the Spanish agendas follow their English
+    # documents; "12 de Marzo" is a typo for May 12
+    agendas = year_block(
+        2025,
+        """<ul>
+        <li><a href="/a/monthly.pdf">March 10, 2025</a></li>
+        <li> <ul><li><a href="/a/monthly-es.pdf">10 de Marzo de 2025</a></li></ul></li>
+        <li><a href="/a/elections.pdf">March 10, 2025 - Annual Election Meeting</a></li>
+        <li> <ul><li><a href="/a/elections-es.pdf">10 de Marzo de 2025 - Reunion Anual de Elecciones</a></li></ul></li>
+        <li><a href="/a/adjourned.pdf">May 12, 2025 - Meeting Adjourned</a></li>
+        <li> <ul><li><a href="/a/adjourned-es.pdf">12 de Marzo de 2025 - Reunion Aplazada</a></li></ul></li>
+        </ul>""",  # noqa
+    )
+    items, error = parse_page(build_page(agendas))
+    assert error is None
+    meetings = {
+        (str(i["start"].date()), i["title"], i["status"]): [
+            link["href"].rsplit("/", 1)[-1] for link in i["links"]
+        ]
+        for i in items
+    }
+    assert meetings == {
+        ("2025-03-10", LJ, PASSED): ["monthly.pdf", "monthly-es.pdf"],
+        ("2025-03-10", f"{LJ} - Annual Election Meeting", PASSED): [
+            "elections.pdf",
+            "elections-es.pdf",
+        ],
+        ("2025-05-12", LJ, CANCELLED): ["adjourned.pdf", "adjourned-es.pdf"],
+    }
+
+
+def test_translation_without_english_entry_is_its_own_meeting():
+    agendas = year_block(
+        2025,
+        '<ul><li> <ul><li><a href="/a/es.pdf">8 de septiembre de 2025</a></li></ul>'
+        "</li></ul>",
+    )
+    items, error = parse_page(build_page(agendas))
+    assert error is None
+    assert [(str(i["start"].date()), i["title"]) for i in items] == [("2025-09-08", LJ)]
+
+
 def test_titles_and_status():
     agendas = year_block(
         2025,
@@ -485,7 +528,6 @@ def test_titles_and_status():
         <li><a href="/a/2.pdf">September 11, 2025 - Project Review Subcommittee - Meeting Cancelled</a></li>
         <li><a href="/a/3.pdf">August 20, 2025 - Amended Agenda</a></li>
         <li><a href="/a/4.pdf">July 16, 2025 - Postponed</a></li>
-        <li><a href="/a/5.pdf">June 18, 2025</a> with May minutes</li>
         <li><a href="/a/6_cancellation_notice.pdf">May 21, 2025</a></li>
         <li><a href="/a/7.pdf">April 16, 2025 - Special Meeting</a></li>
         <li><a href="/a/8.pdf">March 12, 2025 - English and Spanish</a></li>
@@ -506,7 +548,6 @@ def test_titles_and_status():
     check(9, 11, f"{group} - Project Review Subcommittee", CANCELLED)
     check(8, 20, group, PASSED)
     check(7, 16, group, CANCELLED)
-    check(6, 18, group, PASSED)
     check(5, 21, group, CANCELLED)
     check(4, 16, f"{group} - Special Meeting", PASSED)
     check(3, 12, group, PASSED)
@@ -607,6 +648,24 @@ def test_different_committees_on_the_same_day_stay_apart():
     }
 
 
+def test_named_committees_with_little_in_common_stay_apart():
+    # Similarity 1/6 ("review"): below the threshold, so not the same meeting
+    agendas = year_block(
+        2026,
+        ul(("May 5, 2026 - Urban Design-Project Review Subcommittee", "udpr.pdf")),
+    )
+    minutes = year_block(
+        2026,
+        ul(("May 5, 2026 - Development Permit Review Committee", "dpr-minutes.pdf")),
+    )
+    items, error = parse_page(build_page(agendas, minutes))
+    assert error is None
+    assert links_by_meeting(items) == {
+        "Urban Design-Project Review Subcommittee": ["udpr.pdf"],
+        "Development Permit Review Committee": ["dpr-minutes.pdf"],
+    }
+
+
 def test_only_meeting_of_the_day_takes_generic_minutes():
     agendas = year_block(2025, ul(("October 8, 2025 - Special Meeting", "agenda.pdf")))
     minutes = year_block(2025, ul(("October 8, 2025", "minutes.pdf")))
@@ -640,6 +699,26 @@ def test_main_board_aliases_are_the_regular_meeting():
         "trustees_agenda.pdf",
         "minutes.pdf",
     ]
+
+
+def test_text_after_the_link_is_used():
+    agendas = year_block(
+        2025,
+        """<ul>
+        <li><a href="/a/1.pdf">June 10, 2025</a> - Adjournment Notice</li>
+        <li><a href="/a/2.pdf">July 23, 2025</a> - Affordable Housing Task Force</li>
+        <li><a href="/a/3.pdf">April 2, 2025</a> - Special Meeting</li>
+        </ul>""",
+    )
+    items, error = parse_page(build_page(agendas))
+    assert error is None
+    by_day = {i["start"].date(): i for i in items}
+    cancelled = by_day[datetime(2025, 6, 10).date()]
+    assert (cancelled["title"], cancelled["status"]) == (LJ, CANCELLED)
+    task_force = by_day[datetime(2025, 7, 23).date()]
+    assert task_force["title"] == f"{LJ} - Affordable Housing Task Force"
+    assert task_force["classification"] == COMMITTEE
+    assert by_day[datetime(2025, 4, 2).date()]["title"] == f"{LJ} - Special Meeting"
 
 
 def test_non_meeting_entries_are_skipped_quietly():

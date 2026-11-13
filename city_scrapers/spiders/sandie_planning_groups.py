@@ -185,7 +185,6 @@ class SandiePlanningGroupsSpider(CityScrapersSpider):
     name = "sandie_planning_groups"
     agency = "San Diego City Community Planning Groups"
     timezone = "America/Los_Angeles"
-
     tz = pytz.timezone(timezone)
 
     custom_settings = {
@@ -489,12 +488,13 @@ class SandiePlanningGroupsSpider(CityScrapersSpider):
     # ------------------------------------------------------------------ #
 
     def _lookback_cutoff(self):
-        now = datetime.now(self.tz).replace(tzinfo=None)
-        return (now - relativedelta(years=self.lookback_years)).date()
+        """Today in San Diego, minus the lookback."""
+        return datetime.now(self.tz).date() - relativedelta(years=self.lookback_years)
 
     def _parse_entries(self, tab, doc_type, response):
         entries = []
         cutoff = self._lookback_cutoff()
+        previous = None  # last English entry, which a translation follows
         for li in tab.xpath(".//li"):
             year_hint = self._accordion_year(li)
             if year_hint and year_hint < cutoff.year:
@@ -502,11 +502,10 @@ class SandiePlanningGroupsSpider(CityScrapersSpider):
                 continue
             anchors = li.xpath("./a | ./*[not(self::ul or self::ol)]//a")
             href = anchors.xpath("@href").get() if anchors else None
-            text = self._node_text(anchors[0]) if anchors else ""
-            # Prefer the link text; fall back to the whole item when the date
-            # is split around the link ("J<a>anuary 6, 2026</a>")
-            if not (text and self._parse_entry_text(text, year_hint)):
-                text = self._node_text(li, exclude_lists=True)
+            # The whole item, not just the link: text around the link can carry
+            # the meeting type or status ("<a>April 2, 2025</a> - Special
+            # Meeting", "<a>June 10, 2025</a> - Adjournment Notice")
+            text = self._node_text(li, exclude_lists=True)
             entry = self._parse_entry_text(text, year_hint) if text else None
             if entry is None:
                 # "None posted", "June 2026 - Meeting Adjourned", "Press
@@ -526,10 +525,17 @@ class SandiePlanningGroupsSpider(CityScrapersSpider):
                 }
             )
             title_text = entry.pop("title_text")
-            # Translations only duplicate the English entry's title
-            entry["title"] = (
-                "Regular Meeting" if entry["spanish"] else self._parse_title(title_text)
-            )
+            if entry["spanish"] and previous is not None:
+                # A translation is listed right after the English document it
+                # translates and belongs to the same meeting (its own date is
+                # sometimes mistyped: "12 de Marzo" after "May 12, 2025")
+                entry["title"] = previous["title"]
+                entry["dates"] = previous["dates"]
+            elif entry["spanish"]:
+                entry["title"] = "Regular Meeting"
+            else:
+                entry["title"] = self._parse_title(title_text)
+                previous = entry
             entries.append(entry)
         return entries
 
@@ -653,9 +659,9 @@ class SandiePlanningGroupsSpider(CityScrapersSpider):
         2. the most similar title ("Traffic and Transportation Board" and
            "Traffic & Transportation Board", "Elections" and "Annual Elections
            Meeting");
-        3. the only meeting that day, unless both are differently named
-           committees (e.g. Communications minutes on a day with only a Urban
-           Design agenda).
+        3. the only meeting that day, unless both are named committees whose
+           titles are not similar enough (e.g. Communications minutes on a day
+           with only an Urban Design agenda).
 
         Anything left becomes its own meeting (e.g. minutes posted without an
         agenda).
@@ -728,7 +734,7 @@ class SandiePlanningGroupsSpider(CityScrapersSpider):
                 for t in (entry["title"], only["title"])
                 if t != "Regular Meeting" and self._title_words(t)
             ]
-            if len(named) == 2 and title_score(only) == 0:
+            if len(named) == 2 and title_score(only) < _MATCH_THRESHOLD:
                 # Two differently named committees met that day
                 return None
             return only
