@@ -82,7 +82,7 @@ class SandieOceansideSpider(LegistarSpider):
 
     tz = ZoneInfo(timezone)
 
-    months_back = 12
+    months_back = 24
     months_ahead = 6
     # Seconds to wait between curl_cffi requests to the city site
     request_delay = 0.5

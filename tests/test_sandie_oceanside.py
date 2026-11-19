@@ -155,18 +155,18 @@ def test_start_requests(spider):
 
 def test_since_year():
     with freeze_time("2026-01-15"):
-        assert SandieOceansideSpider().since_year == 2025
+        assert SandieOceansideSpider().since_year == 2024
     with freeze_time("2026-10-22"):
-        assert SandieOceansideSpider().since_year == 2025
+        assert SandieOceansideSpider().since_year == 2024
 
 
 def test_calendar_urls(spider):
     # 1 years back through 6 months ahead
     with freeze_time("2026-10-22"):
         urls = list(spider._calendar_urls())
-    assert len(urls) == 19
+    assert len(urls) == 31
     assert urls[0] == (
-        "https://www.ci.oceanside.ca.us/government/about-us/city-calendar/-curm-10/-cury-2025"  # noqa
+        "https://www.ci.oceanside.ca.us/government/about-us/city-calendar/-curm-10/-cury-2024"  # noqa
     )
     assert urls[-1] == (
         "https://www.ci.oceanside.ca.us/government/about-us/city-calendar/-curm-4/-cury-2027"  # noqa
