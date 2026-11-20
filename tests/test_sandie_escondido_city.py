@@ -348,7 +348,7 @@ def test_all_day(parsed_items):
 
 def test_lookback_stops_pagination():
     """Pages aren't followed once meetings older than the lookback are reached"""
-    with freeze_time("2029-01-01"):
+    with freeze_time("2030-01-01"):
         results = list(SandieEscondidoCityCityCouncilSpider().parse(test_response))
     assert [item for item in results if isinstance(item, Meeting)] == []
     assert [item for item in results if isinstance(item, scrapy.Request)] == []
