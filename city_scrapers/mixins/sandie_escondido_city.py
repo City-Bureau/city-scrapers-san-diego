@@ -72,7 +72,7 @@ class SandieEscondidoCityMixin(
     calendar_exclude_pattern = None
     city_hall_address = "201 N. Broadway"
 
-    lookback_days = 365 * 2
+    lookback_days = 365 * 3
     # By default the listing only shows meetings up to a month ahead, so the
     # end of its date range ("date_filter_1") is set to this far ahead. The
     # pager links keep the date range.
