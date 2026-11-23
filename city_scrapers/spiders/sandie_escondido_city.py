@@ -25,7 +25,7 @@ spider_configs = [
     {
         "class_name": "SandieEscondidoCityBuildingAdvisoryAndAppealsBoardSpider",
         "name": "sandie_escondido_building_advisory_and_appeals_board",
-        "agency": "City of City of Escondido - Building Advisory and Appeals Board",
+        "agency": "City of Escondido - Building Advisory and Appeals Board",
         "microsite_id": 1,
         "classification": BOARD,
         "location": MITCHELL_ROOM,
@@ -35,7 +35,7 @@ spider_configs = [
     {
         "class_name": "SandieEscondidoCityCityCouncilSpider",
         "name": "sandie_escondido_city_council",
-        "agency": "City of City of Escondido - City Council",
+        "agency": "City of Escondido - City Council",
         "microsite_id": 2,
         "classification": CITY_COUNCIL,
     },
@@ -43,7 +43,7 @@ spider_configs = [
     {
         "class_name": "SandieEscondidoCityHistoricPreservationCommissionSpider",
         "name": "sandie_escondido_historic_preservation_commission",
-        "agency": "City of City of Escondido - Historic Preservation Commission",
+        "agency": "City of Escondido - Historic Preservation Commission",
         "microsite_id": 3,
         "classification": COMMISSION,
         "calendar_pattern": r"historic\s+preservation",
@@ -52,7 +52,7 @@ spider_configs = [
     {
         "class_name": "SandieEscondidoCityLibraryBoardOfTrusteesSpider",
         "name": "sandie_escondido_library_board_of_trustees",
-        "agency": "City of City of Escondido - Library Board of Trustees",
+        "agency": "City of Escondido - Library Board of Trustees",
         "microsite_id": 4,
         "classification": BOARD,
         "calendar_pattern": r"library\s+board",
@@ -61,7 +61,7 @@ spider_configs = [
     {
         "class_name": "SandieEscondidoCityPlanningCommissionSpider",
         "name": "sandie_escondido_planning_commission",
-        "agency": "City of City of Escondido - Planning Commission",
+        "agency": "City of Escondido - Planning Commission",
         "microsite_id": 5,
         "classification": COMMISSION,
         "calendar_pattern": r"planning\s+commission",
@@ -70,7 +70,7 @@ spider_configs = [
     {
         "class_name": "SandieEscondidoCityPublicArtCommissionSpider",
         "name": "sandie_escondido_public_art_commission",
-        "agency": "City of City of Escondido - Public Art Commission",
+        "agency": "City of Escondido - Public Art Commission",
         "microsite_id": 6,
         "classification": COMMISSION,
         "calendar_pattern": r"public\s+art\s+commission",
@@ -81,7 +81,7 @@ spider_configs = [
     {
         "class_name": "SandieEscondidoCityTransportationCommissionSpider",
         "name": "sandie_escondido_transportation_commission",
-        "agency": "City of City of Escondido - Transportation Commission",
+        "agency": "City of Escondido - Transportation Commission",
         "microsite_id": 7,
         "classification": COMMISSION,
         # e.g. "Transportation and Community Safety Commission"
@@ -91,7 +91,7 @@ spider_configs = [
     {
         "class_name": "SandieEscondidoCitySubcommitteeSpider",
         "name": "sandie_escondido_subcommittees",
-        "agency": "City of City of Escondido - Subcommittees",
+        "agency": "City of Escondido - Subcommittees",
         "microsite_id": 8,
         "classification": COMMITTEE,
         "location": MITCHELL_ROOM,
