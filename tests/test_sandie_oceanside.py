@@ -1,4 +1,5 @@
 import re
+import time
 from datetime import date, datetime
 from os.path import dirname, join
 
@@ -7,6 +8,7 @@ from city_scrapers_core.constants import CITY_COUNCIL, COMMISSION, COMMITTEE, PA
 from city_scrapers_core.utils import file_response
 from freezegun import freeze_time
 from scrapy.http import HtmlResponse
+from scrapy.utils.test import get_crawler
 
 from city_scrapers.spiders.sandie_oceanside import SandieOceansideSpider
 
@@ -587,6 +589,68 @@ def test_fetch_meeting_retries(detail):
     meeting = retry_spider._fetch_meeting(detail, referer="")
     assert meeting["title"] == "Police and Fire Commission Meeting"
     assert pages == []
+
+
+def _read_fixture(name):
+    with open(join(dirname(__file__), "files", name)) as f:
+        return f.read()
+
+
+def test_every_calendar_month_failing_is_logged(monkeypatch, caplog):
+    failed_spider = SandieOceansideSpider.from_crawler(get_crawler())
+    sleeps = []
+    monkeypatch.setattr(time, "sleep", sleeps.append)
+    months = [test_response.url, test_response.url.replace("-curm-10", "-curm-11")]
+    failed_spider._calendar_urls = lambda: months
+    failed_spider._fetch_html = lambda url, referer: None
+
+    assert list(failed_spider.parse_calendar_pages(None)) == []
+    # Each month is retried after 5, 15 and 30 seconds before giving up
+    assert sleeps == [5, 15, 30] * 2
+    stats = failed_spider.crawler.stats
+    assert stats.get_value("oceanside/calendar_months_failed") == 2
+    errors = [r.message for r in caplog.records if r.levelname == "ERROR"]
+    assert errors == [
+        f"Calendar month {months[0]} could not be read after 3 retries",
+        f"Calendar month {months[1]} could not be read after 3 retries",
+        "2 calendar month(s) could not be read; "
+        f"meetings in them are missing from this run: {months[0]}, {months[1]}",
+    ]
+
+
+def test_calendar_month_recovers_after_retry(monkeypatch, caplog):
+    retry_spider = SandieOceansideSpider.from_crawler(get_crawler())
+    sleeps = []
+    monkeypatch.setattr(time, "sleep", sleeps.append)
+    retry_spider._calendar_urls = lambda: [test_response.url]
+    calendar_pages = [None, _read_fixture("sandie_oceanside.html")]
+    detail_pages = {
+        test_detail_response.url: _read_fixture("sandie_oceanside_detail.html"),
+        test_council_detail_response.url: _read_fixture(
+            "sandie_oceanside_council_detail.html"
+        ),
+    }
+
+    def fetch_html(url, referer):
+        if url == test_response.url:
+            # The calendar month fails once, then loads
+            return calendar_pages.pop(0)
+        return detail_pages.get(url)
+
+    retry_spider._fetch_html = fetch_html
+    with freeze_time("2026-10-22"):
+        meetings = list(retry_spider.parse_calendar_pages(None))
+
+    assert calendar_pages == []
+    assert sleeps == [5]
+    assert sorted(m["source"] for m in meetings) == sorted(detail_pages)
+    assert {m["title"] for m in meetings} == {
+        "Police and Fire Commission Meeting",
+        "Joint City Council/CDC/Harbor/OPFA Regular Meeting",
+    }
+    stats = retry_spider.crawler.stats
+    assert stats.get_value("oceanside/calendar_months_failed") == 0
+    assert not [r for r in caplog.records if r.levelname == "ERROR"]
 
 
 def test_parse_calendar_pages_falls_back_to_older_posting():

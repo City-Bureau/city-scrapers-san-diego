@@ -88,6 +88,8 @@ class SandieOceansideSpider(LegistarSpider):
     months_ahead = 6
     # Seconds to wait between curl_cffi requests to the city site
     request_delay = 0.5
+    # Seconds to wait before each retry of a calendar month that failed to load
+    calendar_retry_delays = [5, 15, 30]
 
     custom_settings = {
         "DOWNLOAD_DELAY": 1,
@@ -375,10 +377,14 @@ class SandieOceansideSpider(LegistarSpider):
         meeting, and yield Meetings."""
         self.session = curl_requests.Session(impersonate="chrome110")
         details = []
+        failed_months = []
         for url in self._calendar_urls():
-            html = self._fetch_html(url, referer=self.base_url + "/")
+            html = self._fetch_calendar_month(url)
             if html:
                 details.extend(self._parse_calendar(Selector(text=html)))
+            else:
+                failed_months.append(url)
+        self._record_failed_months(failed_months)
         for candidates in self._dedupe_details(details):
             # Use the most recent posting whose detail page can be parsed
             for detail in candidates:
@@ -388,6 +394,43 @@ class SandieOceansideSpider(LegistarSpider):
                 if meeting:
                     yield meeting
                     break
+
+    def _fetch_calendar_month(self, url):
+        """Fetch a calendar month page, retrying after each delay in
+        calendar_retry_delays if it fails. Returns the HTML or None."""
+        html = self._fetch_html(url, referer=self.base_url + "/")
+        for attempt, delay in enumerate(self.calendar_retry_delays, start=1):
+            if html:
+                break
+            self.logger.info(
+                f"Retrying {url} in {delay}s "
+                f"(retry {attempt}/{len(self.calendar_retry_delays)})"
+            )
+            time.sleep(delay)
+            html = self._fetch_html(url, referer=self.base_url + "/")
+        if not html:
+            self.logger.error(
+                f"Calendar month {url} could not be read after "
+                f"{len(self.calendar_retry_delays)} retries"
+            )
+        return html
+
+    def _record_failed_months(self, failed_months):
+        """Record how many calendar months couldn't be read, so a partial
+        scrape shows up in the run stats. Meetings in those months are
+        missing from the output and may be marked cancelled by the diff
+        pipeline."""
+        crawler = getattr(self, "crawler", None)
+        if crawler is not None:
+            crawler.stats.set_value(
+                "oceanside/calendar_months_failed", len(failed_months)
+            )
+        if failed_months:
+            self.logger.error(
+                f"{len(failed_months)} calendar month(s) could not be read; "
+                "meetings in them are missing from this run: "
+                + ", ".join(failed_months)
+            )
 
     def _dedupe_details(self, details):
         """Group repeated calendar entries. The same meeting can be linked from
@@ -427,8 +470,11 @@ class SandieOceansideSpider(LegistarSpider):
         response = self._get_response(url, referer)
         if response is not None and self._solve_challenge(url, response.text):
             response = self._get_response(url, referer)
-        if response is None or response.status_code != 200:
-            self.logger.warning(f"Failed to fetch {url}")
+        if response is None:
+            self.logger.warning(f"Failed to fetch {url}: no response")
+            return None
+        if response.status_code != 200:
+            self.logger.warning(f"Failed to fetch {url}: status {response.status_code}")
             return None
         if "/_sec/verify" in response.text:
             self.logger.warning(f"Akamai challenge not solved for {url}")
