@@ -60,11 +60,8 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
 
     city_base = "https://www.chulavistaca.gov"
     city_calendar_url = city_base + "/Calendar.aspx"
-    # The city site responds with 403 to the City Scrapers user agent
-    city_user_agent = (
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
-    )
+    # The city site responds with 403 to Scrapy requests, so it's fetched
+    # with curl_cffi browser impersonation
     curl_impersonate = "chrome110"
     curl_timeout = 30
     base_url = "https://pub-chulavista.escribemeetings.com/"
@@ -228,17 +225,16 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
 
     def start_requests(self):
         """
-        The city calendar is requested first, so that its events are known
-        when the eScribe meetings are parsed and matched to them.
+        The city calendar is fetched first, so that its events are known when
+        the eScribe meetings are parsed and matched to them.
         """
         self._init_state()
         if self.calendar_id:
-            yield self._city_calendar_request()
-        else:
-            yield self._escribe_request()
+            self._load_city_calendar()
+        yield self._escribe_request()
 
-    def _city_calendar_request(self):
-        """Request the agency's city calendar events over the scraped period."""
+    def _city_calendar_url(self):
+        """The agency's city calendar events over the scraped period."""
         start, end = self._date_range()
         params = {
             "Keywords": "",
@@ -247,59 +243,40 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
             "CID": self.calendar_id,
             "showPastEvents": "true",
         }
-        return self._city_request(
-            f"{self.city_calendar_url}?{urlencode(params)}",
-            callback=self.parse_city_calendar,
-            errback=self._city_calendar_failed,
-        )
+        return f"{self.city_calendar_url}?{urlencode(params)}"
 
-    def _city_request(self, url, **kwargs):
+    def _city_get(self, url):
         """
-        Request a city site page with a browser user agent. A 403 is passed to
-        the callback, which retries it with curl_cffi (see _unblock).
+        GET a city site page with curl_cffi. Returns an HtmlResponse, or None
+        if the request fails. Blocks the reactor, like the other curl_cffi
+        spiders.
         """
-        return scrapy.Request(
-            url,
-            headers={"User-Agent": self.city_user_agent},
-            meta={"handle_httpstatus_list": [403]},
-            dont_filter=True,
-            **kwargs,
-        )
-
-    def _unblock(self, response):
-        """
-        Return the response, or for a 403 the page fetched again with curl_cffi
-        browser impersonation, or None if that fails too.
-        """
-        if response.status != 403:
-            return response
-        self.logger.info(f"403 for {response.url}, retrying with curl_cffi")
         try:
-            curl_response = curl_requests.get(
-                response.url,
-                impersonate=self.curl_impersonate,
-                timeout=self.curl_timeout,
+            response = curl_requests.get(
+                url, impersonate=self.curl_impersonate, timeout=self.curl_timeout
             )
         except curl_requests.RequestsError as e:
-            self.logger.warning(f"curl_cffi request to {response.url} failed: {e}")
+            self.logger.warning(f"curl_cffi request to {url} failed: {e}")
             return None
-        if curl_response.status_code != 200:
+        if response.status_code != 200:
             self.logger.warning(
-                f"curl_cffi request to {response.url} returned "
-                f"{curl_response.status_code}"
+                f"curl_cffi request to {url} returned {response.status_code}"
             )
             return None
-        return HtmlResponse(
-            url=response.url, body=curl_response.content, encoding="utf-8"
-        )
+        return HtmlResponse(url=url, body=response.content, encoding="utf-8")
 
-    def _city_calendar_failed(self, failure):
+    def _load_city_calendar(self):
         """
-        Scrape eScribe alone if the city calendar can't be fetched; reported on
-        spider close.
+        Record the agency's city calendar events. If the calendar can't be
+        fetched, eScribe is scraped alone and it's reported on spider close.
         """
-        self._request_failed(failure)
-        yield self._escribe_request()
+        url = self._city_calendar_url()
+        response = self._city_get(url)
+        if response is None:
+            self._failed_requests += 1
+            self._add_problem(f"request to city calendar {url} failed")
+            return
+        self._parse_city_calendar(response)
 
     def _escribe_request(self):
         headers = {
@@ -326,36 +303,24 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
             headers=headers,
             body=json.dumps(body),
             callback=self.parse_calendar,
-            errback=self._request_failed,
+            errback=self._escribe_failed,
             dont_filter=True,
         )
 
     # Parsing
 
-    def parse_city_calendar(self, response):
-        """Record the agency's city calendar events, then request eScribe."""
-        blocked_url = response.url
-        response = self._unblock(response)
-        if response is None:
-            self._failed_requests += 1
-            self._add_problem(
-                f"city calendar {blocked_url} returned 403, also with curl_cffi"
-            )
-            yield self._escribe_request()
-            return
+    def _parse_city_calendar(self, response):
         if not response.css(f"#CID{self.calendar_id}"):
-            self._add_problem(
-                f"No calendar CID{self.calendar_id} found on the city calendar "
-                f"{response.url}; the calendar ID or page layout may have changed"
+            # calendars with no events in range have no CID block
+            self.logger.info(
+                f"No events found on {response.url} for CID{self.calendar_id}"
             )
         self._calendar_events = list(self._parse_city_calendar_events(response))
-        yield self._escribe_request()
 
     def parse_calendar(self, response):
         """
         Parse the eScribe meetings, match them to the city calendar events, and
-        request the detail page of each city calendar event that has no
-        eScribe meeting.
+        add the city calendar events that have no eScribe meeting.
         """
         try:
             meetings = response.json().get("d")
@@ -379,21 +344,25 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
             matched_urls |= self._parse_sources(day, day_meetings)
 
         yield from escribe_meetings
+        yield from self._city_meetings(matched_urls)
 
-        # city calendar events not matched to any eScribe meeting; they have
-        # no eScribe attachments, so their links stay empty. Their location is
-        # on their detail page.
+    def _escribe_failed(self, failure):
+        """Record the failure and still yield the city calendar meetings."""
+        self._request_failed(failure)
+        yield from self._city_meetings(set())
+
+    def _city_meetings(self, matched_urls):
+        """
+        Yield a meeting for each city calendar event not matched to an eScribe
+        meeting. These meetings have no eScribe attachments, so their links
+        stay empty.
+        """
         seen_urls = set()
         for event in self._calendar_events:
             if event["url"] in matched_urls or event["url"] in seen_urls:
                 continue
             seen_urls.add(event["url"])
-            yield self._city_request(
-                event["url"],
-                callback=self.parse_city_event,
-                errback=self._city_event_failed,
-                cb_kwargs={"event": event},
-            )
+            yield self._city_meeting(event)
 
     def _create_meeting(self, item):
         # Filter by meeting type if allowed_meeting_types is set
@@ -493,34 +462,22 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
             return response.url
         return f"{self.city_calendar_url}?EID={match.group(1)}"
 
-    def parse_city_event(self, response, event):
-        """Yield a city calendar meeting, with the location from its detail page."""
-        blocked_url = response.url
-        response = self._unblock(response)
-        if response is None:
-            yield self._city_event_unavailable(event, blocked_url, "403")
-            return
+    def _city_meeting(self, event):
+        """
+        A city calendar meeting, with the location from its detail page, or
+        the default location if the page can't be fetched (reported on close
+        only if every detail page failed).
+        """
         self._event_pages += 1
+        response = self._city_get(event["url"])
+        if response is None:
+            self._failed_event_pages += 1
+            return self._create_city_meeting(event, self.location)
         location = self._parse_city_location(response)
         if location is None:
             self._event_pages_without_location += 1
             location = self.location
-        yield self._create_city_meeting(event, location)
-
-    def _city_event_failed(self, failure):
-        """
-        Keep the meeting with the default location if its page can't be
-        fetched. Reported on close only if every detail page failed.
-        """
-        yield self._city_event_unavailable(
-            failure.request.cb_kwargs["event"], failure.request.url, failure.value
-        )
-
-    def _city_event_unavailable(self, event, url, reason):
-        self._event_pages += 1
-        self._failed_event_pages += 1
-        self.logger.warning(f"Failed to fetch city event {url}: {reason!r}")
-        return self._create_city_meeting(event, self.location)
+        return self._create_city_meeting(event, location)
 
     def _create_city_meeting(self, event, location):
         self._meetings_parsed += 1

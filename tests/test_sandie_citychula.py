@@ -1,12 +1,13 @@
 from datetime import datetime
 from os.path import dirname, join
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 from city_scrapers_core.constants import BOARD, CANCELLED
 from city_scrapers_core.utils import file_response
+from curl_cffi import requests as curl_requests
 from freezegun import freeze_time
-from scrapy import Request, signals
+from scrapy import signals
 from scrapy.http import HtmlResponse
 
 from city_scrapers.spiders.sandie_citychula import (
@@ -107,35 +108,86 @@ def test_all_day(parsed_items):
         assert item["all_day"] is False
 
 
-# --- city calendar (CivicPlus) ---
+# --- city calendar (CivicPlus, fetched with curl_cffi) ---
 
 EVENT_URL = "https://www.chulavistaca.gov/Calendar.aspx?EID={}"
+CURL_GET = "city_scrapers.mixins.sandie_citychula.curl_requests.get"
+
+
+def _city_pages(detail_fixture=None):
+    """
+    Stand-in for _city_get: the calendar fixture, then the detail page fixture
+    (None: request failed, "": page without a location).
+    """
+
+    def city_get(url):
+        if "CID=" in url:
+            return _city_response("sandie_citychula_civicplus.html", url)
+        if detail_fixture is None:
+            return None
+        if detail_fixture == "":
+            return HtmlResponse(url, body=b"<html></html>")
+        return _city_response(detail_fixture, url)
+
+    return city_get
+
+
+def _run(detail_fixture="sandie_citychula_civicplus_detail.html"):
+    """Run the spider on the fixtures, returning it and its meetings."""
+    calendar_spider = _calendar_spider()
+    with freeze_time("2026-01-09"), patch.object(
+        calendar_spider, "_city_get", side_effect=_city_pages(detail_fixture)
+    ):
+        (request,) = list(calendar_spider.start_requests())
+        return calendar_spider, list(request.callback(test_response))
 
 
 def test_start_requests_without_calendar_id_requests_escribe():
     escribe_spider = ChulaVistaBoardOfEthicsSpider()
     escribe_spider.calendar_id = None
-    with freeze_time("2026-01-09"):
+    with freeze_time("2026-01-09"), patch.object(
+        escribe_spider, "_city_get"
+    ) as city_get:
         (request,) = list(escribe_spider.start_requests())
     assert request.url.startswith(escribe_spider.api_url_calendar)
+    city_get.assert_not_called()
 
 
-def test_city_calendar_request_date_range():
-    calendar_spider = _calendar_spider()
+def test_city_calendar_url_date_range():
     with freeze_time("2026-01-09 20:00"):
-        (request,) = list(calendar_spider.start_requests())
-    assert request.url.startswith("https://www.chulavistaca.gov/Calendar.aspx?")
-    assert "CID=99" in request.url
+        url = _calendar_spider()._city_calendar_url()
+    assert url.startswith("https://www.chulavistaca.gov/Calendar.aspx?")
+    assert "CID=99" in url
     # same period as eScribe: 3 years back, 1 year ahead
-    assert "startDate=01%2F09%2F2023" in request.url
-    assert "enddate=01%2F09%2F2027" in request.url
+    assert "startDate=01%2F09%2F2023" in url
+    assert "enddate=01%2F09%2F2027" in url
 
 
-def test_city_calendar_then_escribe():
-    calendar_spider = _calendar_spider()
-    with freeze_time("2026-01-09"):
-        (request,) = list(calendar_spider.parse_city_calendar(city_calendar_response))
-    assert request.url.startswith(calendar_spider.api_url_calendar)
+def test_city_get_uses_curl_cffi():
+    url = EVENT_URL.format(1)
+    with patch(
+        CURL_GET, return_value=Mock(status_code=200, content=b"<p>ok</p>")
+    ) as get:
+        response = spider._city_get(url)
+    assert get.call_args.kwargs["impersonate"] == spider.curl_impersonate
+    assert response.url == url
+    assert response.css("p::text").get() == "ok"
+
+
+@pytest.mark.parametrize(
+    "curl_result",
+    [
+        {"return_value": Mock(status_code=403)},
+        {"side_effect": curl_requests.RequestsError("timeout")},
+    ],
+)
+def test_city_get_failure_returns_none(curl_result):
+    with patch(CURL_GET, **curl_result):
+        assert spider._city_get(EVENT_URL.format(1)) is None
+
+
+def test_city_calendar_events():
+    calendar_spider, _ = _run()
     events = calendar_spider._calendar_events
     # the awards reception is excluded
     assert [e["url"] for e in events] == [
@@ -148,24 +200,8 @@ def test_city_calendar_then_escribe():
     assert events[1]["end"] is None
 
 
-def test_city_calendar_failure_still_requests_escribe():
-    calendar_spider = _calendar_spider()
-    failure = Mock(request=calendar_spider._city_calendar_request(), value="error")
-    (request,) = list(calendar_spider._city_calendar_failed(failure))
-    assert request.url.startswith(calendar_spider.api_url_calendar)
-
-
-@pytest.fixture
-def parsed_with_city_calendar():
-    calendar_spider = _calendar_spider()
-    with freeze_time("2026-01-09"):
-        list(calendar_spider.parse_city_calendar(city_calendar_response))
-        return calendar_spider, list(calendar_spider.parse_calendar(test_response))
-
-
-def test_matched_escribe_meeting_source_is_detail_page(parsed_with_city_calendar):
-    _, results = parsed_with_city_calendar
-    (meeting,) = [r for r in results if not isinstance(r, Request)]
+def test_matched_escribe_meeting_source_is_detail_page():
+    _, (meeting, _) = _run()
     assert meeting["source"] == EVENT_URL.format(1001)
     # the eScribe location is kept
     assert meeting["location"] == {
@@ -175,18 +211,8 @@ def test_matched_escribe_meeting_source_is_detail_page(parsed_with_city_calendar
     assert meeting["links"]
 
 
-def test_unmatched_event_requests_detail_page(parsed_with_city_calendar):
-    _, results = parsed_with_city_calendar
-    (request,) = [r for r in results if isinstance(r, Request)]
-    assert request.url == EVENT_URL.format(1002)
-
-
-def test_city_meeting_location_from_detail_page(parsed_with_city_calendar):
-    calendar_spider, results = parsed_with_city_calendar
-    (request,) = [r for r in results if isinstance(r, Request)]
-    detail = _city_response("sandie_citychula_civicplus_detail.html", request.url)
-    with freeze_time("2026-01-09"):
-        (meeting,) = list(request.callback(detail, **request.cb_kwargs))
+def test_city_meeting_location_from_detail_page():
+    _, (_, meeting) = _run()
     assert meeting["title"] == "Board of Ethics Regular Meeting"
     assert meeting["start"] == datetime(2026, 2, 18, 17, 15)
     assert meeting["source"] == EVENT_URL.format(1002)
@@ -208,18 +234,13 @@ def test_city_location_from_detail_text():
     }
 
 
-def test_city_location_default():
+def test_city_location_not_found():
     detail = HtmlResponse(EVENT_URL.format(1), body=b"<html></html>")
     assert spider._parse_city_location(detail) is None
 
 
-def test_city_event_failure_uses_default_location(parsed_with_city_calendar):
-    calendar_spider, results = parsed_with_city_calendar
-    (request,) = [r for r in results if isinstance(r, Request)]
-    with freeze_time("2026-01-09"):
-        (meeting,) = list(
-            calendar_spider._city_event_failed(Mock(request=request, value="error"))
-        )
+def test_city_event_failure_uses_default_location():
+    calendar_spider, (_, meeting) = _run(detail_fixture=None)
     assert meeting["location"] == calendar_spider.location
     assert meeting["source"] == EVENT_URL.format(1002)
 
@@ -300,7 +321,7 @@ def test_calendar_meeting_not_in_escribe_is_kept():
     """
     Real case: Traffic Safety Commission, Jun-Aug 2025. eScribe has the Jun 12
     and Aug 14 meetings; the cancelled Jul 10 meeting is only on the city
-    calendar, so its detail page is requested to yield it as its own meeting.
+    calendar, so it is kept as its own meeting.
     """
     traffic_spider = ChulaVistaTrafficSafetyCommissionSpider()
     traffic_response = file_response(
@@ -315,12 +336,12 @@ def test_calendar_meeting_not_in_escribe_is_kept():
         _event("CANCELLED Traffic Safety Commission", july, 36244),
         _event("Traffic Safety Commission", august, 36612),
     ]
-    with freeze_time("2026-01-09"):
-        june_item, august_item, request = list(
+    with freeze_time("2026-01-09"), patch.object(
+        traffic_spider, "_city_get", return_value=None
+    ):
+        june_item, august_item, calendar_item = list(
             traffic_spider.parse_calendar(traffic_response)
         )
-        detail = HtmlResponse(request.url, body=b"<html></html>")
-        (calendar_item,) = list(request.callback(detail, **request.cb_kwargs))
 
     assert june_item["source"] == EVENT_URL.format(35570)
     assert june_item["links"]
@@ -406,8 +427,8 @@ def _closed_spider_error(calendar_spider, reason="finished"):
     return str(send.call_args.kwargs["failure"].value)
 
 
-def test_no_error_reported_for_normal_run(parsed_with_city_calendar):
-    calendar_spider, _ = parsed_with_city_calendar
+def test_no_error_reported_for_normal_run():
+    calendar_spider, _ = _run()
     assert _closed_spider_error(calendar_spider) is None
 
 
@@ -421,28 +442,41 @@ def test_zero_meetings_not_reported_when_not_finished():
     assert _closed_spider_error(calendar_spider, reason="shutdown") is None
 
 
-def test_escribe_request_failure_reported():
+def test_escribe_failure_reported_and_city_meetings_kept():
     calendar_spider = _calendar_spider()
-    request = calendar_spider._escribe_request()
-    assert request.errback == calendar_spider._request_failed
-    request.errback(Mock(request=request, value="TimeoutError"))
+    with freeze_time("2026-01-09"), patch.object(
+        calendar_spider,
+        "_city_get",
+        side_effect=_city_pages("sandie_citychula_civicplus_detail.html"),
+    ):
+        (request,) = list(calendar_spider.start_requests())
+        assert request.errback == calendar_spider._escribe_failed
+        meetings = list(request.errback(Mock(request=request, value="Timeout")))
+    # every city event is kept, as none matched an eScribe meeting
+    assert [m["source"] for m in meetings] == [
+        EVENT_URL.format(1001),
+        EVENT_URL.format(1002),
+    ]
     error = _closed_spider_error(calendar_spider)
     assert f"request to {request.url} failed" in error
-    assert "failed_requests=1" in error
+    assert "0 meetings parsed" not in error
 
 
-def test_city_calendar_failure_reported():
+def test_city_calendar_failure_reported_and_escribe_requested():
     calendar_spider = _calendar_spider()
-    failure = Mock(request=calendar_spider._city_calendar_request(), value="403")
-    list(calendar_spider._city_calendar_failed(failure))
-    assert "Calendar.aspx" in _closed_spider_error(calendar_spider)
+    with patch.object(calendar_spider, "_city_get", return_value=None):
+        (request,) = list(calendar_spider.start_requests())
+    assert request.url.startswith(calendar_spider.api_url_calendar)
+    assert "request to city calendar" in _closed_spider_error(calendar_spider)
 
 
-def test_missing_calendar_reported():
+def test_missing_calendar_not_reported():
+    """Calendars with no events in range have no CID block on the page."""
     calendar_spider = _calendar_spider()
     calendar_spider.calendar_id = 12345
-    list(calendar_spider.parse_city_calendar(city_calendar_response))
-    assert "No calendar CID12345" in _closed_spider_error(calendar_spider)
+    calendar_spider._parse_city_calendar(city_calendar_response)
+    assert calendar_spider._calendar_events == []
+    assert calendar_spider._problems == []
 
 
 def test_unexpected_escribe_response_reported():
@@ -454,20 +488,13 @@ def test_unexpected_escribe_response_reported():
     assert "Unexpected eScribe response" in _closed_spider_error(calendar_spider)
 
 
-def test_all_detail_pages_failing_reported(parsed_with_city_calendar):
-    calendar_spider, results = parsed_with_city_calendar
-    (request,) = [r for r in results if isinstance(r, Request)]
-    with freeze_time("2026-01-09"):
-        list(calendar_spider._city_event_failed(Mock(request=request, value="503")))
+def test_all_detail_pages_failing_reported():
+    calendar_spider, _ = _run(detail_fixture=None)
     assert "all 1 city calendar detail page(s) failed" in _closed_spider_error(
         calendar_spider
     )
 
 
-def test_detail_pages_without_location_reported(parsed_with_city_calendar):
-    calendar_spider, results = parsed_with_city_calendar
-    (request,) = [r for r in results if isinstance(r, Request)]
-    detail = HtmlResponse(request.url, body=b"<html></html>")
-    with freeze_time("2026-01-09"):
-        list(request.callback(detail, **request.cb_kwargs))
+def test_detail_pages_without_location_reported():
+    calendar_spider, _ = _run(detail_fixture="")
     assert "no location found on any of 1" in _closed_spider_error(calendar_spider)
