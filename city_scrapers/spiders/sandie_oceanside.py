@@ -201,7 +201,11 @@ class SandieOceansideSpider(LegistarSpider):
         """Store City Council Legistar links by meeting date for matching in
         _parse_detail."""
         for event in events:
-            if "city council" not in (event.get("Name") or "").lower():
+            # A linked meeting name is parsed as {"label": ..., "url": ...}
+            name = event.get("Name")
+            if isinstance(name, dict):
+                name = name.get("label")
+            if "city council" not in (name or "").lower():
                 continue
             start = self.legistar_start(event)
             links = self.legistar_links(event)
