@@ -65,7 +65,7 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
         "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
     )
-    curl_impersonate = "chrome"
+    curl_impersonate = "chrome110"
     curl_timeout = 30
     base_url = "https://pub-chulavista.escribemeetings.com/"
     api_url_calendar = base_url + "MeetingsCalendarView.aspx/GetCalendarMeetings"
