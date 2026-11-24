@@ -96,6 +96,8 @@ spider_configs = [
         "classification": COMMITTEE,
         "location": MITCHELL_ROOM,
         "calendar_pattern": r"subcommittee",
+        # Two subcommittees can meet at the same time
+        "calendar_match_title": True,
     },
 ]
 

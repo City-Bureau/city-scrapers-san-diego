@@ -70,6 +70,13 @@ class SandieEscondidoCityMixin(
     # Titles of other bodies' meetings that also match the pattern, e.g.
     # "Public Art Commission Subcommittee Meeting" for the Public Art Commission
     calendar_exclude_pattern = None
+    # Whether the calendar's meetings are matched to the portal's by title as
+    # well as start. Spiders of several bodies (e.g. the subcommittees) set this,
+    # since two of their bodies can meet at the same time.
+    calendar_match_title = False
+    # Words left out when comparing titles, e.g. "Utilities Subcommittee" and
+    # "Utilities Subcommittee Meeting" are the same meeting
+    title_stop_words = {"meeting", "the", "of", "and", "special", "regular"}
     city_hall_address = "201 N. Broadway"
 
     lookback_days = 365 * 3
@@ -115,9 +122,9 @@ class SandieEscondidoCityMixin(
         # IDs of meetings already yielded, as the listing sometimes repeats a
         # meeting (e.g. two "Planning Commission Meeting" entries at the same time)
         self.seen_ids = set()
-        # Start times of the meetings listed on the portal, which are skipped in
-        # the calendar
-        self.seen_starts = set()
+        # Start times of the meetings listed on the portal, mapped to the words
+        # of their titles. Calendar meetings at those times are skipped.
+        self.seen_starts = {}
 
     def start_requests(self):
         now = datetime.now(pytz.timezone(self.timezone)).replace(tzinfo=None)
@@ -148,7 +155,7 @@ class SandieEscondidoCityMixin(
             )
             meetings = []
             for meeting in self._create_meetings(row, response, raw_title, start):
-                self.seen_starts.add(meeting["start"])
+                self._add_seen_start(meeting["start"], meeting["title"])
                 if meeting["id"] not in self.seen_ids:
                     self.seen_ids.add(meeting["id"])
                     meetings.append(meeting)
@@ -208,10 +215,12 @@ class SandieEscondidoCityMixin(
             ):
                 continue
             start = self._parse_calendar_start(event)
-            if start is None or start in self.seen_starts:
+            if start is None:
+                continue
+            title = self._parse_title(raw_title)
+            if self._listed_on_portal(start, title):
                 continue
 
-            title = self._parse_title(raw_title)
             meeting = Meeting(
                 title=title,
                 description="",
@@ -231,6 +240,28 @@ class SandieEscondidoCityMixin(
                 continue
             self.seen_ids.add(meeting["id"])
             yield meeting
+
+    def _title_words(self, title):
+        """The significant words of a title, e.g. {"utilities", "subcommittee"}"""
+        words = re.findall(r"[a-z0-9]+", title.lower())
+        return frozenset(w for w in words if w not in self.title_stop_words)
+
+    def _add_seen_start(self, start, title):
+        self.seen_starts.setdefault(start, set()).add(self._title_words(title))
+
+    def _listed_on_portal(self, start, title):
+        """
+        Whether a calendar meeting is listed on the portal: any portal meeting at
+        the same start, or for spiders of several bodies, one whose title has the
+        same words, allowing for extra words in either one, e.g. "Budget
+        Subcommittee" and "Budget Subcommittee Meeting - Executive Session"
+        """
+        if start not in self.seen_starts:
+            return False
+        if not self.calendar_match_title:
+            return True
+        words = self._title_words(title)
+        return any(words <= seen or seen <= words for seen in self.seen_starts[start])
 
     def _parse_calendar_start(self, event):
         """Parse the start from the event's data, e.g. "2026-12-08T19:00:00" """

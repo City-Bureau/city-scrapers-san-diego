@@ -84,7 +84,9 @@ def video_items(spider, video_requests):
 def calendar_items():
     calendar_spider = SandieEscondidoCityLibraryBoardOfTrusteesSpider()
     # The Library Board meeting on 12/10/2026 at 4:00 PM is listed on the portal
-    calendar_spider.seen_starts.add(datetime(2026, 12, 10, 16, 0))
+    calendar_spider._add_seen_start(
+        datetime(2026, 12, 10, 16, 0), "Library Board of Trustees Meeting"
+    )
     with freeze_time("2026-11-17"):
         return list(calendar_spider._parse_calendar(calendar_response))
 
@@ -422,3 +424,45 @@ def test_calendar_patterns():
     assert [(item["title"], item["location"]["name"]) for item in subcommittees] == [
         ("Utilities Subcommittee Meeting", "Escondido City Hall, Mitchell Room")
     ]
+
+
+def _two_subcommittees_calendar():
+    """
+    A calendar with two subcommittees meeting at the same time: the real 
+    Utilities Subcommittee meeting on 11/02/2026 at 4:00 PM, and a copy
+    of it for the Economic Development Subcommittee
+    """
+    utilities = next(
+        event.get()
+        for event in calendar_response.css("#CID30 ol > li")
+        if "Utilities Subcommittee" in event.get()
+    )
+    economic_development = utilities.replace(
+        "Utilities Subcommittee", "Economic Development Subcommittee"
+    ).replace("EID=1104", "EID=9999")
+    body = f'<div id="CID30"><ol>{utilities}{economic_development}</ol></div>'
+    return HtmlResponse(url=calendar_response.url, body=body.encode(), encoding="utf-8")
+
+
+def test_calendar_subcommittees_at_same_time():
+    """
+    A subcommittee's calendar meeting is only skipped if the same subcommittee
+    is listed on the portal at that time, not another one. The portal lists
+    "Cancelled - Utilities Subcommittee Meeting" on 11/02/2026 at 4:00 PM.
+    """
+    spider = SandieEscondidoCitySubcommitteeSpider()
+    with freeze_time("2026-11-17"):
+        list(spider.parse(test_response))
+        items = list(spider._parse_calendar(_two_subcommittees_calendar()))
+    assert [(item["title"], item["start"]) for item in items] == [
+        ("Economic Development Subcommittee Meeting", datetime(2026, 11, 2, 16, 0))
+    ]
+
+
+def test_calendar_single_body_matches_start_only():
+    """Spiders of one body skip a calendar meeting at any portal meeting's start"""
+    spider = SandieEscondidoCityLibraryBoardOfTrusteesSpider()
+    spider._add_seen_start(datetime(2026, 12, 10, 16, 0), "Special Meeting")
+    with freeze_time("2026-11-17"):
+        starts = [item["start"] for item in spider._parse_calendar(calendar_response)]
+    assert datetime(2026, 12, 10, 16, 0) not in starts
