@@ -6,6 +6,7 @@ import pytest
 from city_scrapers_core.constants import CITY_COUNCIL, COMMISSION, COMMITTEE, PASSED
 from city_scrapers_core.utils import file_response
 from freezegun import freeze_time
+from scrapy.http import HtmlResponse
 
 from city_scrapers.spiders.sandie_oceanside import SandieOceansideSpider
 
@@ -143,8 +144,8 @@ COUNCIL_LINKS = [
 
 def test_start_requests(spider):
     # Legistar and the records archive are requested up front; the calendar
-    # follows on spider_idle
-    assert [req.url for req in spider.start_requests()] == [
+    # is requested once they all finish (see test_calendar_requested_*)
+    assert [req.url for req in SandieOceansideSpider().start_requests()] == [
         "https://oceanside.legistar.com/Calendar.aspx",
         "https://records.ci.oceanside.ca.us/custom/filebank/archive-search-details.asp?DocumentTypeID=16&DocumentTypeID=11&Search=Search",  # noqa
         "https://records.ci.oceanside.ca.us/custom/filebank/archive-search-details.asp?DocumentTypeID=172&DocumentTypeID=173&Search=Search",  # noqa
@@ -153,20 +154,53 @@ def test_start_requests(spider):
     ]
 
 
+def _is_calendar_request(output):
+    return getattr(output, "callback", None) is not None and (
+        output.callback.__name__ == "parse_calendar_pages"
+    )
+
+
+def test_calendar_requested_by_last_source_callback():
+    # The calendar must be requested from a callback, not on spider_idle: the
+    # diff pipeline (staging/prod) handles spider_idle by marking upcoming
+    # meetings from the previous feed cancelled, so a calendar started there
+    # would be published as cancelled. Only the last Legistar/records
+    # callback to finish should yield the calendar request.
+    with freeze_time("2026-10-22"):
+        flow_spider = SandieOceansideSpider()
+        queue = list(flow_spider.start_requests())
+        calendar_seen = []
+        while queue:
+            request = queue.pop(0)
+            body = (
+                test_legistar_response.body
+                if "legistar" in request.url
+                else b"<html></html>"
+            )
+            response = HtmlResponse(request.url, body=body, request=request)
+            output = list(request.callback(response, **request.cb_kwargs))
+            calendar_seen.append(any(_is_calendar_request(o) for o in output))
+            queue.extend(o for o in output if not _is_calendar_request(o))
+
+    # 1 Legistar page + 3 Legistar years (2024-2026) + 4 records searches
+    assert len(calendar_seen) == 8
+    assert calendar_seen == [False] * 7 + [True]
+
+
 def test_since_year():
     with freeze_time("2026-01-15"):
-        assert SandieOceansideSpider().since_year == 2025
+        assert SandieOceansideSpider().since_year == 2024
     with freeze_time("2026-10-22"):
-        assert SandieOceansideSpider().since_year == 2025
+        assert SandieOceansideSpider().since_year == 2024
 
 
 def test_calendar_urls(spider):
     # 1 years back through 6 months ahead
     with freeze_time("2026-10-22"):
         urls = list(spider._calendar_urls())
-    assert len(urls) == 19
+    assert len(urls) == 31
     assert urls[0] == (
-        "https://www.ci.oceanside.ca.us/government/about-us/city-calendar/-curm-10/-cury-2025"  # noqa
+        "https://www.ci.oceanside.ca.us/government/about-us/city-calendar/-curm-10/-cury-2024"  # noqa
     )
     assert urls[-1] == (
         "https://www.ci.oceanside.ca.us/government/about-us/city-calendar/-curm-4/-cury-2027"  # noqa
