@@ -16,6 +16,10 @@ City Council agendas, minutes and videos come from Legistar
 (https://oceanside.legistar.com/Calendar.aspx). Legistar is scraped first with
 the core LegistarSpider flow; the city calendar is fetched once it finishes,
 so each meeting can be matched to its Legistar links when it's built.
+The calendar request is yielded from the callback that finishes the last
+Legistar/records request (see _source_done), not from a spider_idle handler:
+the diff pipeline also runs on spider_idle and would mark every upcoming
+calendar meeting as cancelled before the calendar was scraped.
 
 Police and Fire Commission,Citizen Investment Oversight Committee, Utilities Commission,
 and UC Water/Sewer agendas and minutes come from the city records archive
@@ -42,8 +46,6 @@ from city_scrapers_core.spiders import LegistarSpider
 from curl_cffi import requests as curl_requests
 from dateutil.relativedelta import relativedelta
 from parsel import Selector
-from scrapy import signals
-from scrapy.exceptions import DontCloseSpider
 
 
 class SandieOceansideSpider(LegistarSpider):
@@ -127,38 +129,60 @@ class SandieOceansideSpider(LegistarSpider):
         self.since_year = self._first_month().year
         self._legistar_links = defaultdict(list)
         self._records_links = defaultdict(list)
-        self._calendar_started = False
-
-    @classmethod
-    # Connect to the spider_idle signal so the city calendar is fetched once
-    def from_crawler(cls, crawler, *args, **kwargs):
-        spider = super().from_crawler(crawler, *args, **kwargs)
-        crawler.signals.connect(spider._start_calendar, signal=signals.spider_idle)
-        return spider
+        # Legistar and records requests that haven't finished yet
+        self._pending_sources = 0
 
     def start_requests(self):
-        # Legistar and the records archive are fetched first;
-        # the city calendar is fetched in _start_calendar once both are done.
-        yield scrapy.Request(self.start_urls[0], callback=self.parse)
+        # Legistar and the records archive are fetched first; the city
+        # calendar is requested in _source_done once all of them finish.
+        yield self._track(scrapy.Request(self.start_urls[0], callback=self.parse))
         for body, source in self.ARCHIVE_RECORDS_SOURCES.items():
             query = "&".join(f"DocumentTypeID={t}" for t in source["document_types"])
-            yield scrapy.Request(
-                self.records_url.format(query),
-                callback=self.parse_records,
-                cb_kwargs={"body": body},
+            yield self._track(
+                scrapy.Request(
+                    self.records_url.format(query),
+                    callback=self.parse_records,
+                    cb_kwargs={"body": body},
+                )
             )
 
-    def _start_calendar(self, spider):
-        if self._calendar_started:
-            return
-        self._calendar_started = True
-        # City pages are fetched with curl_cffi in parse_calendar_pages.
-        self.crawler.engine.crawl(
-            scrapy.Request(
+    def _track(self, request):
+        """Count a Legistar or records request as outstanding."""
+        self._pending_sources += 1
+        return request.replace(errback=self._source_failed)
+
+    def _source_done(self):
+        """Mark one Legistar or records request finished. After the last one,
+        request the city calendar (its pages are fetched with curl_cffi in
+        parse_calendar_pages)."""
+        self._pending_sources -= 1
+        if self._pending_sources == 0:
+            yield scrapy.Request(
                 "data:,", callback=self.parse_calendar_pages, dont_filter=True
             )
-        )
-        raise DontCloseSpider
+
+    def _source_failed(self, failure):
+        self.logger.warning(f"Request failed: {failure.request.url}: {failure.value}")
+        yield from self._source_done()
+
+    # Every source callback calls _source_done in a finally block, so a
+    # parsing error can't keep the calendar from being requested. Follow-up
+    # requests are tracked before the current one is marked done.
+
+    def parse(self, response):
+        try:
+            for request in super().parse(response):
+                yield self._track(request)
+        finally:
+            yield from self._source_done()
+
+    def _parse_legistar_events_page(self, response):
+        try:
+            yield from self.parse_legistar(self._parse_legistar_events(response))
+            for request in self._parse_next_page(response):
+                yield self._track(request)
+        finally:
+            yield from self._source_done()
 
     def _calendar_urls(self):
         first_month = self._first_month()
@@ -270,6 +294,12 @@ class SandieOceansideSpider(LegistarSpider):
     # RECORDS ARCHIVE
 
     def parse_records(self, response, body):
+        try:
+            self._store_records(response, body)
+        finally:
+            yield from self._source_done()
+
+    def _store_records(self, response, body):
         """Store agenda and minutes links from the records archive by body and
         meeting date for matching in _parse_detail."""
         date_from_title = self.ARCHIVE_RECORDS_SOURCES[body]["date_from_title"]
@@ -296,7 +326,6 @@ class SandieOceansideSpider(LegistarSpider):
             # The same file is often listed under more than one document type
             if link_item not in self._records_links[(body, date)]:
                 self._records_links[(body, date)].append(link_item)
-        return []
 
     def _get_records_links(self, start, title):
         """Find records archive links for a meeting of the same body on the
