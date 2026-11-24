@@ -428,7 +428,7 @@ def test_calendar_patterns():
 
 def _two_subcommittees_calendar():
     """
-    A calendar with two subcommittees meeting at the same time: the real 
+    A calendar with two subcommittees meeting at the same time: the real
     Utilities Subcommittee meeting on 11/02/2026 at 4:00 PM, and a copy
     of it for the Economic Development Subcommittee
     """
