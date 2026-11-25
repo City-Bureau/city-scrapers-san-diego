@@ -498,7 +498,7 @@ class SandieNationalCityMixin(
                                 "all_day": False,
                                 "time_notes": self.time_notes,
                                 "links": filtered_links,
-                                "source": self._parse_source(response),
+                                "source": self.start_url,
                             }
                         )
                 else:
@@ -822,8 +822,3 @@ class SandieNationalCityMixin(
             )
 
         return links
-
-    def _parse_source(self, response):
-        """Main listing URL: page URLs (-npage-N) shift as new meetings are added,
-        so a meeting's page number doesn't stay accurate."""
-        return self.start_url
