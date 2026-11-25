@@ -94,7 +94,7 @@ def _one(items, start):
 def test_council_spider_configuration(council_spider):
     """Test that City Council spider is properly configured"""
     assert council_spider.name == "sandie_national_council_committees"
-    assert council_spider.agency == "San Diego National City - City Council"
+    assert council_spider.agency == "City of National City- City Council Committees"
     assert council_spider.escribe_url == "https://pub-nationalcity.escribemeetings.com"
 
     assert council_spider.event_type is None
@@ -252,7 +252,7 @@ def test_council_unparseable_meeting_is_skipped(council_spider):
 def test_boards_spider_configuration(boards_spider):
     """Test that Boards & Commissions spider is properly configured"""
     assert boards_spider.name == "sandie_national_boards_commissions"
-    assert boards_spider.agency == "San Diego National City - Boards and Commissions"
+    assert boards_spider.agency == "City of National City- Boards & Commissions"
     assert isinstance(boards_spider.event_type, list)
 
 
