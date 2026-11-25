@@ -34,7 +34,6 @@ spider_configs = [
         "class_name": "SandieCityCouncilSpider",
         "name": "sandie_national_council_committees",
         "agency": "San Diego National City - City Council",
-        "event_type": "City Council",
         "escribe_url": "https://pub-nationalcity.escribemeetings.com",
     },
     {
