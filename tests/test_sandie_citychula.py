@@ -188,27 +188,33 @@ def test_city_get_failure_returns_none(curl_result):
         assert spider._city_get(EVENT_URL.format(1)) is None
 
 
-def test_city_calendar_retried_after_one_off_403():
+def test_city_calendar_retried_after_403s():
     calendar_spider = _calendar_spider()
     with open(
         join(dirname(__file__), "files", "sandie_citychula_civicplus.html"), "rb"
     ) as f:
         calendar_page = Mock(status_code=200, content=f.read())
     with freeze_time("2026-01-09"), patch(
-        CURL_GET, side_effect=[Mock(status_code=403), calendar_page]
+        CURL_GET,
+        side_effect=[Mock(status_code=403), Mock(status_code=403), calendar_page],
     ) as get, patch(SLEEP) as sleep:
         list(calendar_spider.start_requests())
-    assert get.call_count == calendar_spider.calendar_tries == 2
-    sleep.assert_called_once_with(calendar_spider.retry_backoff)
+    assert get.call_count == calendar_spider.calendar_tries == 3
+    # the wait grows with each try: 5s, then 10s
+    assert [c.args[0] for c in sleep.call_args_list] == [5, 10]
     assert len(calendar_spider._calendar_events) == 2
     assert calendar_spider._problems == []
 
 
 def test_city_calendar_failure_after_all_tries_reported():
     calendar_spider = _calendar_spider()
-    with patch(CURL_GET, return_value=Mock(status_code=403)) as get, patch(SLEEP):
+    with patch(CURL_GET, return_value=Mock(status_code=403)) as get, patch(
+        SLEEP
+    ) as sleep:
         list(calendar_spider.start_requests())
-    assert get.call_count == 2
+    assert get.call_count == 3
+    # no wait after the last try
+    assert sleep.call_count == 2
     assert "request to city calendar" in _closed_spider_error(calendar_spider)
 
 

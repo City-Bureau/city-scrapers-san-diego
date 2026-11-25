@@ -67,8 +67,8 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
     curl_impersonate = "chrome110"
     curl_timeout = 30
     # A one-off 403 on the calendar would drop the city-only meetings
-    calendar_tries = 2
-    retry_backoff = 3
+    calendar_tries = 3
+    retry_backoff = 5
     base_url = "https://pub-chulavista.escribemeetings.com/"
     api_url_calendar = base_url + "MeetingsCalendarView.aspx/GetCalendarMeetings"
 
@@ -253,9 +253,9 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
     def _city_get(self, url, tries=1):
         """
         GET a city site page with curl_cffi, up to `tries` times, waiting
-        retry_backoff seconds between tries. Returns an HtmlResponse, or None
-        if every try fails. Blocks the reactor, like the other curl_cffi
-        spiders.
+        retry_backoff * attempt seconds between tries (5s, then 10s). Returns
+        an HtmlResponse, or None if every try fails. Blocks the reactor, like
+        the other curl_cffi spiders.
         """
         for attempt in range(1, tries + 1):
             try:
@@ -274,7 +274,7 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
                 f"curl_cffi request to {url} failed ({attempt}/{tries}): {error}"
             )
             if attempt < tries:
-                time.sleep(self.retry_backoff)
+                time.sleep(self.retry_backoff * attempt)
         return None
 
     def _load_city_calendar(self):
