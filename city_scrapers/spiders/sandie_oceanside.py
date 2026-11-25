@@ -88,8 +88,9 @@ class SandieOceansideSpider(LegistarSpider):
     months_ahead = 6
     # Seconds to wait between curl_cffi requests to the city site
     request_delay = 0.5
-    # Seconds to wait before each retry of a calendar month that failed to load
-    calendar_retry_delays = [5, 15, 30]
+    # Seconds to wait before each retry of a calendar month or detail page
+    # that failed to load
+    retry_delays = [5, 15, 30]
 
     custom_settings = {
         "DOWNLOAD_DELAY": 1,
@@ -385,6 +386,7 @@ class SandieOceansideSpider(LegistarSpider):
             else:
                 failed_months.append(url)
         self._record_failed_months(failed_months)
+        failed_meetings = []
         for candidates in self._dedupe_details(details):
             # Use the most recent posting whose detail page can be parsed
             for detail in candidates:
@@ -394,26 +396,31 @@ class SandieOceansideSpider(LegistarSpider):
                 if meeting:
                     yield meeting
                     break
+            else:
+                failed_meetings.append([detail["source"] for detail in candidates])
+        self._record_failed_meetings(failed_meetings)
 
     def _fetch_calendar_month(self, url):
         """Fetch a calendar month page, retrying after each delay in
-        calendar_retry_delays if it fails. Returns the HTML or None."""
+        retry_delays if it fails. Returns the HTML or None."""
         html = self._fetch_html(url, referer=self.base_url + "/")
-        for attempt, delay in enumerate(self.calendar_retry_delays, start=1):
+        for attempt, delay in enumerate(self.retry_delays, start=1):
             if html:
                 break
-            self.logger.info(
-                f"Retrying {url} in {delay}s "
-                f"(retry {attempt}/{len(self.calendar_retry_delays)})"
-            )
-            time.sleep(delay)
+            self._wait_to_retry(url, attempt, delay)
             html = self._fetch_html(url, referer=self.base_url + "/")
         if not html:
             self.logger.error(
                 f"Calendar month {url} could not be read after "
-                f"{len(self.calendar_retry_delays)} retries"
+                f"{len(self.retry_delays)} retries"
             )
         return html
+
+    def _wait_to_retry(self, url, attempt, delay):
+        self.logger.info(
+            f"Retrying {url} in {delay}s (retry {attempt}/{len(self.retry_delays)})"
+        )
+        time.sleep(delay)
 
     def _record_failed_months(self, failed_months):
         """Record how many calendar months couldn't be read, so a partial
@@ -430,6 +437,22 @@ class SandieOceansideSpider(LegistarSpider):
                 f"{len(failed_months)} calendar month(s) could not be read; "
                 "meetings in them are missing from this run: "
                 + ", ".join(failed_months)
+            )
+
+    def _record_failed_meetings(self, failed_meetings):
+        """Record how many meetings had no detail page that could be read
+        (counting each meeting once, however many postings it has), so a
+        partial scrape shows up in the run stats. failed_meetings holds the
+        posting URLs of each such meeting."""
+        crawler = getattr(self, "crawler", None)
+        if crawler is not None:
+            crawler.stats.set_value(
+                "oceanside/detail_pages_failed", len(failed_meetings)
+            )
+        for urls in failed_meetings:
+            self.logger.error(
+                "Meeting is missing from this run: no detail page could be "
+                "read from " + ", ".join(urls)
             )
 
     def _dedupe_details(self, details):
@@ -452,15 +475,23 @@ class SandieOceansideSpider(LegistarSpider):
         match = re.search(r"/Event/(\d+)", detail["source"])
         return int(match.group(1)) if match else 0
 
-    def _fetch_meeting(self, detail, referer, attempts=2):
-        """Fetch and parse a detail page, retrying once: the site occasionally
-        returns a page without the event details."""
-        for _ in range(attempts):
-            html = self._fetch_html(detail["source"], referer=referer)
+    def _fetch_meeting(self, detail, referer):
+        """Fetch and parse a detail page, retrying after each delay in
+        retry_delays if it fails: the site occasionally returns an error or a
+        page without the event details. Returns the Meeting or None."""
+        url = detail["source"]
+        for attempt, delay in enumerate([0] + self.retry_delays):
+            if attempt:
+                self._wait_to_retry(url, attempt, delay)
+            html = self._fetch_html(url, referer=referer)
             if html:
                 meeting = self._parse_detail(Selector(text=html), **detail)
                 if meeting:
                     return meeting
+        self.logger.warning(
+            f"Detail page {url} could not be read after "
+            f"{len(self.retry_delays)} retries"
+        )
         return None
 
     def _fetch_html(self, url, referer):
