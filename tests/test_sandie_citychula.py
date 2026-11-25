@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 from city_scrapers_core.constants import BOARD, CANCELLED
+from city_scrapers_core.items import Meeting
 from city_scrapers_core.utils import file_response
 from curl_cffi import requests as curl_requests
 from freezegun import freeze_time
@@ -112,6 +113,7 @@ def test_all_day(parsed_items):
 
 EVENT_URL = "https://www.chulavistaca.gov/Calendar.aspx?EID={}"
 CURL_GET = "city_scrapers.mixins.sandie_citychula.curl_requests.get"
+SLEEP = "city_scrapers.mixins.sandie_citychula.time.sleep"
 
 
 def _city_pages(detail_fixture=None):
@@ -120,7 +122,7 @@ def _city_pages(detail_fixture=None):
     (None: request failed, "": page without a location).
     """
 
-    def city_get(url):
+    def city_get(url, tries=1):
         if "CID=" in url:
             return _city_response("sandie_citychula_civicplus.html", url)
         if detail_fixture is None:
@@ -184,6 +186,30 @@ def test_city_get_uses_curl_cffi():
 def test_city_get_failure_returns_none(curl_result):
     with patch(CURL_GET, **curl_result):
         assert spider._city_get(EVENT_URL.format(1)) is None
+
+
+def test_city_calendar_retried_after_one_off_403():
+    calendar_spider = _calendar_spider()
+    with open(
+        join(dirname(__file__), "files", "sandie_citychula_civicplus.html"), "rb"
+    ) as f:
+        calendar_page = Mock(status_code=200, content=f.read())
+    with freeze_time("2026-01-09"), patch(
+        CURL_GET, side_effect=[Mock(status_code=403), calendar_page]
+    ) as get, patch(SLEEP) as sleep:
+        list(calendar_spider.start_requests())
+    assert get.call_count == calendar_spider.calendar_tries == 2
+    sleep.assert_called_once_with(calendar_spider.retry_backoff)
+    assert len(calendar_spider._calendar_events) == 2
+    assert calendar_spider._problems == []
+
+
+def test_city_calendar_failure_after_all_tries_reported():
+    calendar_spider = _calendar_spider()
+    with patch(CURL_GET, return_value=Mock(status_code=403)) as get, patch(SLEEP):
+        list(calendar_spider.start_requests())
+    assert get.call_count == 2
+    assert "request to city calendar" in _closed_spider_error(calendar_spider)
 
 
 def test_city_calendar_events():
@@ -312,6 +338,44 @@ def test_source_event_on_other_day_not_matched():
     assert _source_for(["Board of Ethics Regular Meeting"], events, start) == [
         ESCRIBE_URL
     ]
+
+
+def test_city_event_start_overrides_escribe_start():
+    """
+    Real case: Traffic Safety Commission, Dec 10, 2026. eScribe lists the
+    meeting at 10:00 AM; the city calendar event (EID=776) and every other
+    meeting this year are at 6:00 PM.
+    """
+    traffic_spider = ChulaVistaTrafficSafetyCommissionSpider()
+    event = _event("Traffic Safety Commission", datetime(2026, 12, 10, 18), 776)
+    traffic_spider._calendar_events = [event]
+    meeting = Meeting(
+        title="Traffic Safety Commission Regular Meeting",
+        start=datetime(2026, 12, 10, 10),
+        end=datetime(2026, 12, 10, 13),
+        links=[],
+    )
+    with freeze_time("2026-11-25"):
+        meeting["status"] = traffic_spider._get_status(meeting)
+        meeting["id"] = traffic_spider._get_id(meeting)
+        old_id = meeting["id"]
+        traffic_spider._parse_sources(meeting["start"].date(), [meeting])
+    assert meeting["source"] == EVENT_URL.format(776)
+    assert meeting["start"] == datetime(2026, 12, 10, 18)
+    assert meeting["end"] is None
+    assert meeting["id"] != old_id
+    assert "/202612101800/" in meeting["id"]
+
+
+def test_city_event_without_time_keeps_escribe_start():
+    start = datetime(2026, 12, 10, 18)
+    spider._calendar_events = [
+        _event("Board of Ethics Regular Meeting", datetime(2026, 12, 10), 1)
+    ]
+    meeting = {"title": "Board of Ethics Regular Meeting", "start": start}
+    with freeze_time("2026-11-25"):
+        spider._parse_sources(start.date(), [meeting])
+    assert meeting["start"] == start
 
 
 # --- city calendar meetings missing from eScribe ---

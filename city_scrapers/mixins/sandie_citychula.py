@@ -6,8 +6,10 @@ Uses the eScribe GetCalendarMeetings endpoint and the city's CivicPlus calendar.
 import html
 import json
 import re
+import time
 from collections import defaultdict
 from datetime import datetime
+from datetime import time as dt_time
 from urllib.parse import urlencode, urljoin
 from zoneinfo import ZoneInfo
 
@@ -64,6 +66,9 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
     # with curl_cffi browser impersonation
     curl_impersonate = "chrome110"
     curl_timeout = 30
+    # A one-off 403 on the calendar would drop the city-only meetings
+    calendar_tries = 2
+    retry_backoff = 3
     base_url = "https://pub-chulavista.escribemeetings.com/"
     api_url_calendar = base_url + "MeetingsCalendarView.aspx/GetCalendarMeetings"
 
@@ -245,25 +250,32 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         }
         return f"{self.city_calendar_url}?{urlencode(params)}"
 
-    def _city_get(self, url):
+    def _city_get(self, url, tries=1):
         """
-        GET a city site page with curl_cffi. Returns an HtmlResponse, or None
-        if the request fails. Blocks the reactor, like the other curl_cffi
+        GET a city site page with curl_cffi, up to `tries` times, waiting
+        retry_backoff seconds between tries. Returns an HtmlResponse, or None
+        if every try fails. Blocks the reactor, like the other curl_cffi
         spiders.
         """
-        try:
-            response = curl_requests.get(
-                url, impersonate=self.curl_impersonate, timeout=self.curl_timeout
-            )
-        except curl_requests.RequestsError as e:
-            self.logger.warning(f"curl_cffi request to {url} failed: {e}")
-            return None
-        if response.status_code != 200:
+        for attempt in range(1, tries + 1):
+            try:
+                response = curl_requests.get(
+                    url, impersonate=self.curl_impersonate, timeout=self.curl_timeout
+                )
+            except curl_requests.RequestsError as e:
+                error = e
+            else:
+                if response.status_code == 200:
+                    return HtmlResponse(
+                        url=url, body=response.content, encoding="utf-8"
+                    )
+                error = f"status {response.status_code}"
             self.logger.warning(
-                f"curl_cffi request to {url} returned {response.status_code}"
+                f"curl_cffi request to {url} failed ({attempt}/{tries}): {error}"
             )
-            return None
-        return HtmlResponse(url=url, body=response.content, encoding="utf-8")
+            if attempt < tries:
+                time.sleep(self.retry_backoff)
+        return None
 
     def _load_city_calendar(self):
         """
@@ -271,7 +283,7 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         fetched, eScribe is scraped alone and it's reported on spider close.
         """
         url = self._city_calendar_url()
-        response = self._city_get(url)
+        response = self._city_get(url, tries=self.calendar_tries)
         if response is None:
             self._failed_requests += 1
             self._add_problem(f"request to city calendar {url} failed")
@@ -581,14 +593,23 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
     def _apply_event(self, meeting, event):
         """
         Use a matched city calendar event's detail page as the eScribe meeting's
-        source, and recheck its status with the event title, since a meeting
-        cancelled on the city calendar (e.g. "... Meeting - Cancelled") can
-        still look scheduled in eScribe. The eScribe location is kept.
+        source and its start time when they differ, as eScribe times can be
+        wrong (e.g. 10:00 AM for a 6:00 PM meeting). The status is rechecked
+        with the event title, since a meeting cancelled on the city calendar
+        (e.g. "... Meeting - Cancelled") can still look scheduled in eScribe.
+        The eScribe location is kept.
         """
         meeting["source"] = event["url"]
+        # midnight means the event has no time
+        if event["start"].time() != dt_time(0) and event["start"] != meeting["start"]:
+            meeting["start"] = event["start"]
+            # eScribe's end no longer fits; None unless the city event has one
+            meeting["end"] = event["end"]
         meeting["status"] = self._get_status(
             meeting, text=self._status_text(meeting, event["title"])
         )
+        if "id" in meeting:
+            meeting["id"] = self._get_id(meeting)
 
     # Error reporting
 
