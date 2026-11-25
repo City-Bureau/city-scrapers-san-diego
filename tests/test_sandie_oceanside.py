@@ -581,6 +581,7 @@ def test_legistar_links_matching(spider):
 
 def test_fetch_meeting_retries(detail):
     retry_spider = SandieOceansideSpider()
+    retry_spider._wait_to_retry = lambda url, attempt, delay: None
     pages = [
         "<html>No details</html>",
         open(join(dirname(__file__), "files", "sandie_oceanside_detail.html")).read(),
@@ -637,6 +638,11 @@ def test_calendar_month_recovers_after_retry(monkeypatch, caplog):
             return calendar_pages.pop(0)
         return detail_pages.get(url)
 
+    # Only follow the meetings that have a detail page fixture
+    parse_calendar = retry_spider._parse_calendar
+    retry_spider._parse_calendar = lambda selector: [
+        d for d in parse_calendar(selector) if d["source"] in detail_pages
+    ]
     retry_spider._fetch_html = fetch_html
     with freeze_time("2026-10-22"):
         meetings = list(retry_spider.parse_calendar_pages(None))
@@ -655,6 +661,7 @@ def test_calendar_month_recovers_after_retry(monkeypatch, caplog):
 
 def test_parse_calendar_pages_falls_back_to_older_posting():
     fallback_spider = SandieOceansideSpider()
+    fallback_spider._wait_to_retry = lambda url, attempt, delay: None
     start = datetime(2026, 10, 13, 17, 0)
     details = [
         _calendar_detail(3350, "Police and Fire Commission Meeting", start),
@@ -676,7 +683,54 @@ def test_parse_calendar_pages_falls_back_to_older_posting():
     meetings = list(fallback_spider.parse_calendar_pages(None))
     assert len(meetings) == 1
     assert meetings[0]["source"].split("/")[-2] == "3259"
-    assert fetched == ["calendar", "3350", "3350", "3259"]
+    assert fetched == ["calendar", "3350", "3350", "3350", "3350", "3259"]
+
+
+def _detail_page_spider(details, fetch_detail):
+    """A spider whose calendar lists the given details, with detail pages
+    fetched by fetch_detail(url). Returns the spider and the retry waits."""
+    page_spider = SandieOceansideSpider.from_crawler(get_crawler())
+    sleeps = []
+    page_spider._wait_to_retry = lambda url, attempt, delay: sleeps.append(delay)
+    page_spider._calendar_urls = lambda: ["calendar"]
+    page_spider._parse_calendar = lambda selector: details
+    page_spider._fetch_html = lambda url, referer: (
+        "<html></html>" if url == "calendar" else fetch_detail(url)
+    )
+    return page_spider, sleeps
+
+
+def test_one_detail_page_failing(detail, caplog):
+    broken = _calendar_detail(3400, "Housing Commission", datetime(2026, 10, 20, 17, 0))
+    detail_html = _read_fixture("sandie_oceanside_detail.html")
+    page_spider, sleeps = _detail_page_spider(
+        [detail, broken],
+        lambda url: None if url == broken["source"] else detail_html,
+    )
+    with freeze_time("2026-10-22"):
+        meetings = list(page_spider.parse_calendar_pages(None))
+
+    assert [m["source"] for m in meetings] == [detail["source"]]
+    # The broken page is retried after 5, 15 and 30 seconds
+    assert sleeps == [5, 15, 30]
+    errors = [r.message for r in caplog.records if r.levelname == "ERROR"]
+    assert errors == [
+        "Meeting is missing from this run: no detail page could be read from "
+        + broken["source"]
+    ]
+    assert page_spider.crawler.stats.get_value("oceanside/detail_pages_failed") == 1
+
+
+def test_detail_page_recovers_after_retry(detail):
+    pages = [None, _read_fixture("sandie_oceanside_detail.html")]
+    page_spider, sleeps = _detail_page_spider([detail], lambda url: pages.pop(0))
+    with freeze_time("2026-10-22"):
+        meetings = list(page_spider.parse_calendar_pages(None))
+
+    assert pages == []
+    assert sleeps == [5]
+    assert [m["source"] for m in meetings] == [detail["source"]]
+    assert meetings[0]["title"] == "Police and Fire Commission Meeting"
 
 
 def test_classification(parsed_items):
