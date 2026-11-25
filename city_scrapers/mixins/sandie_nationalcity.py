@@ -517,7 +517,7 @@ class SandieNationalCityMixin(
                             "all_day": False,
                             "time_notes": self.time_notes,
                             "links": clean_links,
-                            "source": self._parse_source(response),
+                            "source": self.start_url,
                         }
                     )
 
