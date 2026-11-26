@@ -369,8 +369,7 @@ def test_city_event_start_overrides_escribe_start():
     assert meeting["source"] == EVENT_URL.format(776)
     assert meeting["start"] == datetime(2026, 12, 10, 18)
     assert meeting["end"] is None
-    assert meeting["id"] != old_id
-    assert "/202612101800/" in meeting["id"]
+    assert meeting["id"] == old_id
 
 
 def test_city_event_without_time_keeps_escribe_start():

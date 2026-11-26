@@ -597,7 +597,8 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         wrong (e.g. 10:00 AM for a 6:00 PM meeting). The status is rechecked
         with the event title, since a meeting cancelled on the city calendar
         (e.g. "... Meeting - Cancelled") can still look scheduled in eScribe.
-        The eScribe location is kept.
+        The eScribe location and id are kept: the id embeds the start, so a new
+        one would cancel the existing meeting and add a duplicate.
         """
         meeting["source"] = event["url"]
         # midnight means the event has no time
@@ -608,8 +609,6 @@ class ChulaVistaMixin(CityScrapersSpider, metaclass=ChulaVistaMixinMeta):
         meeting["status"] = self._get_status(
             meeting, text=self._status_text(meeting, event["title"])
         )
-        if "id" in meeting:
-            meeting["id"] = self._get_id(meeting)
 
     # Error reporting
 
