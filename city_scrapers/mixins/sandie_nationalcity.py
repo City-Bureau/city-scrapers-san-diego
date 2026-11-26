@@ -5,14 +5,17 @@ table-based HTML structure on the boards-commissions-committees page.
 Required class variables (enforced by metaclass):
     name (str): Spider name/slug (e.g., "sandie_citycouncil")
     agency (str): Full agency name (e.g., "Sandie City Council")
-    event_type (str or list): Text to filter rows by to identify this specific agency
+    event_type (str or list): Text to filter rows by to identify this specific agency,
+        or escribe_url (str) for spiders that read only eSCRIBE
 """
 
 import html
+import json
 import random
 import re
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
+from urllib.parse import urljoin
 
 import pytz
 import scrapy
@@ -27,7 +30,9 @@ from city_scrapers_core.constants import (
 from city_scrapers_core.items import Meeting
 from city_scrapers_core.spiders import CityScrapersSpider
 from curl_cffi import requests as cffi_requests
+from scrapy import signals
 from scrapy.http import HtmlResponse
+from twisted.python.failure import Failure
 
 REAL_UA = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -43,6 +48,10 @@ AKAMAI_TIMEOUT = 30
 ESCRIBE_CALENDAR_PATH = "/MeetingsCalendarView.aspx/GetCalendarMeetings"
 
 
+class NationalCityError(Exception):
+    """The National City website or eSCRIBE could not be read as expected."""
+
+
 class SandieNationalCityMixinMeta(type):
     """
     Metaclass that enforces the implementation of required static
@@ -50,8 +59,10 @@ class SandieNationalCityMixinMeta(type):
     """
 
     def __init__(cls, name, bases, dct):
-        required_static_vars = ["agency", "name", "event_type"]
+        required_static_vars = ["agency", "name"]
         missing_vars = [var for var in required_static_vars if var not in dct]
+        if "event_type" not in dct and "escribe_url" not in dct:
+            missing_vars.append("event_type or escribe_url")
 
         if missing_vars:
             missing_vars_str = ", ".join(missing_vars)
@@ -85,9 +96,10 @@ class SandieNationalCityMixin(
     akamai_retries = 3
     akamai_retry_backoff = 30
 
-    # Optional eSCRIBE portal (not behind Akamai) used as a fallback when a
-    # website listing page can't be fetched. Only City Council publishes there.
+    # eSCRIBE portal used as the only source when set (City Council only)
     escribe_url = None
+    # Years after today covered by the eSCRIBE request
+    escribe_lookahead_years = 1
 
     custom_settings = {
         "ROBOTSTXT_OBEY": False,
@@ -110,141 +122,268 @@ class SandieNationalCityMixin(
     ]
 
     def __init__(self, *args, **kwargs):
-        self._last_akamai_request = None
         super().__init__(*args, **kwargs)
+        self._init_state()
+
+    def _init_state(self):
+        """Reset per-run state (also called from start_requests)."""
+        self._last_akamai_request = None
+        self._problems = []
+        self._failed_requests = 0
+        self._listing_pages = 0
+        self._escribe_items = 0
+        self._escribe_items_skipped = 0
+        self._meetings_parsed = 0
+
+    @classmethod
+    def from_crawler(cls, crawler, *args, **kwargs):
+        spider = super().from_crawler(crawler, *args, **kwargs)
+        crawler.signals.connect(spider._on_spider_closed, signal=signals.spider_closed)
+        return spider
+
+    def _now_local(self):
+        return datetime.now(pytz.timezone(self.timezone)).replace(tzinfo=None)
+
+    def _shift_years(self, dt, years):
+        """Shift a datetime by whole years, clamping Feb 29 to Feb 28."""
+        try:
+            return dt.replace(year=dt.year + years)
+        except ValueError:
+            return dt.replace(year=dt.year + years, day=28)
 
     def _start_cutoff(self):
         """Earliest meeting start to scrape: today minus lookback_years."""
-        now = datetime.now(pytz.timezone(self.timezone)).replace(tzinfo=None)
-        try:
-            cutoff = now.replace(year=now.year - self.lookback_years)
-        except ValueError:  # today is Feb 29 and the cutoff year has none
-            cutoff = now.replace(year=now.year - self.lookback_years, day=28)
+        cutoff = self._shift_years(self._now_local(), -self.lookback_years)
         return cutoff.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    def _escribe_end(self):
+        """Last day requested from eSCRIBE: today plus escribe_lookahead_years."""
+        end = self._shift_years(self._now_local(), self.escribe_lookahead_years)
+        return end.replace(hour=23, minute=59, second=59, microsecond=0)
 
     def start_requests(self):
         """
-        Kick off the spider without touching the protected site.
-
-        The real pages are fetched inside _run_crawl() using curl-cffi; a
-        data: URL avoids a Scrapy-fingerprinted request that Akamai would 403.
+        Spiders with escribe_url read only eSCRIBE. Others read the website,
+        whose pages are fetched inside _run_crawl() using curl-cffi; a data: URL
+        avoids a Scrapy-fingerprinted request that Akamai would 403.
         """
-        yield scrapy.Request("data:,", callback=self._run_crawl, dont_filter=True)
+        self._init_state()
+        if self.escribe_url:
+            yield self._escribe_request()
+        else:
+            yield scrapy.Request(
+                "data:,",
+                callback=self._run_crawl,
+                errback=self._request_failed,
+                dont_filter=True,
+            )
 
-    def _run_crawl(self, response):
-        """Fetch listing pages via curl-cffi, following pagination.
-
-        parse() still yields a scrapy.Request for the next page; it is fetched
-        here instead of being scheduled through Scrapy. If a listing page can't
-        be fetched, the meetings the website didn't cover come from eSCRIBE
-        (when escribe_url is set).
-        """
-        next_url = self.start_url
-        oldest_listed = None  # oldest date on any listing page fetched so far
-        yielded_starts = set()
-
-        while next_url:
-            listing = self._akamai_get(next_url)
-            if listing is None:
-                self.logger.warning("Could not fetch listing page: %s", next_url)
-                yield from self._escribe_fallback(oldest_listed, yielded_starts)
-                return
-
-            for row in listing.css("table tbody tr"):
-                start = self._parse_start(row)
-                if start and (oldest_listed is None or start < oldest_listed):
-                    oldest_listed = start
-
-            next_url = None
-            for result in self.parse(listing):
-                if isinstance(result, scrapy.Request):
-                    next_url = result.url
-                else:
-                    yielded_starts.add(result["start"])
-                    yield result
-
-    def _escribe_fallback(self, before, yielded_starts):
-        """Yield eSCRIBE meetings from the start cutoff up to `before` (the oldest
-        date the website listing reached; everything if it reached nothing),
-        skipping any start time the website already produced."""
-        if not self.escribe_url:
-            return
-
-        start = self._start_cutoff()
-        # Website pages cover `before` onwards; include that day in case its
-        # meetings continue on the page that failed.
-        end = before or datetime.now() + timedelta(days=730)
-        self.logger.info(
-            "Falling back to eSCRIBE for meetings %s to %s", start.date(), end.date()
+    def _escribe_request(self):
+        """POST to eSCRIBE's calendar endpoint for the scraped period."""
+        return scrapy.Request(
+            url=self.escribe_url + ESCRIBE_CALENDAR_PATH,
+            method="POST",
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json, text/javascript, */*; q=0.01",
+                "X-Requested-With": "XMLHttpRequest",
+            },
+            body=json.dumps(
+                {
+                    "calendarStartDate": self._start_cutoff().strftime("%Y-%m-%d"),
+                    "calendarEndDate": self._escribe_end().strftime("%Y-%m-%d"),
+                }
+            ),
+            callback=self.parse_escribe,
+            errback=self._request_failed,
+            dont_filter=True,
         )
 
-        meetings = self._fetch_escribe_meetings(start, end)
-        if meetings is None:
+    def parse_escribe(self, response):
+        """Parse eSCRIBE's calendar response into Meeting items."""
+        try:
+            meetings = response.json().get("d")
+        except (ValueError, AttributeError):
+            meetings = None
+        if not isinstance(meetings, list):
+            self._add_problem(
+                f"Unexpected eSCRIBE response from {response.url}; the API may "
+                "have changed"
+            )
             return
+
         for meeting in self._parse_escribe_meetings(meetings):
-            if meeting["start"] in yielded_starts:
-                continue
-            if before and meeting["start"].date() > before.date():
-                continue
+            self._meetings_parsed += 1
             yield meeting
 
-    def _fetch_escribe_meetings(self, start, end):
-        """POST to eSCRIBE's calendar endpoint; returns its list of meetings."""
-        try:
-            response = cffi_requests.post(
-                self.escribe_url + ESCRIBE_CALENDAR_PATH,
-                impersonate=IMPERSONATE,
-                timeout=AKAMAI_TIMEOUT,
-                json={
-                    "calendarStartDate": start.strftime("%Y-%m-%d"),
-                    "calendarEndDate": end.strftime("%Y-%m-%d"),
-                },
+        if self._escribe_items and (self._escribe_items_skipped == self._escribe_items):
+            self._add_problem(
+                f"none of the {self._escribe_items} eSCRIBE meeting(s) could be "
+                "parsed; the API may have changed"
             )
-            response.raise_for_status()
-            return response.json()["d"]
-        except Exception as e:
-            self.logger.warning("eSCRIBE fallback failed: %s", e)
-            return None
 
     def _parse_escribe_meetings(self, meetings):
         """Turn eSCRIBE calendar entries into Meeting items."""
+        cutoff = self._start_cutoff()
         for item in meetings:
-            start = datetime.strptime(item["StartDate"], "%Y/%m/%d %H:%M:%S")
-            if start < self._start_cutoff():
+            self._escribe_items += 1
+            start = self._parse_escribe_datetime(item)
+            name = self._normalize_title(
+                item.get("MeetingName") or item.get("MeetingType")
+            )
+            if start is None or not name:
+                self._escribe_items_skipped += 1
+                self.logger.warning("Skipping unparseable eSCRIBE meeting: %r", item)
                 continue
-            name = self._normalize_title(item["MeetingName"])
-            # Match the website's titles so meeting ids agree across sources
-            title = re.sub(r"^Cancellation Notice of an? ", "", name, flags=re.I)
-            title = re.sub(r"^Regular ", "", title)
+            if start < cutoff:
+                continue
 
+            title = self._escribe_title(name)
             meeting = Meeting(
                 title=title,
                 description="",
-                classification=self._parse_classification_from_title(title),
+                classification=self._parse_escribe_classification(name),
                 start=start,
-                # eSCRIBE's EndDate is a scheduled block (often 11pm), not a
-                # published end time; leave it empty like the website does so
-                # the pipeline fills it in
+                # eSCRIBE's EndDate is a placeholder block, not the real end time
                 end=None,
                 all_day=False,
+                closed_to_public=self._is_closed(title),
                 time_notes=self.time_notes,
-                location=self._parse_escribe_location(item.get("Location", "")),
-                links=[
-                    {"href": self.escribe_url + link["Url"], "title": link["Title"]}
-                    for link in item.get("MeetingDocumentLink", [])
-                ],
-                # Same source as website meetings: the main listing page
-                source=self.start_url,
+                location=self._parse_escribe_location(item.get("Location") or ""),
+                links=self._parse_escribe_links(item),
+                source=self._parse_escribe_source(item),
             )
             meeting["status"] = self._get_status(meeting, text=name)
             meeting["id"] = self._get_id(meeting)
             yield meeting
+
+    def _parse_escribe_datetime(self, item):
+        """Parse eSCRIBE's "2026/09/15 18:00:00" StartDate (local time)."""
+        value = item.get("StartDate")
+        try:
+            return datetime.strptime(value or "", "%Y/%m/%d %H:%M:%S")
+        except (TypeError, ValueError) as e:
+            self.logger.warning("Failed to parse eSCRIBE StartDate %r: %s", value, e)
+            return None
+
+    def _parse_escribe_classification(self, name):
+        """Classification from the title, CITY_COUNCIL for abbreviated titles."""
+        classification = self._parse_classification_from_title(name)
+        return CITY_COUNCIL if classification == NOT_CLASSIFIED else classification
+
+    def _escribe_title(self, name):
+        """Title without the "Cancellation Notice of a" and "Regular" prefixes,
+        matching the ids of meetings previously scraped from the website."""
+        title = re.sub(r"^Cancellation Notice of an? ", "", name, flags=re.I)
+        return re.sub(r"^Regular ", "", title)
+
+    def _parse_escribe_links(self, item):
+        """Document links (agendas, minutes, ...) and the video, if any."""
+        candidates = [
+            (doc.get("Url"), doc.get("Title"))
+            for doc in item.get("MeetingDocumentLink") or []
+        ]
+        if item.get("HasVideo") and item.get("VideoUrl"):
+            candidates.append((item["VideoUrl"], "Video"))
+
+        links, seen = [], set()
+        for url, title in candidates:
+            if not url or not title:
+                continue
+            href = urljoin(self.escribe_url + "/", url)
+            if href not in seen:
+                seen.add(href)
+                links.append({"href": href, "title": self._normalize_title(title)})
+        return links
+
+    def _parse_escribe_source(self, item):
+        """The meeting's eSCRIBE page, or the portal for meetings without one."""
+        # e.g. "Meeting?Id=..." from ".../MeetingsCalendarView.aspx/Meeting?Id=..."
+        page = (item.get("Url") or "").rsplit("/", 1)[-1]
+        return urljoin(self.escribe_url + "/", page) if page else self.escribe_url
 
     def _parse_escribe_location(self, location):
         """Map eSCRIBE's location text to a location dict."""
         if not location or "1243 National City" in location:
             return self.location
         return {"name": location.strip(), "address": ""}
+
+    def _run_crawl(self, response):
+        """Fetch listing pages via curl-cffi, following parse()'s next-page
+        requests. Only a blocked first page is reported as a problem."""
+        next_url = self.start_url
+
+        while next_url:
+            listing = self._akamai_get(next_url)
+            if listing is None:
+                self._failed_requests += 1
+                if self._listing_pages == 0:
+                    self._add_problem(f"could not fetch listing page {next_url}")
+                else:
+                    self.logger.warning(
+                        "Could not fetch listing page %s; stopping after %s page(s)",
+                        next_url,
+                        self._listing_pages,
+                    )
+                return
+            self._listing_pages += 1
+
+            if not listing.css("table tbody tr"):
+                self._add_problem(
+                    f"no meeting rows found on {next_url}; the page layout may "
+                    "have changed"
+                )
+                return
+
+            next_url = None
+            for result in self.parse(listing):
+                if isinstance(result, scrapy.Request):
+                    next_url = result.url
+                else:
+                    self._meetings_parsed += 1
+                    yield result
+
+    def _request_failed(self, failure):
+        """Record HTTP and network failures for the spider close report."""
+        self._failed_requests += 1
+        request = getattr(failure, "request", None)
+        url = request.url if request else (self.escribe_url or self.start_url)
+        self._add_problem(f"request to {url} failed: {failure.value!r}")
+
+    def _add_problem(self, problem):
+        self.logger.warning(problem)
+        self._problems.append(problem)
+
+    def _on_spider_closed(self, spider, reason):
+        """Report one error per run for major breakages only."""
+        problems = list(self._problems)
+        if reason == "finished" and self._meetings_parsed == 0:
+            problems.append("0 meetings parsed")
+        if not problems:
+            return
+        source = (
+            f"escribe_items={self._escribe_items}"
+            if self.escribe_url
+            else f"listing_pages={self._listing_pages}"
+        )
+        self._report_error(
+            NationalCityError(
+                f"{self.name}: {'; '.join(problems)} (finish_reason={reason}, "
+                f"failed_requests={self._failed_requests}, {source}, "
+                f"meetings={self._meetings_parsed})"
+            )
+        )
+
+    def _report_error(self, exc):
+        """Log and send spider_error (forwarded to Sentry)."""
+        self.logger.error(str(exc))
+        self.crawler.stats.inc_value(f"spider_exceptions/{exc.__class__.__name__}")
+        self.crawler.signals.send_catch_log(
+            signal=signals.spider_error,
+            failure=Failure(exc),
+            response=None,
+            spider=self,
+        )
 
     def _akamai_get(self, url):
         """GET an Akamai-protected URL with curl-cffi Chrome impersonation.
@@ -359,7 +498,7 @@ class SandieNationalCityMixin(
                                 "all_day": False,
                                 "time_notes": self.time_notes,
                                 "links": filtered_links,
-                                "source": self._parse_source(response),
+                                "source": self.start_url,
                             }
                         )
                 else:
@@ -378,7 +517,7 @@ class SandieNationalCityMixin(
                             "all_day": False,
                             "time_notes": self.time_notes,
                             "links": clean_links,
-                            "source": self._parse_source(response),
+                            "source": self.start_url,
                         }
                     )
 
@@ -435,10 +574,18 @@ class SandieNationalCityMixin(
     def _build_meetings(self, meeting_data_list, location):
         """Create Meeting items from parsed row data and a location."""
         for meeting_data in meeting_data_list:
-            meeting = Meeting(**meeting_data, location=location)
+            meeting = Meeting(
+                **meeting_data,
+                location=location,
+                closed_to_public=self._is_closed(meeting_data["title"]),
+            )
             meeting["status"] = self._get_status(meeting)
             meeting["id"] = self._get_id(meeting)
             yield meeting
+
+    def _is_closed(self, title):
+        """Closed to the public, e.g. "... - Closed Session"."""
+        return bool(re.search(r"\bclosed\b", title, flags=re.I))
 
     def _detect_combined_meeting(self, title):
         """
@@ -629,7 +776,10 @@ class SandieNationalCityMixin(
                 time_str = re.sub(r"\s+", "", time_str).upper()
                 return datetime.strptime(f"{date_str} {time_str}", "%m/%d/%Y %I:%M%p")
             return datetime.strptime(date_str, "%m/%d/%Y")
-        except ValueError:
+        except ValueError as e:
+            self.logger.warning(
+                "Failed to parse datetime %r %r: %s", date_str, time_str, e
+            )
             return None
 
     def _parse_links(self, row):
@@ -672,8 +822,3 @@ class SandieNationalCityMixin(
             )
 
         return links
-
-    def _parse_source(self, response):
-        """Main listing URL: page URLs (-npage-N) shift as new meetings are added,
-        so a meeting's page number doesn't stay accurate."""
-        return self.start_url

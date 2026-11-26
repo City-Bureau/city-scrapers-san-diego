@@ -15,7 +15,15 @@ from city_scrapers_core.constants import (
 from city_scrapers_core.items import Meeting
 from city_scrapers_core.utils import file_response
 from freezegun import freeze_time
+from scrapy import signals
+from scrapy.http import HtmlResponse, TextResponse
+from scrapy.utils.test import get_crawler
+from twisted.python.failure import Failure
 
+from city_scrapers.mixins.sandie_nationalcity import (
+    NationalCityError,
+    SandieNationalCityMixin,
+)
 from city_scrapers.spiders.sandie_nationalcity import (
     SandieBoardsCommissionsSpider,
     SandieCityCouncilSpider,
@@ -30,6 +38,17 @@ test_response = file_response(
 )
 
 
+with open(join(dirname(__file__), "files", "sandie_nationalcity_escribe.json")) as f:
+    escribe_meetings = json.load(f)["d"]  # saved eSCRIBE calendar response
+
+escribe_response = TextResponse(
+    url="https://pub-nationalcity.escribemeetings.com"
+    "/MeetingsCalendarView.aspx/GetCalendarMeetings",
+    body=json.dumps({"d": escribe_meetings}).encode(),
+    encoding="utf-8",
+)
+
+
 @pytest.fixture
 def council_spider():
     return SandieCityCouncilSpider()
@@ -41,30 +60,32 @@ def boards_spider():
 
 
 @pytest.fixture
-def council_results(council_spider):
+def council_items(council_spider):
+    """Meetings parse_escribe() yields for the saved eSCRIBE response"""
+    with freeze_time("2026-09-25"):
+        return list(council_spider.parse_escribe(escribe_response))
+
+
+@pytest.fixture
+def boards_results(boards_spider):
     """Everything parse() yields for the fixture page: meetings and the
     next-page request"""
     with freeze_time("2026-09-25"):
-        return list(council_spider.parse(test_response))
+        return list(boards_spider.parse(test_response))
 
 
 @pytest.fixture
-def council_items(council_results):
-    return [item for item in council_results if isinstance(item, Meeting)]
-
-
-@pytest.fixture
-def boards_items(boards_spider):
-    with freeze_time("2026-09-25"):
-        return [
-            item
-            for item in boards_spider.parse(test_response)
-            if isinstance(item, Meeting)
-        ]
+def boards_items(boards_results):
+    return [item for item in boards_results if isinstance(item, Meeting)]
 
 
 def _by_start(items, start):
     return [item for item in items if item["start"] == start]
+
+
+def _one(items, start):
+    (item,) = _by_start(items, start)
+    return item
 
 
 # ============ City Council Spider Tests ============
@@ -73,101 +94,156 @@ def _by_start(items, start):
 def test_council_spider_configuration(council_spider):
     """Test that City Council spider is properly configured"""
     assert council_spider.name == "sandie_national_council_committees"
-    assert council_spider.agency == "San Diego National City - City Council"
-    assert council_spider.event_type == "City Council"
+    assert council_spider.agency == "City of National City- City Council Committees"
+    assert council_spider.escribe_url == "https://pub-nationalcity.escribemeetings.com"
+
+    assert council_spider.event_type is None
+
+
+def test_spider_requires_event_type_or_escribe_url():
+    with pytest.raises(NotImplementedError, match="event_type or escribe_url"):
+        type("NoSourceSpider", (SandieNationalCityMixin,), {"name": "x", "agency": "X"})
+
+
+@freeze_time("2026-09-25")
+def test_council_start_requests_only_escribe(council_spider):
+    """The council spider makes one request, to eSCRIBE, and never the website"""
+    (request,) = list(council_spider.start_requests())
+    assert request.method == "POST"
+    assert request.url == (
+        "https://pub-nationalcity.escribemeetings.com"
+        "/MeetingsCalendarView.aspx/GetCalendarMeetings"
+    )
+    assert request.callback == council_spider.parse_escribe
+    assert request.errback == council_spider._request_failed
+    assert json.loads(request.body) == {
+        "calendarStartDate": "2024-09-24",
+        "calendarEndDate": "2027-09-24",
+    }
+
+
+def test_council_never_fetches_website(council_spider):
+    """Crawling the council spider never touches the Akamai-protected site"""
+    council_spider._akamai_get = lambda url: pytest.fail("website was fetched")
+    for request in council_spider.start_requests():
+        assert "nationalcityca.gov" not in request.url
 
 
 def test_council_count(council_items):
-    """Test that City Council spider gets the page's 4 council meetings"""
-    assert len(council_items) == 4
+    """The meeting before the 2024-09-24 cutoff is dropped; the other 6 are kept"""
+    assert len(council_items) == 6
+    assert not _by_start(council_items, datetime(2024, 9, 17, 18, 0))
+
+
+def test_council_no_duplicates(council_items):
+    assert len({item["id"] for item in council_items}) == len(council_items)
 
 
 def test_council_title(council_items):
-    """Test that council meeting titles are correctly parsed"""
+    """'Regular' and 'Cancellation Notice of a' are dropped from titles"""
     assert [item["title"] for item in council_items] == [
+        "City Council Workshop",
+        "Special City Council Meeting - Closed Session",
+        "City Council Meeting",
         "Special City Council Meeting",
         "City Council Meeting",
-        "Special City Council Meeting - Closed Session",
-        "Special City Council Meeting - Closed Session",
+        "City Council Meeting",
     ]
 
 
 def test_council_start(council_items):
-    """Test that council meeting start times are correctly parsed"""
     assert [item["start"] for item in council_items] == [
-        datetime(2026, 9, 29, 17, 0),
-        datetime(2026, 9, 15, 18, 0),
-        datetime(2026, 9, 15, 17, 0),
+        datetime(2026, 7, 21, 15, 0),
         datetime(2026, 9, 9, 13, 30),
+        datetime(2026, 9, 15, 18, 0),
+        datetime(2026, 9, 22, 17, 0),
+        datetime(2026, 10, 6, 18, 0),
+        datetime(2026, 11, 3, 18, 0),
     ]
 
 
 def test_council_end(council_items):
-    """Rows with a time range get an end; rows with only a start time don't"""
-    assert [item["end"] for item in council_items] == [
-        None,
-        None,
-        datetime(2026, 9, 15, 18, 0),
-        None,
-    ]
+    """eSCRIBE's EndDate (a scheduled block) is not used"""
+    for item in council_items:
+        assert item["end"] is None
 
 
 def test_council_classification(council_items):
-    """Test that council meeting classification is CITY_COUNCIL"""
     for item in council_items:
         assert item["classification"] == CITY_COUNCIL
 
 
+def test_council_abbreviated_title_is_city_council(council_spider):
+    """Titles like "Special CC Meeting - ..." are still CITY_COUNCIL"""
+    assert (
+        council_spider._parse_escribe_classification(
+            "Special CC Meeting - Certify Election - Incumbents Only"
+        )
+        == CITY_COUNCIL
+    )
+
+
 def test_council_status(council_items):
-    """Past meetings are PASSED, the upcoming 9/29 meeting is TENTATIVE"""
+    """Past meetings are PASSED, upcoming ones TENTATIVE, and the
+    "Cancellation Notice of a ..." meeting CANCELLED"""
     assert [item["status"] for item in council_items] == [
+        PASSED,
+        PASSED,
+        PASSED,
+        PASSED,
         TENTATIVE,
-        PASSED,
-        PASSED,
-        PASSED,
+        CANCELLED,
     ]
 
 
 def test_council_links(council_items):
-    """Test that council meeting links are correctly parsed"""
-    (meeting,) = _by_start(council_items, datetime(2026, 9, 15, 18, 0))
-    assert len(meeting["links"]) == 9
-    assert meeting["links"][0] == {
-        "href": "https://www.nationalcityca.gov/home/showpublisheddocument/37388/639246616538870000",  # noqa
-        "title": "Agenda Packet - Regular City Council Meeting of September 15, 2026",
+    regular = _one(council_items, datetime(2026, 9, 15, 18, 0))
+    assert regular["links"][0] == {
+        "href": "https://pub-nationalcity.escribemeetings.com"
+        "/FileStream.ashx?DocumentId=11499",
+        "title": "Agenda Cover Page (PDF)",
     }
-    assert {
-        "href": "https://www.nationalcityca.gov/home/showpublisheddocument/37398/639250804584170000",  # noqa
-        "title": "Written Public Comment",
-    } in meeting["links"]
+    # No agenda published yet: no links
+    assert _one(council_items, datetime(2026, 10, 6, 18, 0))["links"] == []
 
 
-def test_council_source(council_spider, council_items):
-    """Source is the main listing URL, not the page the meeting was found on"""
-    for item in council_items:
-        assert item["source"] == council_spider.start_url
+def test_council_source(council_items):
+    """Source is the meeting's eSCRIBE page, or the eSCRIBE portal if none"""
+    regular = _one(council_items, datetime(2026, 9, 15, 18, 0))
+    assert regular["source"] == (
+        "https://pub-nationalcity.escribemeetings.com"
+        "/Meeting?Id=2def99e5-4dd6-438a-b1ba-ccf55744c926"
+    )
+    upcoming = _one(council_items, datetime(2026, 10, 6, 18, 0))
+    assert upcoming["source"] == "https://pub-nationalcity.escribemeetings.com"
 
 
 def test_council_id(council_items):
-    """Test that unique ID is generated"""
-    assert council_items[0]["id"] == (
-        "sandie_national_council_committees/202609291700/x/"
-        "special_city_council_meeting"
+    """Ids match those of the council meetings previously scraped from the
+    website, e.g. the 9/15 City Council Meeting"""
+    assert _one(council_items, datetime(2026, 9, 15, 18, 0))["id"] == (
+        "sandie_national_council_committees/202609151800/x/city_council_meeting"
     )
 
 
 def test_council_location(council_spider, council_items):
-    """Test that the default location is used"""
+    """The Council Chamber maps to the default location; others keep their name"""
+    assert _one(council_items, datetime(2026, 7, 21, 15, 0))["location"] == {
+        "name": "Martin Luther King Jr. Community Center",
+        "address": "",
+    }
     for item in council_items:
-        assert item["location"] == council_spider.location
+        if item["start"] != datetime(2026, 7, 21, 15, 0):
+            assert item["location"] == council_spider.location
 
 
-def test_parse_yields_next_page_request(council_results):
-    """The fixture page has a Next link, so parse() also yields page 3"""
-    requests = [r for r in council_results if not isinstance(r, Meeting)]
-    assert [r.url for r in requests] == [
-        "https://www.nationalcityca.gov/government/boards-commissions-committees/-toggle-all/-sortn-EDate/-sortd-desc/-npage-3"  # noqa
-    ]
+@freeze_time("2026-09-25")
+def test_council_unparseable_meeting_is_skipped(council_spider):
+    """A meeting with a bad StartDate is skipped instead of crashing"""
+    bad = dict(escribe_meetings[1], StartDate="TBD")
+    items = list(council_spider._parse_escribe_meetings([bad, escribe_meetings[2]]))
+    assert [item["start"] for item in items] == [datetime(2026, 9, 9, 13, 30)]
+    assert council_spider._escribe_items_skipped == 1
 
 
 # ============ Boards & Commissions Spider Tests ============
@@ -176,7 +252,7 @@ def test_parse_yields_next_page_request(council_results):
 def test_boards_spider_configuration(boards_spider):
     """Test that Boards & Commissions spider is properly configured"""
     assert boards_spider.name == "sandie_national_boards_commissions"
-    assert boards_spider.agency == "San Diego National City - Boards and Commissions"
+    assert boards_spider.agency == "City of National City- Boards & Commissions"
     assert isinstance(boards_spider.event_type, list)
 
 
@@ -279,6 +355,43 @@ def test_boards_location(boards_spider, boards_items):
         assert item["location"] == boards_spider.location
 
 
+def test_parse_yields_next_page_request(boards_results):
+    """The fixture page has a Next link, so parse() also yields page 3"""
+    requests = [r for r in boards_results if not isinstance(r, Meeting)]
+    assert [r.url for r in requests] == [
+        "https://www.nationalcityca.gov/government/boards-commissions-committees/-toggle-all/-sortn-EDate/-sortd-desc/-npage-3"  # noqa
+    ]
+
+
+def test_council_closed_to_public(council_items):
+    """Only the "Closed Session" meeting is closed to the public"""
+    assert [item["closed_to_public"] for item in council_items] == [
+        False,
+        True,
+        False,
+        False,
+        False,
+        False,
+    ]
+
+
+def test_boards_closed_to_public(boards_items):
+    for item in boards_items:
+        assert item["closed_to_public"] is ("closed" in item["title"].lower())
+
+
+@freeze_time("2026-09-25")
+def test_website_closed_session_is_closed_to_public():
+    """Website meetings with "Closed" in the title are closed to the public"""
+    body = b"""<table><tbody><tr>
+        <td>Special Planning Commission Meeting - Closed Session</td>
+        <td class="event_datetime">09/29/2026 5:00 PM</td>
+    </tr></tbody></table>"""
+    response = HtmlResponse(url=test_response.url, body=body, encoding="utf-8")
+    (item,) = list(SandieBoardsCommissionsSpider().parse(response))
+    assert item["closed_to_public"] is True
+
+
 def test_all_day_false(council_items, boards_items):
     """Test that all_day is False for all meetings"""
     for item in council_items + boards_items:
@@ -299,21 +412,21 @@ def test_start_cutoff_on_leap_day(boards_spider):
 
 
 @freeze_time("2028-09-25")
-def test_meetings_before_cutoff_are_skipped(council_spider):
-    """Two years later the cutoff is 2026-09-25: only the upcoming meetings on
-    the page are kept"""
-    items = [r for r in council_spider.parse(test_response) if isinstance(r, Meeting)]
-    assert [item["start"] for item in items] == [datetime(2026, 9, 29, 17, 0)]
+def test_meetings_before_cutoff_are_skipped(boards_spider):
+    """Two years later the cutoff is 2026-09-25: only the meetings on the page
+    from that date on are kept"""
+    items = [r for r in boards_spider.parse(test_response) if isinstance(r, Meeting)]
+    assert items
+    assert all(item["start"] >= datetime(2026, 9, 25) for item in items)
 
 
 # ============ curl-cffi Crawl Tests ============
 
 
 @freeze_time("2026-09-25")
-def test_run_crawl_fetches_listing_via_akamai_get(council_items):
+def test_run_crawl_fetches_listing_via_akamai_get(boards_items):
     """_run_crawl fetches listing pages through curl-cffi and yields meetings"""
-    spider = SandieCityCouncilSpider()
-    spider._fetch_escribe_meetings = lambda start, end: []  # no network
+    spider = SandieBoardsCommissionsSpider()
     fetched = []
 
     def fake_get(url):
@@ -325,34 +438,54 @@ def test_run_crawl_fetches_listing_via_akamai_get(council_items):
 
     # Page 1 (the fixture) is fetched, then its Next link (page 3)
     assert fetched == [spider.start_url, test_response.url.replace("-2", "-3")]
-    assert items == council_items
+    assert items == boards_items
+    # A blocked later page is not reported as a problem
+    assert spider._problems == []
+    assert spider._listing_pages == 1
+    assert spider._meetings_parsed == len(boards_items)
 
 
 @freeze_time("2026-09-25")
-def test_run_crawl_blocked_listing_yields_nothing():
-    """A blocked listing page stops the crawl without raising (no eSCRIBE)"""
+def test_run_crawl_blocked_first_listing_page_is_reported():
+    """A blocked first listing page stops the crawl and is recorded as a
+    problem (there is no eSCRIBE fallback)"""
     spider = SandieBoardsCommissionsSpider()
     assert spider.escribe_url is None
     spider._akamai_get = lambda url: None
     assert list(spider._run_crawl(None)) == []
+    assert spider._failed_requests == 1
+    assert spider._problems == [f"could not fetch listing page {spider.start_url}"]
+
+
+def test_run_crawl_page_without_rows_is_reported():
+    """A fetched page with no table rows means the layout changed"""
+    spider = SandieBoardsCommissionsSpider()
+    spider._akamai_get = lambda url: HtmlResponse(
+        url=url, body=b"<html><body>No table</body></html>", encoding="utf-8"
+    )
+    assert list(spider._run_crawl(None)) == []
+    assert "no meeting rows found" in spider._problems[0]
+
+
+def test_boards_start_requests_use_website(boards_spider):
+    (request,) = list(boards_spider.start_requests())
+    assert request.url == "data:,"
+    assert request.callback == boards_spider._run_crawl
+    assert request.errback == boards_spider._request_failed
 
 
 def test_row_without_start_date_is_skipped():
     """A matching row with no parseable date is skipped instead of crashing"""
-    from scrapy.http import HtmlResponse
-
     body = b"""<table><tbody><tr>
-        <td>City Council Meeting</td><td>TBD</td>
+        <td>Planning Commission Meeting</td><td>TBD</td>
     </tr></tbody></table>"""
     response = HtmlResponse(url=test_response.url, body=body, encoding="utf-8")
-    assert list(SandieCityCouncilSpider().parse(response)) == []
+    assert list(SandieBoardsCommissionsSpider().parse(response)) == []
 
 
 def _live_row_response(datetime_cell, agenda_text=""):
-    from scrapy.http import HtmlResponse
-
     body = f"""<table><tbody><tr>
-        <td>Special City Council Meeting</td>
+        <td>Planning Commission Meeting</td>
         <td class="event_datetime">{datetime_cell}</td>
         <td><a href="/home/showpublisheddocument/1">{agenda_text}</a></td>
     </tr></tbody></table>""".encode()
@@ -366,10 +499,9 @@ def test_live_markup_without_end_time():
         "09/29/2026 5:00 PM "
         '<time itemprop="startDate">09/29/2026 5:00 PM</time> '
         '<time itemprop="endDate">09/29/2026</time>',
-        agenda_text="2026 09-14 CC SP MIN",
+        agenda_text="2026 09-14 PC MIN",
     )
-    spider = SandieCityCouncilSpider()
-    items = list(spider.parse(response))
+    items = list(SandieBoardsCommissionsSpider().parse(response))
     assert len(items) == 1
     assert items[0]["start"] == datetime(2026, 9, 29, 17, 0)
     assert items[0]["end"] is None
@@ -383,14 +515,12 @@ def test_live_markup_with_time_range():
         '<time itemprop="startDate">02/19/2026 6:00 PM</time> '
         '<time itemprop="endDate">02/19/2026 8:00 PM</time>'
     )
-    items = list(SandieCityCouncilSpider().parse(response))
+    items = list(SandieBoardsCommissionsSpider().parse(response))
     assert items[0]["start"] == datetime(2026, 2, 19, 18, 0)
     assert items[0]["end"] == datetime(2026, 2, 19, 20, 0)
 
 
 def _listing_page(url, date, title="Planning Commission Meeting"):
-    from scrapy.http import HtmlResponse
-
     body = f"""<table><tbody><tr>
         <td>{title}</td>
         <td class="event_datetime">{date} 6:00 PM</td>
@@ -401,7 +531,7 @@ def _listing_page(url, date, title="Planning Commission Meeting"):
 
 def test_parse_follows_next_page_while_after_cutoff():
     """Pagination continues while the page's meetings are on/after the cutoff"""
-    spider = SandieCityCouncilSpider()
+    spider = SandieBoardsCommissionsSpider()
     date = spider._start_cutoff().strftime("%m/%d/%Y")
     results = list(spider.parse(_listing_page(test_response.url, date)))
     assert [r.url for r in results if hasattr(r, "callback")] == [
@@ -412,14 +542,14 @@ def test_parse_follows_next_page_while_after_cutoff():
 
 def test_parse_stops_paging_before_cutoff():
     """Pagination stops once a page reaches meetings before the cutoff"""
-    spider = SandieCityCouncilSpider()
+    spider = SandieBoardsCommissionsSpider()
     date = (spider._start_cutoff() - timedelta(days=1)).strftime("%m/%d/%Y")
     assert list(spider.parse(_listing_page(test_response.url, date))) == []
 
 
 def test_run_crawl_stops_at_cutoff():
     """_run_crawl fetches pages until one reaches meetings before the cutoff"""
-    spider = SandieCityCouncilSpider()
+    spider = SandieBoardsCommissionsSpider()
     cutoff = spider._start_cutoff()
     dates = [
         (cutoff + timedelta(days=days)).strftime("%m/%d/%Y")
@@ -436,134 +566,106 @@ def test_run_crawl_stops_at_cutoff():
     assert len(fetched) == 3
 
 
-# ============ eSCRIBE Fallback Tests ============
-
-with open(join(dirname(__file__), "files", "sandie_nationalcity_escribe.json")) as f:
-    escribe_meetings = json.load(f)["d"]  # saved eSCRIBE calendar response
-
-
-def _council_spider_with_fallback(listing_pages):
-    """Council spider whose website fetches return listing_pages in order (None =
-    blocked) and whose eSCRIBE fetch returns the fixture, recording the range."""
-    spider = SandieCityCouncilSpider()
-    pages = iter(listing_pages)
-    spider._akamai_get = lambda url: next(pages, None)
-    spider.escribe_ranges = []
-
-    def fake_fetch(start, end):
-        spider.escribe_ranges.append((start, end))
-        return escribe_meetings
-
-    spider._fetch_escribe_meetings = fake_fetch
+def _crawled_spider(spider_cls):
+    """A spider attached to a crawler, recording the spider_error signals sent"""
+    crawler = get_crawler(spider_cls)
+    spider = spider_cls.from_crawler(crawler)
+    spider.errors = []
+    crawler.signals.connect(
+        lambda failure, response, spider: spider.errors.append(failure.value),
+        signal=signals.spider_error,
+        weak=False,
+    )
     return spider
 
 
-def test_council_spider_has_escribe_fallback(council_spider):
-    assert council_spider.escribe_url == (
-        "https://pub-nationalcity.escribemeetings.com"
+def _close(spider, reason="finished"):
+    spider.crawler.signals.send_catch_log(
+        signal=signals.spider_closed, spider=spider, reason=reason
     )
 
 
 @freeze_time("2026-09-25")
-def test_escribe_meeting_parsing(council_spider, council_items):
-    """eSCRIBE entries map to meetings with website-style titles"""
-    items = list(council_spider._parse_escribe_meetings(escribe_meetings))
-    by_start = {item["start"]: item for item in items}
-
-    # 2024-09-17 is before the 2024-09-25 cutoff; the other 6 are kept
-    assert datetime(2024, 9, 17, 18, 0) not in by_start
-    assert len(items) == 6
-
-    regular = by_start[datetime(2026, 9, 15, 18, 0)]
-    assert regular["title"] == "City Council Meeting"
-    assert regular["end"] is None  # eSCRIBE's EndDate (10pm) is not used
-    assert regular["classification"] == CITY_COUNCIL
-    assert regular["status"] == PASSED
-    assert regular["location"] == council_spider.location
-    assert regular["links"][0] == {
-        "href": "https://pub-nationalcity.escribemeetings.com"
-        "/FileStream.ashx?DocumentId=11499",
-        "title": "Agenda Cover Page (PDF)",
-    }
-    # Same listing page as the website's meetings
-    assert regular["source"] == council_spider.start_url
-    # Same id as the website's version of this meeting
-    (website_version,) = _by_start(council_items, datetime(2026, 9, 15, 18, 0))
-    assert regular["id"] == website_version["id"]
-
-    closed = by_start[datetime(2026, 9, 9, 13, 30)]
-    assert closed["title"] == "Special City Council Meeting - Closed Session"
-
-    # No agenda published yet: no links
-    upcoming = by_start[datetime(2026, 10, 6, 18, 0)]
-    assert upcoming["status"] == TENTATIVE
-    assert upcoming["links"] == []
-
-    workshop = by_start[datetime(2026, 7, 21, 15, 0)]
-    assert workshop["location"] == {
-        "name": "Martin Luther King Jr. Community Center",
-        "address": "",
-    }
-
-    cancelled = by_start[datetime(2026, 11, 3, 18, 0)]
-    assert cancelled["title"] == "City Council Meeting"
-    assert cancelled["status"] == CANCELLED
+def test_no_error_reported_for_a_good_run():
+    spider = _crawled_spider(SandieCityCouncilSpider)
+    list(spider.parse_escribe(escribe_response))
+    _close(spider)
+    assert spider.errors == []
 
 
-@freeze_time("2026-09-25")
-def test_fallback_when_first_listing_page_blocked():
-    """If the website is blocked from the start, all meetings come from eSCRIBE"""
-    spider = _council_spider_with_fallback([None])
-    items = list(spider._run_crawl(None))
-
-    assert spider.escribe_ranges[0][0] == datetime(2024, 9, 24)  # the cutoff
-    assert len(items) == 6  # fixture minus the meeting before the cutoff
-    assert all(item["source"] == spider.start_url for item in items)
+def test_zero_meetings_is_reported():
+    spider = _crawled_spider(SandieCityCouncilSpider)
+    _close(spider)
+    (error,) = spider.errors
+    assert isinstance(error, NationalCityError)
+    assert "0 meetings parsed" in str(error)
+    assert spider.crawler.stats.get_value("spider_exceptions/NationalCityError") == 1
 
 
-@freeze_time("2026-09-25")
-def test_fallback_fills_only_what_the_website_missed():
-    """After page 2 is blocked, eSCRIBE only fills in meetings up to the oldest
-    listed date, and skips meetings the website already produced"""
-    spider = _council_spider_with_fallback([test_response, None])
-    items = list(spider._run_crawl(None))
+def test_zero_meetings_not_reported_when_run_did_not_finish():
+    """A run stopped early (e.g. shutdown) isn't reported for 0 meetings"""
+    spider = _crawled_spider(SandieCityCouncilSpider)
+    _close(spider, reason="shutdown")
+    assert spider.errors == []
 
-    # Oldest row on the fixture page is the 9/9 1:30pm closed session
-    assert spider.escribe_ranges[0][1] == datetime(2026, 9, 9, 13, 30)
-    # Both sources use start_url, so tell them apart by their document links
-    sources = {
-        item["start"]: (
-            "escribe"
-            if item["links"][0]["href"].startswith(spider.escribe_url)
-            else "website"
-        )
-        for item in items
-    }
-    # The 4 website meetings (9/9 not duplicated from eSCRIBE); the July
-    # workshop comes from eSCRIBE; 9/22, 10/6 and 11/3 are newer than the
-    # website's coverage and are skipped
-    assert len(items) == len(sources)
-    assert sources == {
-        datetime(2026, 7, 21, 15, 0): "escribe",
-        datetime(2026, 9, 9, 13, 30): "website",
-        datetime(2026, 9, 15, 17, 0): "website",
-        datetime(2026, 9, 15, 18, 0): "website",
-        datetime(2026, 9, 29, 17, 0): "website",
-    }
+
+def test_unexpected_escribe_response_is_reported():
+    spider = _crawled_spider(SandieCityCouncilSpider)
+    response = TextResponse(
+        url=escribe_response.url, body=b"<html>Error</html>", encoding="utf-8"
+    )
+    assert list(spider.parse_escribe(response)) == []
+    _close(spider)
+    (error,) = spider.errors
+    assert "Unexpected eSCRIBE response" in str(error)
+    assert "0 meetings parsed" in str(error)
+
+
+def test_unparseable_escribe_meetings_are_reported():
+    """Every meeting failing to parse means the API changed"""
+    spider = _crawled_spider(SandieCityCouncilSpider)
+    body = json.dumps({"d": [{"StartDate": "TBD", "MeetingName": "X"}]}).encode()
+    response = TextResponse(url=escribe_response.url, body=body, encoding="utf-8")
+    assert list(spider.parse_escribe(response)) == []
+    _close(spider)
+    assert "none of the 1 eSCRIBE meeting(s) could be parsed" in str(spider.errors[0])
+
+
+def test_failed_escribe_request_is_reported():
+    """A network/HTTP failure on the eSCRIBE request reaches the errback"""
+    spider = _crawled_spider(SandieCityCouncilSpider)
+    (request,) = list(spider.start_requests())
+    failure = Failure(ConnectionRefusedError("refused"))
+    failure.request = request
+    request.errback(failure)
+    _close(spider)
+    (error,) = spider.errors
+    assert f"request to {request.url} failed" in str(error)
+    assert "failed_requests=1" in str(error)
+
+
+def test_blocked_website_is_reported():
+    spider = _crawled_spider(SandieBoardsCommissionsSpider)
+    spider._akamai_get = lambda url: None
+    list(spider._run_crawl(None))
+    _close(spider)
+    (error,) = spider.errors
+    assert "could not fetch listing page" in str(error)
+    assert "listing_pages=0" in str(error)
 
 
 # ============ Akamai Challenge Page Tests ============
 
 
-def test_akamai_challenge_page_is_detected(council_spider):
+def test_akamai_challenge_page_is_detected(boards_spider):
     """A 200 with Akamai's JavaScript challenge (bm-verify) is not a real page"""
     with open(
         join(dirname(__file__), "files", "sandie_nationalcity_akamai_challenge.html"),
         "rb",
     ) as f:
         challenge = f.read()
-    assert council_spider._is_akamai_challenge(challenge)
-    assert not council_spider._is_akamai_challenge(test_response.body)
+    assert boards_spider._is_akamai_challenge(challenge)
+    assert not boards_spider._is_akamai_challenge(test_response.body)
 
 
 def test_akamai_get_retries_challenge_page(monkeypatch):
@@ -580,6 +682,6 @@ def test_akamai_get_retries_challenge_page(monkeypatch):
 
     monkeypatch.setattr(mixin.cffi_requests, "get", fake_get)
     monkeypatch.setattr(mixin.time, "sleep", lambda seconds: None)
-    spider = SandieCityCouncilSpider()
+    spider = SandieBoardsCommissionsSpider()
     assert spider._akamai_get(spider.start_url) is None
     assert len(calls) == spider.akamai_retries
